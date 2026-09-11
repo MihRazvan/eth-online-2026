@@ -9,6 +9,7 @@ import type {
   AnalysisResult,
 } from "./types";
 import { FixtureAdapter } from "./fixtureAdapter";
+import { MakerStrategies, SellToBid } from "./components/QuoteControls";
 import {
   EntitlementReceipt,
   FEE_CLAIM_RIGHTS,
@@ -352,7 +353,10 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
   const begin = (r: Review) => {
     setError("");
     setMessage("");
-    setReview(r);
+    setReview({
+      ...r,
+      action: { ...r.action, reviewedAccount: snapshot?.wallet.address },
+    });
   };
   const submit = async () => {
     if (!review) return;
@@ -433,7 +437,10 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
       },
       lines: [
         ["You pay", money(cost, 6) + " USDC"],
-        ["You receive", formatClaims(quantityBase) + " fee claims"],
+        [
+          "Minimum fee claims received",
+          formatClaims(quantityBase) + " fee claims",
+        ],
         [
           "Share of original Q",
           sharePercent(quantityBase.toString(), selected.originalSupply) +
@@ -1027,6 +1034,15 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                 </p>
                 <div className="quote-info">
                   <span>Maker: {selectedQuote.maker}</span>
+                  {selectedQuote.advertisedClaims && (
+                    <span>
+                      Advertised lot:{" "}
+                      {formatClaims(selectedQuote.advertisedClaims)} claims ·
+                      executable now:{" "}
+                      {formatClaims(selectedQuote.executableClaims ?? "0")}{" "}
+                      claims.
+                    </span>
+                  )}
                   {selectedQuote.available && (
                     <span>Expires {deadlineDate(selectedQuote.expiresAt)}</span>
                   )}
@@ -1196,6 +1212,15 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                     ))
                   )}
                 </section>
+                <MakerStrategies
+                  strategies={s.strategies.filter(
+                    (q) =>
+                      q.maker.toLowerCase() === s.wallet.address?.toLowerCase(),
+                  )}
+                  markets={s.markets}
+                  disabled={wrongNetwork}
+                  onReview={begin}
+                />
                 <section className="position-list">
                   <div className="section-top">
                     <h2>Original positions</h2>
@@ -1543,21 +1568,30 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                           <a className="button" href={"#market/" + m.id}>
                             View claim <Icon />
                           </a>
-                          {!fixture &&
-                            m.phase !== "closed" &&
-                            BigInt(s.wallet.claims[m.id]) > 0n && (
-                              <button
-                                className="button"
-                                onClick={() =>
-                                  setMakerQuoteSeries(
-                                    makerQuoteSeries === m.id ? null : m.id,
-                                  )
-                                }
-                              >
-                                Publish sell quote
-                              </button>
-                            )}
+                          {m.phase !== "closed" && (
+                            <button
+                              className="button"
+                              onClick={() =>
+                                setMakerQuoteSeries(
+                                  makerQuoteSeries === m.id ? null : m.id,
+                                )
+                              }
+                            >
+                              {BigInt(s.wallet.claims[m.id]) > 0n
+                                ? "Publish sell quote"
+                                : "Publish buy quote"}
+                            </button>
+                          )}
                         </div>
+                        {m.phase !== "closed" &&
+                          BigInt(s.wallet.claims[m.id]) > 0n && (
+                            <SellToBid
+                              market={m}
+                              balance={s.wallet.claims[m.id]}
+                              disabled={wrongNetwork}
+                              onReview={begin}
+                            />
+                          )}
                         <EntitlementReceipt
                           market={m}
                           quantity={s.wallet.claims[m.id]}
@@ -1566,10 +1600,11 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                           mode={s.mode}
                           compact
                         />
-                        {!fixture && makerQuoteSeries === m.id && (
+                        {makerQuoteSeries === m.id && (
                           <MakerQuote
                             market={m}
                             balance={s.wallet.claims[m.id]}
+                            cashBalance={s.wallet.usdcBalanceMicros}
                             timestamp={s.timestamp}
                             onReview={begin}
                           />
@@ -1824,18 +1859,21 @@ function FundedOffer({
 function MakerQuote({
   market,
   balance,
+  cashBalance,
   timestamp,
   onReview,
 }: {
   market: Market;
   balance: string;
+  cashBalance: string;
   timestamp: string;
   onReview: (review: Review) => void;
 }) {
   const [amount, setAmount] = useState("1000"),
     [cash, setCash] = useState("84"),
     [minutes, setMinutes] = useState("60"),
-    [error, setError] = useState("");
+    [error, setError] = useState(""),
+    [claimsIn, setClaimsIn] = useState(BigInt(balance) === 0n);
   return (
     <form
       className="maker-form"
@@ -1844,9 +1882,13 @@ function MakerQuote({
         try {
           const quantity = parseClaims(amount),
             usdc = parseUsdc(cash);
-          if (quantity <= 0n || quantity > BigInt(balance) || usdc <= 0n)
+          if (
+            quantity <= 0n ||
+            usdc <= 0n ||
+            (claimsIn ? usdc > BigInt(cashBalance) : quantity > BigInt(balance))
+          )
             throw new Error(
-              "Choose a positive claim quantity within your wallet balance and a positive USDC price.",
+              "Choose positive amounts within your maker inventory balance.",
             );
           if (
             !/^\d+$/.test(minutes) ||
@@ -1862,14 +1904,22 @@ function MakerQuote({
             title: "Publish a maker quote",
             action: {
               type: "publishQuote",
+              claimsIn,
               seriesId: market.id,
               quantity: quantity.toString(),
               usdcMicros: usdc.toString(),
               expiresAt,
             },
             lines: [
-              ["Claim inventory", formatClaims(quantity)],
-              ["Total ask for this lot", money(usdc, 6) + " USDC"],
+              [
+                "Direction",
+                claimsIn ? "Buy claims with your USDC" : "Sell claims for USDC",
+              ],
+              ["Advertised claim lot", formatClaims(quantity)],
+              [
+                claimsIn ? "USDC inventory" : "Total ask for this lot",
+                money(usdc, 6) + " USDC",
+              ],
               [
                 "Price ratio",
                 formatClaims(quantity) +
@@ -1880,8 +1930,7 @@ function MakerQuote({
               ["Expires", deadlineDate(expiresAt)],
               ["Series", market.pair + " · NFT #" + market.tokenId],
             ],
-            warning:
-              "Approve only this claim inventory to Aqua, then ship the exact FeeStrip strategy. Tokens remain in your wallet. Other apps can share this inventory; a quote is not separately locked capital or guaranteed resale liquidity. A series state change invalidates this strategy.",
+            warning: `Approve only this ${claimsIn ? "USDC" : "claim"} inventory to Aqua, then ship the exact FeeStrip strategy. Tokens remain in your wallet. Other apps can share this inventory; a quote is not separately locked capital or guaranteed resale liquidity. A series state change invalidates this strategy.`,
             button: "Approve and publish quote",
           });
           setError("");
@@ -1891,12 +1940,24 @@ function MakerQuote({
       }}
     >
       <div>
-        <h3>Offer your claims to the market</h3>
+        <h3>Publish a maker quote</h3>
         <p className="fine">
-          Publish an executable sell quote through Aqua / SwapVM. Available
-          wallet balance: {formatClaims(balance)} claims.
+          Advertise an exact price ratio through Aqua / SwapVM. Wallet
+          inventory: {formatClaims(balance)} claims and {money(cashBalance, 6)}{" "}
+          USDC. Publishing does not lock these assets.
         </p>
       </div>
+      <label>
+        Maker direction
+        <select
+          aria-label="Maker direction"
+          value={claimsIn ? "bid" : "ask"}
+          onChange={(e) => setClaimsIn(e.target.value === "bid")}
+        >
+          <option value="ask">Sell claims (ask)</option>
+          <option value="bid">Buy claims (bid)</option>
+        </select>
+      </label>
       <div className="maker-fields">
         <label>
           Claim quantity
@@ -1908,7 +1969,7 @@ function MakerQuote({
           />
         </label>
         <label>
-          Total USDC ask
+          {claimsIn ? "USDC offered for lot" : "Total USDC ask"}
           <input
             aria-label="Maker total USDC ask"
             value={cash}

@@ -1,4 +1,5 @@
 import { claimCost } from "./amounts";
+import { strategyCapacity } from "./quotes";
 import type {
   Action,
   ActionResult,
@@ -48,6 +49,7 @@ export function initialFixture(): Snapshot {
     sourceBlock: "11842994",
     scenario: "normal",
     fundedOffers: [],
+    strategies: [],
     wallet: {
       connected: false,
       usdcBalanceMicros: "2500000000",
@@ -127,10 +129,36 @@ export function initialFixture(): Snapshot {
 /** Isolated deterministic design/test state. It never signs, broadcasts, or invents a hash. */
 export class FixtureAdapter implements FeeStripAdapter {
   private nextOffer = 1;
+  private nextStrategy = 1;
+  private strategyPhase = new Map<string, string>();
   readonly mode = "fixture" as const;
   private state: Snapshot = initialFixture();
   async load() {
-    return structuredClone(this.state);
+    const s = this.state;
+    for (const q of s.strategies) {
+      const m = s.markets.find((m) => m.id === q.seriesId)!;
+      const balance = BigInt(
+        q.claimsIn
+          ? s.wallet.usdcBalanceMicros
+          : (s.wallet.claims[q.seriesId] ?? "0"),
+      );
+      const result = strategyCapacity({
+        claimsIn: q.claimsIn,
+        claimUnits: BigInt(q.advertisedClaims),
+        usdcUnits: BigInt(q.advertisedUSDC),
+        virtual: BigInt(q.virtualOutput),
+        balance,
+        allowance: BigInt(q.allowanceOutput),
+        cancelled: q.limitations.includes("cancelled"),
+        active: q.cancellable,
+        expired: BigInt(q.expiresAt) <= BigInt(s.timestamp),
+        stale: this.strategyPhase.get(q.strategyHash) !== m.phase,
+      });
+      q.walletOutput = balance.toString();
+      q.executableClaims = result.available.toString();
+      q.limitations = result.limitations;
+    }
+    return structuredClone(s);
   }
   async connect(): Promise<WalletState> {
     if (this.state.scenario === "rejected-signature")
@@ -163,6 +191,8 @@ export class FixtureAdapter implements FeeStripAdapter {
   reset() {
     this.state = initialFixture();
     this.nextOffer = 1;
+    this.nextStrategy = 1;
+    this.strategyPhase.clear();
   }
   /** Explicit fixture controls exercise post-N state; there is no wall-clock authority. */
   advance(seriesId: string) {
@@ -190,7 +220,71 @@ export class FixtureAdapter implements FeeStripAdapter {
       "seriesId" in action
         ? s.markets.find((m) => m.id === action.seriesId)
         : undefined;
-    if (action.type === "buyClaims") {
+    if (action.type === "dockQuote") {
+      const q = s.strategies.find(
+        (q) => q.strategyHash === action.strategyHash,
+      );
+      if (
+        !q ||
+        q.maker !== s.wallet.address ||
+        q.app !== action.app ||
+        q.claimToken !== action.claimToken ||
+        q.cashToken !== action.cashToken
+      )
+        throw new Error(
+          "Only the maker can cancel the exact reviewed strategy.",
+        );
+      if (!q.cancellable) throw new Error("Strategy already cancelled.");
+      q.cancellable = false;
+      q.limitations = ["cancelled"];
+      q.virtualOutput = "0";
+      q.executableClaims = "0";
+    } else if (action.type === "publishQuote") {
+      const m = s.markets.find((m) => m.id === action.seriesId),
+        quantity = BigInt(action.quantity),
+        cash = BigInt(action.usdcMicros),
+        claimsIn = !!action.claimsIn;
+      if (
+        !m ||
+        m.phase === "closed" ||
+        quantity <= 0n ||
+        cash <= 0n ||
+        BigInt(action.expiresAt) <= BigInt(s.timestamp)
+      )
+        throw new Error(
+          "Choose positive terms for an open series and future deadline.",
+        );
+      const balance = claimsIn
+        ? BigInt(s.wallet.usdcBalanceMicros)
+        : BigInt(s.wallet.claims[m.id] ?? "0");
+      const inventory = claimsIn ? cash : quantity;
+      if (inventory > balance)
+        throw new Error("The quote exceeds your wallet inventory.");
+      const hash = "fixture-strategy-" + this.nextStrategy++;
+      this.strategyPhase.set(hash, m.phase);
+      s.strategies.push({
+        strategyHash: hash,
+        app: "Fixture SwapVM router",
+        maker: s.wallet.address!,
+        seriesId: m.id,
+        claimsIn,
+        claimToken: "Fixture claim " + m.id,
+        cashToken: "Fixture USDC",
+        advertisedClaims: quantity.toString(),
+        advertisedUSDC: cash.toString(),
+        executableClaims: quantity.toString(),
+        virtualOutput: inventory.toString(),
+        walletOutput: balance.toString(),
+        allowanceOutput: inventory.toString(),
+        expiresAt: action.expiresAt,
+        limitations: [],
+        cancellable: true,
+      });
+    } else if (action.type === "sellClaims") {
+      throw new Error(
+        "No external executable bid is supplied in these design fixtures.",
+      );
+    } else if (action.type === "buyClaims") {
       if (!market) throw new Error("Series unavailable.");
       if (!s.quote.available)
         throw new Error(

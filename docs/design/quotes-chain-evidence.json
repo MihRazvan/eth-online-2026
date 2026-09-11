@@ -1,0 +1,70 @@
+{
+  "scope": "Actual isolated local8550 transactions; no public signing or live liquidity claim",
+  "chainId": 31337,
+  "ask": "0x188449160a76817fcfbd528bd2149975efb23d4811f86e9402917775dbadccc9",
+  "bid": "0xc0a3edb0c19a1ac78bd3f757bc1a5e646e57cd38cb51970ee04419d586330295",
+  "stale": "0x7a0090ae4229a9b2c4daa2de256aee3f6e4f269d90977358670dfb5d43186d14",
+  "partialAskRemaining": "1000000000000000000000",
+  "sellerBidProceeds": "2000000",
+  "capturedReserve": "299999999",
+  "escrowBalanceAfterDock": "299999999",
+  "safeBalancesRejectsDocked": true,
+  "receipts": [
+    {
+      "action": "Approve NFT transfer",
+      "hash": "0x9c6289e7911ae7fa7e0999365edb83abe4e74f3320ba52bdea4d98df8776c41f"
+    },
+    {
+      "action": "Accept exact funded terms",
+      "hash": "0xfb2db5a1d113b58dc1cb385748bdf7a5fcfa401ade412de8d87aa8aa38e941c4"
+    },
+    {
+      "action": "Approve and publish quote",
+      "hash": "0x80943e2c1d5913629c60fa79d6707a1a387c594ecf693665ebfad9f824c89032"
+    },
+    {
+      "action": "Confirm claim purchase",
+      "hash": "0x95f38b617501cbce23bdff875b5d1d8eb2bf6c330e2f80ac9781672699ab154d"
+    },
+    {
+      "action": "Cancel this maker quote",
+      "hash": "0x785e0442f6d780d8f8162146e012e261aa63d47f14ab2b0ceb94487f7ac28269"
+    },
+    {
+      "action": "Approve and publish quote",
+      "hash": "0x0db3f5af5e7432b7d1700e4f7f6b9e900e3fea5001e06902f5c742b93097adce"
+    },
+    {
+      "action": "Confirm claim sale",
+      "hash": "0x24fd0681381e98b7815c8b5375128e7264a2c01e1cd98823eb872900a125caa7"
+    },
+    {
+      "action": "approve",
+      "hash": "0x161e795639656347c58866bdcb246823bfa0f1edf932e173f59079ccaac2940d"
+    },
+    {
+      "action": "Cancel this maker quote",
+      "hash": "0xa83d8a4d6789a1d4195bfbc151293f36bffbbacdbbd44867cddba1c47c006a83"
+    },
+    {
+      "action": "Approve and publish quote",
+      "hash": "0x399d5cea89d58a205de853a3c2d8fd58b286f41ff1721c3dc8360758c023324a"
+    },
+    {
+      "action": "transfer",
+      "hash": "0xe8bae663a4d7227fdc541096e0885642621416b969c275278c8299b81545aa18"
+    },
+    {
+      "action": "donate",
+      "hash": "0x8cf83bfa5b0188480db4c0530122bacd3d6a336876413db07097683eedce385e"
+    },
+    {
+      "action": "Confirm transaction",
+      "hash": "0xc7b1982d1c686c3db8414620a0dca4ca2e02ddbe21837f285a67320632ded771"
+    },
+    {
+      "action": "Cancel this maker quote",
+      "hash": "0x701685086157af750c63cba19410940a365958a1919f27ed50a48c4b15b8a4d6"
+    }
+  ]
+}

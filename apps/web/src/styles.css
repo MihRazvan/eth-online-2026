@@ -2177,3 +2177,169 @@ dialog h2 {
     flex-basis: 20px;
   }
 }
+
+.maker-strategies {
+  margin-bottom: 48px;
+}
+.strategy-row {
+  padding: 26px 0;
+  border-bottom: 1px solid var(--line);
+}
+.strategy-title {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  align-items: start;
+}
+.strategy-title h3 {
+  font-size: 18px;
+  margin: 0;
+}
+.strategy-title h3 span {
+  display: block;
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 400;
+}
+.strategy-state {
+  color: #7b512b;
+  font-size: 12px;
+  max-width: 45%;
+  text-align: right;
+  line-height: 1.6;
+}
+.strategy-state.executable {
+  color: #44661c;
+}
+.strategy-amounts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 25px;
+  margin: 24px 0;
+  font-variant-numeric: tabular-nums;
+}
+.strategy-amounts dt {
+  color: var(--muted);
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+.strategy-amounts dd {
+  margin: 0;
+  font-size: 23px;
+  overflow-wrap: anywhere;
+}
+.strategy-amounts dd small {
+  font-size: 11px;
+}
+.strategy-bottom {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 32px;
+}
+.strategy-bottom > details {
+  min-width: 0;
+  flex: 1;
+}
+.strategy-bottom summary {
+  cursor: pointer;
+  font-size: 12px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  padding-block: 13px;
+}
+.strategy-bottom dl {
+  display: grid;
+  gap: 15px;
+}
+.strategy-bottom dt {
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.strategy-bottom dd {
+  margin: 0;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.strategy-bottom > button {
+  font-size: 12px;
+}
+.holding-row > .sell-to-bid {
+  grid-column: 1/-1;
+  width: 100%;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+.sell-to-bid h3 {
+  font-size: 16px;
+  margin: 0 0 10px;
+}
+.sell-bid-fields {
+  display: flex;
+  align-items: end;
+  gap: 18px;
+}
+.sell-bid-fields label {
+  font-size: 12px;
+  flex: 1;
+  max-width: 300px;
+}
+.sell-bid-fields input {
+  display: block;
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: inherit;
+  background: transparent;
+  padding: 12px;
+  margin-top: 8px;
+}
+.sell-bid-fields button {
+  font-size: 12px;
+}
+.maker-form > label {
+  font-size: 12px;
+}
+.maker-form > label > select {
+  margin-left: 14px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+}
+@media (max-width: 680px) {
+  .strategy-title {
+    display: block;
+  }
+  .strategy-state {
+    display: block;
+    max-width: none;
+    text-align: left;
+    margin-top: 12px;
+  }
+  .strategy-amounts {
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  .strategy-amounts > div:last-child {
+    grid-column: 1/-1;
+  }
+  .strategy-bottom {
+    display: block;
+  }
+  .strategy-bottom > button {
+    margin-top: 15px;
+    width: 100%;
+  }
+  .sell-bid-fields {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .sell-bid-fields label {
+    max-width: none;
+  }
+}

@@ -22,6 +22,36 @@ export interface Quote {
   ratioClaimUnits?: string;
   ratioUsdcUnits?: string;
   strategyHash?: string;
+  advertisedClaims?: string;
+  executableClaims?: string;
+}
+export type StrategyLimitation =
+  | "cancelled"
+  | "expired"
+  | "series-state-changed"
+  | "depleted"
+  | "allowance-revoked"
+  | "allowance-limited"
+  | "wallet-balance-limited"
+  | "partially-filled"
+  | "unavailable";
+export interface MakerStrategy {
+  strategyHash: string;
+  app: string;
+  maker: string;
+  seriesId: string;
+  claimsIn: boolean;
+  claimToken: string;
+  cashToken: string;
+  advertisedClaims: string;
+  advertisedUSDC: string;
+  executableClaims: string;
+  virtualOutput: string;
+  walletOutput: string;
+  allowanceOutput: string;
+  expiresAt: string;
+  limitations: StrategyLimitation[];
+  cancellable: boolean;
 }
 export interface Market {
   id: string;
@@ -35,6 +65,7 @@ export interface Market {
   currentRangePercent?: number;
   priceIsIndicative?: boolean;
   quote?: Quote;
+  bid?: Quote;
   baselineX128?: string;
   residualOwner?: string;
   residualUsdcMicros?: string;
@@ -112,11 +143,27 @@ export interface Snapshot {
   markets: Market[];
   positions: Position[];
   fundedOffers: FundedOffer[];
+  strategies: MakerStrategy[];
   wallet: WalletState;
   quote: Quote;
   scenario: Scenario;
 }
-export type Action =
+export type Action = { reviewedAccount?: string } & (
+  | {
+      type: "dockQuote";
+      strategyHash: string;
+      app: string;
+      claimToken: string;
+      cashToken: string;
+    }
+  | {
+      type: "sellClaims";
+      seriesId: string;
+      quantity: string;
+      minimumUSDC: string;
+      expiresAt: string;
+      strategyHash: string;
+    }
   | { type: "cancelOffer"; offerId: string }
   | {
       type: "fundOffer";
@@ -143,6 +190,7 @@ export type Action =
     }
   | {
       type: "publishQuote";
+      claimsIn?: boolean;
       seriesId: string;
       quantity: string;
       usdcMicros: string;
@@ -157,7 +205,8 @@ export type Action =
         | "closeEarly"
         | "withdrawResidual";
       seriesId: string;
-    };
+    }
+);
 export interface ActionResult {
   mode: DataMode;
   description: string;

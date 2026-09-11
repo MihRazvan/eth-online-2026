@@ -38,6 +38,7 @@ import type {
   Market,
   Position,
   Quote,
+  MakerStrategy,
   Snapshot,
   WalletState,
 } from "./types";
@@ -189,12 +190,10 @@ interface Offer {
   positionCommitment: Hex;
   consumed: boolean;
 }
-interface Order {
-  maker: Address;
-  traits: bigint;
-  data: Hex;
-}
+type Order = CanonicalOrder;
 interface DiscoveredQuote {
+  record: MakerStrategy;
+  claimsIn: boolean;
   order: Order;
   strategyHash: Hex;
   seriesId: string;
@@ -205,9 +204,13 @@ interface DiscoveredQuote {
   cash: Address;
   claim: Address;
 }
-const ORDER_PARAMETERS = parseAbiParameters(
-  "(address maker,uint256 traits,bytes data)",
-);
+import {
+  ORDER_PARAMETERS,
+  decodeFrozenOrder,
+  restoreFrozenOrder,
+  strategyCapacity,
+  type CanonicalOrder,
+} from "./quotes";
 const KEY_PARAMETERS = parseAbiParameters(
   "address currency0,address currency1,uint24 fee,int24 tickSpacing,address hooks",
 );
@@ -261,6 +264,8 @@ export class ChainAdapter implements FeeStripAdapter {
   private account?: Address;
   private validated = false;
   private quotes = new Map<string, DiscoveredQuote>();
+  private bids = new Map<string, DiscoveredQuote>();
+  private strategies = new Map<string, DiscoveredQuote>();
   private knownSeries = new Map<string, Series>();
   private testActor?: "seller" | "buyer" | "holder";
   constructor(
@@ -660,6 +665,8 @@ export class ChainAdapter implements FeeStripAdapter {
                 ratioClaimUnits: q.claimUnits.toString(),
                 ratioUsdcUnits: q.usdcUnits.toString(),
                 strategyHash: q.strategyHash,
+                advertisedClaims: q.claimUnits.toString(),
+                executableClaims: q.available.toString(),
               }
             : { ...NO_QUOTE };
         const estimated =
@@ -707,6 +714,7 @@ export class ChainAdapter implements FeeStripAdapter {
           sourceFromBlock: "0",
           sourceToBlock: "0",
           quote,
+          bid: this.bids.has(id) ? this.asQuote(this.bids.get(id)!) : undefined,
           baselineX128: s.baselineX128.toString(),
           residualOwner: s.residualOwner,
           residualUsdcMicros: s.residualUSDC.toString(),
@@ -842,9 +850,22 @@ export class ChainAdapter implements FeeStripAdapter {
           deadlineTimestamp: o.deadline.toString(),
           expired: o.endBlock <= bn || o.deadline < block.timestamp,
         })),
+      strategies: Array.from(this.strategies.values(), (x) => x.record),
       wallet,
       quote: markets[0]?.quote ?? { ...NO_QUOTE },
       scenario: "normal",
+    };
+  }
+  private asQuote(q: DiscoveredQuote): Quote {
+    return {
+      maker: q.order.maker,
+      expiresAt: q.deadline.toString(),
+      available: q.available > 0n,
+      ratioClaimUnits: q.claimUnits.toString(),
+      ratioUsdcUnits: q.usdcUnits.toString(),
+      strategyHash: q.strategyHash,
+      advertisedClaims: q.claimUnits.toString(),
+      executableClaims: q.available.toString(),
     };
   }
   private async discoverQuotes(
@@ -852,21 +873,20 @@ export class ChainAdapter implements FeeStripAdapter {
     blockNumber: bigint,
   ): Promise<Map<string, DiscoveredQuote>> {
     const d = this.deployment,
-      found = new Map<string, DiscoveredQuote>();
-    const event = parseAbi([
-      "event Shipped(address maker,address app,bytes32 strategyHash,bytes strategy)",
-    ])[0];
+      asks = new Map<string, DiscoveredQuote>();
+    this.bids = new Map();
+    this.strategies = new Map();
     const logs = await this.client.getLogs({
       address: d.aqua,
-      event,
+      event: parseAbi([
+        "event Shipped(address maker,address app,bytes32 strategyHash,bytes strategy)",
+      ])[0],
       fromBlock: BigInt(d.deploymentBlock ?? "0"),
       toBlock: blockNumber,
       strict: true,
     });
     for (const log of logs) {
       if (!same(log.args.app, d.swapRouter)) continue;
-      // Public log data is untrusted. Only byte-identical outputs of the pinned onchain
-      // builder qualify; hooks, token pair, state commitment and complete program bind.
       try {
         const [order] = decodeAbiParameters(
           ORDER_PARAMETERS,
@@ -877,71 +897,125 @@ export class ChainAdapter implements FeeStripAdapter {
           keccak256(log.args.strategy) !== log.args.strategyHash
         )
           continue;
-        const preEnd = Number((order.traits >> 160n) & 65535n),
-          programStart = Number((order.traits >> 208n) & 65535n);
-        if (preEnd !== 124 || programStart < preEnd) continue;
-        if (!same(sliceHex(order.data, 40, 60), d.market)) continue;
         const [id] = decodeAbiParameters(
-          parseAbiParameters("uint256,bytes32"),
-          sliceHex(order.data, 60, 124),
+          parseAbiParameters("uint256"),
+          sliceHex(order.data, 60, 92),
         );
         const s = this.knownSeries.get(id.toString());
-        if (!s || s.closed) continue;
-        const program = sliceHex(order.data, programStart),
-          bytes = (program.length - 2) / 2;
-        if (
-          bytes !== 110 ||
-          sliceHex(program, 0, 2) !== "0x2005" ||
-          sliceHex(program, 7, 9) !== "0x9040" ||
-          sliceHex(program, 73, 75) !== "0x5301" ||
-          sliceHex(program, 76, 78) !== "0x0220"
-        )
-          continue;
-        const deadline = BigInt(sliceHex(program, 2, 7));
-        if (deadline <= timestamp) continue;
-        const first = BigInt(sliceHex(program, 9, 41)),
-          second = BigInt(sliceHex(program, 41, 73));
-        const claimUnits = BigInt(s.claim) < BigInt(d.usdc) ? first : second,
-          usdcUnits = BigInt(s.claim) < BigInt(d.usdc) ? second : first;
-        if (claimUnits === 0n || usdcUnits === 0n) continue;
-        const salt = sliceHex(program, 78, 110);
+        if (!s) continue;
+        const decoded = decodeFrozenOrder(order, d.market, d.usdc, s.claim);
+        const {
+          claimUnits,
+          usdcUnits,
+          deadline,
+          salt,
+          claimsIn,
+          expectedState,
+        } = decoded;
         const rebuilt = await this.read<Order>(
           d.market,
           feeStripMarketAbi,
           "buildOrder",
-          [id, order.maker, false, claimUnits, usdcUnits, deadline, salt],
+          [
+            id,
+            order.maker,
+            claimsIn,
+            claimUnits,
+            usdcUnits,
+            timestamp + 1n,
+            salt,
+          ],
           blockNumber,
         );
         if (
-          encodeAbiParameters(ORDER_PARAMETERS, [rebuilt]) !== log.args.strategy
+          encodeAbiParameters(ORDER_PARAMETERS, [
+            restoreFrozenOrder(rebuilt, id, expectedState, deadline),
+          ]) !== log.args.strategy
         )
           continue;
-        const [virtual, balance, allowance] = await Promise.all([
-          this.read<readonly [bigint, bigint]>(
+        const output = claimsIn ? d.usdc : s.claim;
+        const [cashRaw, claimRaw, balance, allowance, currentState] =
+          await Promise.all([
+            this.read<readonly [bigint, number]>(
+              d.aqua,
+              aquaAbi,
+              "rawBalances",
+              [order.maker, d.swapRouter, log.args.strategyHash, d.usdc],
+              blockNumber,
+            ),
+            this.read<readonly [bigint, number]>(
+              d.aqua,
+              aquaAbi,
+              "rawBalances",
+              [order.maker, d.swapRouter, log.args.strategyHash, s.claim],
+              blockNumber,
+            ),
+            this.read<bigint>(
+              output,
+              erc20Abi,
+              "balanceOf",
+              [order.maker],
+              blockNumber,
+            ),
+            this.read<bigint>(
+              output,
+              erc20Abi,
+              "allowance",
+              [order.maker, d.aqua],
+              blockNumber,
+            ),
+            this.read<Hex>(
+              d.feeStrip,
+              feeStripAbi,
+              "marketState",
+              [id],
+              blockNumber,
+            ),
+          ]);
+        const cancelled = cashRaw[1] === 255 && claimRaw[1] === 255;
+        const active = cashRaw[1] === 2 && claimRaw[1] === 2;
+        let virtual = claimsIn ? cashRaw[0] : claimRaw[0];
+        if (active) {
+          const safe = await this.read<readonly [bigint, bigint]>(
             d.aqua,
             aquaAbi,
             "safeBalances",
             [order.maker, d.swapRouter, log.args.strategyHash, d.usdc, s.claim],
             blockNumber,
-          ),
-          this.read<bigint>(
-            s.claim,
-            erc20Abi,
-            "balanceOf",
-            [order.maker],
-            blockNumber,
-          ),
-          this.read<bigint>(
-            s.claim,
-            erc20Abi,
-            "allowance",
-            [order.maker, d.aqua],
-            blockNumber,
-          ),
-        ]);
-        const available = minimum(claimUnits, virtual[1], balance, allowance);
-        if (available === 0n) continue;
-        const candidate = {
+          );
+          virtual = claimsIn ? safe[0] : safe[1];
+        }
+        const { available, limitations } = strategyCapacity({
+          claimsIn,
+          claimUnits,
+          usdcUnits,
+          virtual,
+          balance,
+          allowance,
+          cancelled,
+          active,
+          expired: deadline <= timestamp,
+          stale: currentState !== expectedState || s.closed,
+        });
+        const record: MakerStrategy = {
+          strategyHash: log.args.strategyHash,
+          app: d.swapRouter,
+          maker: order.maker,
+          seriesId: id.toString(),
+          claimsIn,
+          claimToken: s.claim,
+          cashToken: d.usdc,
+          advertisedClaims: claimUnits.toString(),
+          advertisedUSDC: usdcUnits.toString(),
+          executableClaims: available.toString(),
+          virtualOutput: virtual.toString(),
+          walletOutput: balance.toString(),
+          allowanceOutput: allowance.toString(),
+          expiresAt: deadline.toString(),
+          limitations,
+          cancellable: active,
+        };
+        const candidate: DiscoveredQuote = {
           order,
           strategyHash: log.args.strategyHash,
           seriesId: id.toString(),
@@ -951,45 +1025,60 @@ export class ChainAdapter implements FeeStripAdapter {
           available,
           cash: d.usdc,
           claim: s.claim,
+          claimsIn,
+          record,
         };
-        const previous = found.get(id.toString());
+        this.strategies.set(log.args.strategyHash, candidate);
+        if (available === 0n) continue;
+        const found = claimsIn ? this.bids : asks,
+          previous = found.get(id.toString());
         if (
           !previous ||
-          usdcUnits * previous.claimUnits < previous.usdcUnits * claimUnits
+          (claimsIn
+            ? usdcUnits * previous.claimUnits > previous.usdcUnits * claimUnits
+            : usdcUnits * previous.claimUnits < previous.usdcUnits * claimUnits)
         )
           found.set(id.toString(), candidate);
       } catch {
-        // Malformed, obsolete or revoked external strategies are not executable quotes.
+        // Unknown/malformed strategies are never promoted to trusted executable orders.
+        // Known canonical states above remain visible even after expiry, docking or revocation.
         continue;
       }
     }
-    return found;
+    return asks;
   }
-  private async signer() {
+  private async signer(expectedAccount?: Address) {
     if (!this.wallet || !this.account)
       throw new Error("Connect a wallet before continuing.");
     if ((await this.wallet.getChainId()) !== this.deployment.chainId)
       throw new Error(
         "Wrong wallet network. Switch to the configured FeeStrip chain.",
       );
+    const account = expectedAccount ?? this.account;
+    if (!same(this.account, account))
+      throw new Error(
+        "Wallet account changed. Reconnect and review the transaction again.",
+      );
     if (!this.testActor) {
       const accounts = await this.wallet.getAddresses();
-      if (!accounts.some((a) => same(a, this.account!)))
+      if (!accounts[0] || !same(accounts[0], account))
         throw new Error(
           "Wallet account changed. Reconnect and review the transaction again.",
         );
     }
-    return { wallet: this.wallet, account: this.account };
+    return { wallet: this.wallet, account };
   }
   private async write(
+    expectedAccount: Address,
     address: Address,
     abi: Abi,
     functionName: string,
     args: readonly unknown[],
   ): Promise<Hex> {
-    const { wallet, account } = await this.signer();
+    const { wallet, account } = await this.signer(expectedAccount);
     const data = encodeFunctionData({ abi, functionName, args });
     await this.client.call({ account, to: address, data });
+    await this.signer(expectedAccount);
     const hash = await wallet.sendTransaction({
       account,
       chain: this.chain,
@@ -1015,19 +1104,23 @@ export class ChainAdapter implements FeeStripAdapter {
     return receipt.transactionHash;
   }
   private async approve(
+    account: Address,
     token: Address,
     spender: Address,
     amount: bigint,
     hashes: Hex[],
   ) {
-    const { account } = await this.signer();
+    await this.signer(account);
     const allowance = await this.read<bigint>(token, erc20Abi, "allowance", [
       account,
       spender,
     ]);
     if (allowance < amount)
       hashes.push(
-        await this.write(token, erc20Abi, "approve", [spender, amount]),
+        await this.write(account, token, erc20Abi, "approve", [
+          spender,
+          amount,
+        ]),
       );
   }
   async readAnalysis(
@@ -1102,7 +1195,9 @@ export class ChainAdapter implements FeeStripAdapter {
   }
   async execute(action: Action): Promise<ActionResult> {
     await this.validate();
-    const { account } = await this.signer(),
+    const { account } = await this.signer(
+        action.reviewedAccount as Address | undefined,
+      ),
       d = this.deployment,
       hashes: Hex[] = [];
     try {
@@ -1119,7 +1214,7 @@ export class ChainAdapter implements FeeStripAdapter {
             "Only the current NFT owner can approve its transfer.",
           );
         hashes.push(
-          await this.write(d.positionManager, NFT_ABI, "approve", [
+          await this.write(account, d.positionManager, NFT_ABI, "approve", [
             d.feeStrip,
             BigInt(action.tokenId),
           ]),
@@ -1141,9 +1236,9 @@ export class ChainAdapter implements FeeStripAdapter {
           throw new Error(
             "Funded terms require positive payment and claims within original Q.",
           );
-        await this.approve(d.usdc, d.feeStrip, proceeds, hashes);
+        await this.approve(account, d.usdc, d.feeStrip, proceeds, hashes);
         hashes.push(
-          await this.write(d.feeStrip, feeStripAbi, "fundOffer", [
+          await this.write(account, d.feeStrip, feeStripAbi, "fundOffer", [
             seller,
             BigInt(action.tokenId),
             10000n * CLAIM_UNIT,
@@ -1177,15 +1272,40 @@ export class ChainAdapter implements FeeStripAdapter {
             "This offer was already accepted or cancelled. Refresh its state.",
           );
         hashes.push(
-          await this.write(d.feeStrip, feeStripAbi, "cancelOffer", [
+          await this.write(account, d.feeStrip, feeStripAbi, "cancelOffer", [
             BigInt(action.offerId),
           ]),
         );
       } else if (action.type === "acceptOffer") {
         hashes.push(
-          await this.write(d.feeStrip, feeStripAbi, "acceptOffer", [
+          await this.write(account, d.feeStrip, feeStripAbi, "acceptOffer", [
             BigInt(action.offerId),
             BigInt(action.minimumProceedsMicros),
+          ]),
+        );
+      } else if (action.type === "dockQuote") {
+        await this.load();
+        await this.signer(account);
+        const q = this.strategies.get(action.strategyHash);
+        if (!q || !same(q.order.maker, account))
+          throw new Error(
+            "Only the maker can cancel this identified strategy.",
+          );
+        if (
+          !same(action.app, d.swapRouter) ||
+          !same(action.claimToken, q.claim) ||
+          !same(action.cashToken, q.cash)
+        )
+          throw new Error("The reviewed strategy app or token pair changed.");
+        if (!q.record.cancellable)
+          throw new Error(
+            "This strategy is already cancelled or its token inventory is unsupported. Refresh its state.",
+          );
+        hashes.push(
+          await this.write(account, d.aqua, aquaAbi, "dock", [
+            d.swapRouter,
+            q.strategyHash,
+            [q.cash, q.claim],
           ]),
         );
       } else if (action.type === "publishQuote") {
@@ -1196,11 +1316,17 @@ export class ChainAdapter implements FeeStripAdapter {
           s = await this.read<Series>(d.feeStrip, feeStripAbi, "series", [id]);
         if (s.closed || quantity <= 0n || cash <= 0n)
           throw new Error("Choose positive quote amounts for an open series.");
+        const claimsIn = !!action.claimsIn,
+          outputToken = claimsIn ? d.usdc : s.claim,
+          inventory = claimsIn ? cash : quantity;
         if (
-          (await this.read<bigint>(s.claim, erc20Abi, "balanceOf", [account])) <
-          quantity
+          (await this.read<bigint>(outputToken, erc20Abi, "balanceOf", [
+            account,
+          ])) < inventory
         )
-          throw new Error("The quote exceeds your actual claim balance.");
+          throw new Error(
+            "The quote exceeds your actual maker inventory balance.",
+          );
         const entropy = new Uint8Array(32);
         globalThis.crypto.getRandomValues(entropy);
         const salt = toHex(entropy);
@@ -1208,20 +1334,72 @@ export class ChainAdapter implements FeeStripAdapter {
           d.market,
           feeStripMarketAbi,
           "buildOrder",
-          [id, account, false, quantity, cash, deadline, salt],
+          [id, account, claimsIn, quantity, cash, deadline, salt],
         );
-        await this.approve(s.claim, d.aqua, quantity, hashes);
+        await this.approve(account, outputToken, d.aqua, inventory, hashes);
         hashes.push(
-          await this.write(d.aqua, aquaAbi, "ship", [
+          await this.write(account, d.aqua, aquaAbi, "ship", [
             d.swapRouter,
             encodeAbiParameters(ORDER_PARAMETERS, [order]),
             [d.usdc, s.claim],
-            [0n, quantity],
+            claimsIn ? [cash, 0n] : [0n, quantity],
+          ]),
+        );
+      } else if (action.type === "sellClaims") {
+        const latest = await this.load(),
+          q = this.bids.get(action.seriesId);
+        await this.signer(account);
+        if (!q || q.strategyHash !== action.strategyHash)
+          throw new Error(
+            "The displayed bid changed or is no longer executable. Refresh and review.",
+          );
+        const quantity = BigInt(action.quantity),
+          proceeds = (quantity * q.usdcUnits) / q.claimUnits,
+          deadline = minimum(q.deadline, BigInt(action.expiresAt));
+        if (
+          quantity <= 0n ||
+          quantity > q.available ||
+          proceeds <= 0n ||
+          proceeds < BigInt(action.minimumUSDC) ||
+          deadline <= BigInt(latest.timestamp)
+        )
+          throw new Error(
+            "Bid size, minimum USDC or deadline is no longer valid.",
+          );
+        if (quantity > BigInt(latest.wallet.claims[action.seriesId] ?? "0"))
+          throw new Error("Insufficient claims in this wallet.");
+        const taker = await this.read<Hex>(
+          d.market,
+          feeStripMarketAbi,
+          "takerData",
+          [account, q.claim, d.usdc, BigInt(action.minimumUSDC), deadline],
+        );
+        const preview = await this.read<readonly [bigint, bigint, Hex]>(
+          d.swapRouter,
+          feeStripRouterAbi,
+          "quote",
+          [q.order, quantity, taker],
+        );
+        if (
+          preview[0] !== quantity ||
+          preview[1] < BigInt(action.minimumUSDC) ||
+          preview[2] !== q.strategyHash
+        )
+          throw new Error(
+            "Swap preview no longer meets the reviewed claim input and minimum USDC.",
+          );
+        await this.approve(account, q.claim, d.swapRouter, quantity, hashes);
+        hashes.push(
+          await this.write(account, d.swapRouter, feeStripRouterAbi, "swap", [
+            q.order,
+            quantity,
+            taker,
           ]),
         );
       } else if (action.type === "buyClaims") {
         const latest = await this.load(),
           q = this.quotes.get(action.seriesId);
+        await this.signer(account);
         if (!q)
           throw new Error(
             "No executable quote remains. Maker balances, allowance, or series state changed.",
@@ -1262,9 +1440,9 @@ export class ChainAdapter implements FeeStripAdapter {
           throw new Error(
             "Swap preview no longer meets the reviewed minimum claims and maximum USDC.",
           );
-        await this.approve(d.usdc, d.swapRouter, cost, hashes);
+        await this.approve(account, d.usdc, d.swapRouter, cost, hashes);
         hashes.push(
-          await this.write(d.swapRouter, feeStripRouterAbi, "swap", [
+          await this.write(account, d.swapRouter, feeStripRouterAbi, "swap", [
             q.order,
             cost,
             taker,
@@ -1274,25 +1452,28 @@ export class ChainAdapter implements FeeStripAdapter {
         const id = BigInt(action.seriesId);
         if (action.type === "capture")
           hashes.push(
-            await this.write(d.feeStrip, feeStripAbi, "capture", [id]),
+            await this.write(account, d.feeStrip, feeStripAbi, "capture", [id]),
           );
         else if (action.type === "withdrawNFT")
           hashes.push(
-            await this.write(d.feeStrip, feeStripAbi, "withdrawNFT", [
+            await this.write(account, d.feeStrip, feeStripAbi, "withdrawNFT", [
               id,
               account,
             ]),
           );
         else if (action.type === "withdrawResidual")
           hashes.push(
-            await this.write(d.feeStrip, feeStripAbi, "withdrawResidual", [
-              id,
+            await this.write(
               account,
-            ]),
+              d.feeStrip,
+              feeStripAbi,
+              "withdrawResidual",
+              [id, account],
+            ),
           );
         else if (action.type === "closeEarly")
           hashes.push(
-            await this.write(d.feeStrip, feeStripAbi, "recombine", [
+            await this.write(account, d.feeStrip, feeStripAbi, "recombine", [
               id,
               account,
             ]),
@@ -1310,7 +1491,7 @@ export class ChainAdapter implements FeeStripAdapter {
           if (amount === 0n)
             throw new Error("No unredeemed claims remain in this wallet.");
           hashes.push(
-            await this.write(d.feeStrip, feeStripAbi, "redeem", [
+            await this.write(account, d.feeStrip, feeStripAbi, "redeem", [
               id,
               amount,
               account,
@@ -1346,7 +1527,7 @@ export class ChainAdapter implements FeeStripAdapter {
             manager: d.poolManager,
           });
           hashes.push(
-            await this.write(d.feeStrip, feeStripAbi, "settle", [
+            await this.write(account, d.feeStrip, feeStripAbi, "settle", [
               id,
               file.witness,
             ]),
