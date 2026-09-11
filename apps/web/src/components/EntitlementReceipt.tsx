@@ -184,7 +184,7 @@ export function EntitlementReceipt(props: Props) {
           establish historical witness availability.
         </p>
         <p className="receipt-contract">
-          FeeStrip contract:{" "}
+          Escrow contract:{" "}
           {mode === "fixture"
             ? "Simulated fixture · no deployed contract"
             : (props.feeStrip ?? "Deployment identity unavailable")}

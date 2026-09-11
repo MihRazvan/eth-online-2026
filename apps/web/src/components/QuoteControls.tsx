@@ -193,6 +193,12 @@ export function SellToBid({
   const [amount, setAmount] = useState("1"),
     [error, setError] = useState("");
   const bid = market.bid;
+  if (!bid?.available)
+    return (
+      <p className="no-bid-note">
+        No executable bid. Resale liquidity is not guaranteed.
+      </p>
+    );
   return (
     <form
       className="sell-to-bid"

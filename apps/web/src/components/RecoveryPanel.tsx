@@ -175,7 +175,7 @@ export function RecoveryPanel({
                 </dd>
               </div>
               <div>
-                <dt>FeeStrip contract</dt>
+                <dt>Escrow contract</dt>
                 <dd>{observation.feeStrip}</dd>
               </div>
               <div>

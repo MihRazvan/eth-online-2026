@@ -1,3 +1,4 @@
+import { Fruit, FruitBand, CabinetPreview, Ticket } from "./components/Orchard";
 import { RecoveryPanel } from "./components/RecoveryPanel";
 import { useEffect, useRef, useState } from "react";
 import type {
@@ -60,31 +61,6 @@ function Icon({
     </svg>
   );
 }
-function Tokens({ pair }: { pair: string }) {
-  return (
-    <span className="tokens" aria-hidden="true">
-      <svg viewBox="0 0 36 36">
-        <circle
-          cx="18"
-          cy="18"
-          r="18"
-          fill={pair.startsWith("WBTC") ? "#ece2c8" : "#e1e4e7"}
-        />
-        {pair.startsWith("WBTC") ? (
-          <path
-            d="M14 8v20m4-20v20m-7-17h9c7 0 7 7 0 7h-7m0 0h8c7 0 7 7-1 7h-9"
-            fill="none"
-            stroke="#826322"
-            strokeWidth="1.6"
-          />
-        ) : (
-          <path d="m18 5 8 13-8 5-8-5zm0 20 8-5-8 11-8-11z" fill="#68717e" />
-        )}
-      </svg>
-      <span>$</span>
-    </span>
-  );
-}
 function Pair({
   market,
 }: {
@@ -92,7 +68,7 @@ function Pair({
 }) {
   return (
     <span className="pair">
-      <Tokens pair={market.pair} />
+      <Fruit pair={market.pair} small />
       <span>
         <b>{market.pair}</b>
         <small>
@@ -149,28 +125,6 @@ function Range({
           swap fees.
         </p>
       )}
-    </div>
-  );
-}
-function SplitReceipt({ market }: { market: Market }) {
-  return (
-    <div className="split-receipt">
-      <div className="receipt-top">
-        <span className="receipt-title">The position stays yours</span>
-        <span className="nft-tag">NFT #{market.tokenId}</span>
-        <Range market={market} compact />
-      </div>
-      <div className="receipt-bottom">
-        <div>
-          <span className="receipt-title">The fees can change hands</span>
-          <strong>USDC income</strong>
-        </div>
-        <span className="receipt-date">
-          {market.startDate.slice(0, 6)}–{market.endDate.slice(0, 6)}
-          <br />
-          <small>Exact cutoff: block {integer(market.endBlock)}</small>
-        </span>
-      </div>
     </div>
   );
 }
@@ -307,6 +261,7 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
     [message, setMessage] = useState(""),
     [error, setError] = useState(""),
     [funding, setFunding] = useState(false),
+    [pinToken, setPinToken] = useState<string | null>(null),
     [fundAmount, setFundAmount] = useState("672"),
     [scenarioIncome, setScenarioIncome] = useState("840"),
     [makerQuoteSeries, setMakerQuoteSeries] = useState<string | null>(null);
@@ -367,6 +322,7 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
       const result = await adapter.execute(review.action);
       await refresh();
       setReview(null);
+      if (review.action.type === "acceptOffer") location.hash = "positions";
       setMessage(
         result.transactionHash
           ? `${result.description} Transaction: ${result.transactionHash}`
@@ -381,7 +337,7 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
   if (!snapshot)
     return (
       <main className="loading">
-        <h1>Opening FeeStrip</h1>
+        <h1>Opening usufruct</h1>
         <p role="status">Loading market and chain state…</p>
         {error && <p role="alert">{error}</p>}
       </main>
@@ -395,7 +351,16 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
       s.markets[0],
     detail = route.startsWith("market/"),
     positions = route === "positions",
+    pin = route === "pin",
     held = s.wallet.claims[selected?.id ?? ""] ?? "0";
+  const pinCandidates = s.positions.filter((p) => !p.seriesId);
+  const pinPosition =
+    pinCandidates.find((p) => p.tokenId === pinToken) ?? pinCandidates[0];
+  const visiblePositions = pin
+    ? pinPosition
+      ? [pinPosition]
+      : []
+    : s.positions.filter((p) => !!p.seriesId);
   const filtered = s.markets.filter(
     (m) =>
       (filter === "all" ||
@@ -518,24 +483,30 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
         Skip to content
       </a>
       <header>
-        <a className="brand" href="#market" aria-label="FeeStrip market">
-          <span className="brandmark" />
-          feestrip
+        <a className="brand" href="#market" aria-label="usufruct orchard">
+          usufruct
         </a>
         <nav aria-label="Main navigation">
           <a
-            className={!positions ? "selected" : ""}
-            aria-current={!positions ? "page" : undefined}
+            className={!positions && !pin ? "selected" : ""}
+            aria-current={!positions && !pin ? "page" : undefined}
             href="#market"
           >
-            Market
+            Orchard
+          </a>
+          <a
+            className={pin ? "selected" : ""}
+            aria-current={pin ? "page" : undefined}
+            href="#pin"
+          >
+            Pin a tree
           </a>
           <a
             className={positions ? "selected" : ""}
             aria-current={positions ? "page" : undefined}
             href="#positions"
           >
-            Your positions
+            My cabinet
           </a>
         </nav>
         <span className="network-label">
@@ -624,39 +595,30 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
             </button>
           </div>
         )}
-        {!detail && !positions ? (
+        {!detail && !positions && !pin ? (
           <>
-            <section className="intro">
+            <section className="intro orchard-intro">
               <div>
-                <h1>
-                  A market for
-                  <br />
-                  <span>future fees.</span>
-                </h1>
+                <h1>The orchard</h1>
                 <p>
-                  Buy a share of a Uniswap position’s USDC fees.
-                  <br />
-                  The position stays put. The income changes hands.
+                  Buy a share of a Uniswap position’s USDC fees for one fixed
+                  period.
+                  <br /> Every claim carries its unpaid income for that whole
+                  period.
                 </p>
               </div>
-              {s.markets[0] ? (
-                <SplitReceipt market={s.markets[0]} />
-              ) : (
-                <div className="split-receipt empty">
-                  <h2>No active fee markets</h2>
-                  <p>
-                    Explore your supported positions to start a funded fee sale.
-                  </p>
-                  <a className="button" href="#positions">
-                    Your positions <Icon />
-                  </a>
-                </div>
-              )}
+              <div className="orchard-note">
+                <span>the income, not the tree.</span>
+                <small>
+                  Original NFT & fee claims
+                  <br /> are separate rights.
+                </small>
+              </div>
             </section>
             <section className="market">
               <div className="section-top">
                 <h2>
-                  Fee markets{" "}
+                  Fee claims{" "}
                   <span>{String(filtered.length).padStart(2, "0")}</span>
                 </h2>
                 <div className="market-controls">
@@ -685,108 +647,136 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                   />
                 </div>
               </div>
-              <div className="table">
-                <div className="table-head">
-                  <span>Underlying position</span>
-                  <span>Earning window ends</span>
-                  <span>Ask / fee claim</span>
-                  <span>Original supply Q</span>
-                  <span>Position status</span>
-                  <span />
-                </div>
+              <div className="orchard-legend" aria-hidden="true">
+                <span>
+                  <i className="fruit-dot filled" /> offered share
+                </span>
+                <span>
+                  <Ticket /> cabinet record
+                </span>
+                <span>
+                  <i className="fruit-dot" /> unavailable share
+                </span>
+              </div>
+              <p className="glyph-key">
+                Each row is one fee period. Ten marks represent original Q; a
+                pale mark is a partial share. Color identifies the position, not
+                earned income.
+              </p>
+              <div className="table orchard-table">
                 {filtered.map((m) => (
                   <a
-                    className="market-row"
+                    className="market-row orchard-row"
                     href={"#market/" + m.id}
                     key={m.id}
                     aria-label={`Open ${m.pair} NFT ${m.tokenId}`}
                   >
-                    <Pair market={m} />
-                    <span data-label="Window ends">
-                      {m.endDate}
-                      <small>Block {integer(m.endBlock)}</small>
-                    </span>
-                    <span data-label="Ask / claim" className="numeric">
-                      {BigInt(m.availableClaims) === 0n
-                        ? "No quote"
-                        : money(m.askMicros, 3)}
-                      <small>native USDC</small>
-                    </span>
-                    <span data-label="Original Q">
-                      {formatClaims(m.originalSupply)}
+                    <div className="orchard-position">
+                      <h3>
+                        {m.pair} <span>{m.feeTier}</span>
+                      </h3>
                       <small>
-                        1 claim ={" "}
+                        #{m.tokenId} · Uniswap v4
+                        <br />{" "}
+                        {m.inRange
+                          ? "In range"
+                          : "Out of range · income may be zero"}
+                      </small>
+                      <span className="orchard-state">
+                        {m.phase === "active"
+                          ? "One fixed fee period"
+                          : m.phase === "matured"
+                            ? "Period ended · capture pending"
+                            : m.phase === "captured"
+                              ? "Fees captured · allocation pending"
+                              : m.phase === "closed"
+                                ? "Closed by recombination"
+                                : "Allocation verified"}
+                      </span>
+                    </div>
+                    <div className="orchard-inventory">
+                      <FruitBand market={m} />
+                      <p>
+                        Through <b>block {integer(m.endBlock)}</b>
+                        <small>{m.endDate} · estimated date</small>
+                      </p>
+                    </div>
+                    <div className="orchard-price">
+                      <strong>
+                        {BigInt(m.availableClaims) === 0n
+                          ? "No executable quote"
+                          : money(m.askMicros, 3) + " USDC"}
+                      </strong>
+                      <span>
+                        {BigInt(m.availableClaims) > 0n
+                          ? "per fee claim"
+                          : "Availability can change"}
+                      </span>
+                      <small>
+                        Original Q: {formatClaims(m.originalSupply)}
+                        <br /> 1 claim ={" "}
                         {sharePercent(CLAIM_UNIT.toString(), m.originalSupply)}%
                       </small>
-                    </span>
-                    <span>
-                      <Status market={m} />
-                      <small>
-                        {m.phase === "active"
-                          ? "Fixed through term"
-                          : m.phase === "matured"
-                            ? "Capture available"
-                            : m.phase === "captured"
-                              ? "Proof pending"
-                              : m.phase === "closed"
-                                ? "Recombined"
-                                : "Allocated"}
-                      </small>
-                    </span>
-                    <Icon />
+                      <span className="read-specimen">Read the terms ↗</span>
+                    </div>
                   </a>
                 ))}
               </div>
               {filtered.length === 0 && (
                 <div className="empty">
-                  <h3>{s.markets.length ? "No matching fee markets" : "No fee sales yet"}</h3>
-                  <p>{s.markets.length
-                    ? "Try another pool pair, NFT number, or market filter."
-                    : "A market appears when a position owner accepts a funded offer."}</p>
-                  {s.markets.length ? <button
-                    onClick={() => {
-                      setSearch("");
-                      setFilter("all");
-                    }}
-                  >
-                    Clear filters
-                  </button> : <a className="button" href="#positions">Explore positions</a>}
+                  <h3>
+                    {s.markets.length
+                      ? "No matching fee markets"
+                      : "No fee sales yet"}
+                  </h3>
+                  <p>
+                    {s.markets.length
+                      ? "Try another pool pair, NFT number, or market filter."
+                      : "A market appears when a position owner accepts a funded offer."}
+                  </p>
+                  {s.markets.length ? (
+                    <button
+                      onClick={() => {
+                        setSearch("");
+                        setFilter("all");
+                      }}
+                    >
+                      Clear filters
+                    </button>
+                  ) : (
+                    <a className="button" href="#pin">
+                      Explore positions
+                    </a>
+                  )}
                 </div>
               )}
             </section>
-            <section className="understand">
-              <h2>
-                One position.
-                <br />
-                Two separate rights.
-              </h2>
+            <CabinetPreview
+              markets={s.markets}
+              claims={s.wallet.claims}
+              connected={connected}
+              onConnect={connect}
+            />
+            <section className="orchard-colophon">
               <p>
-                <b>The LP keeps the position.</b>
-                <br />
-                Its original NFT returns after fee capture. The range and
-                liquidity stay fixed during the term.
+                A tree is the original position NFT. The fruit is its fee claims
+                for <b>one agreed window</b>, not monthly strips.
               </p>
-              <p>
-                <b>Claim holders receive the fees.</b>
-                <br />
-                Each token carries its share of all unpaid USDC income in the
-                exact sold window.
-              </p>
+              <a href="#pin">Have a position? Pin a tree ↗</a>
             </section>
           </>
         ) : null}
         {detail && selected ? (
           <>
             <a className="back-link" href="#market">
-              <Icon name="back" size={15} /> All fee markets
+              <Icon name="back" size={15} /> Back to the orchard
             </a>
             <div className="detail-heading">
               <div>
                 <Pair market={selected} />
                 <h1>
-                  USDC fees.
-                  <br />
-                  <span>From this position.</span>
+                  The fruit of
+                  <br /> <span>this position.</span>
                 </h1>
               </div>
               <div className="term-label">
@@ -813,7 +803,7 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                 />
                 <section className="instrument">
                   <div className="section-top">
-                    <h2>Behind this fee strip</h2>
+                    <h2>The original tree</h2>
                     <span className="nft-tag">
                       Original NFT #{selected.tokenId}
                     </span>
@@ -1125,11 +1115,28 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
             </div>
           </>
         ) : null}
-        {positions ? (
+        {positions || pin ? (
           <>
             <section className="positions-intro">
-              <h1>Your positions.</h1>
-              <p>Keep the NFT. Put its future fees to work.</p>
+              <div>
+                <h1>{pin ? "Pin a tree" : "My cabinet"}</h1>
+                <p>
+                  {pin
+                    ? "Receive USDC upfront for a share of your position’s future USDC fees."
+                    : "Your fee claims, position return rights and open offers."}
+                  <br />{" "}
+                  {pin
+                    ? "Your NFT stays in escrow until the period ends and fees are captured."
+                    : "Keep the original window in view. Harvest only after allocation is verified."}
+                </p>
+              </div>
+              <span className="accession-label">
+                {pin ? "accession form" : "collection ledger"}
+                <br />{" "}
+                {pinPosition && pin
+                  ? "NFT no. " + pinPosition.tokenId
+                  : "one window. separate rights."}
+              </span>
             </section>
             {!connected ? (
               <div className="connect-state">
@@ -1145,116 +1152,288 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
               </div>
             ) : (
               <>
-                <section
-                  className="funded-offers"
-                  aria-label="Your funded offers"
-                >
-                  <div className="section-top">
-                    <h2>Your funded offers</h2>
-                    <span className="source-tag">
-                      {money(
-                        s.fundedOffers.reduce(
-                          (sum, o) => sum + BigInt(o.fundedMicros),
-                          0n,
-                        ),
-                        6,
-                      )}{" "}
-                      USDC in unaccepted offers
-                    </span>
-                  </div>
-                  <p className="fine">
-                    Unaccepted funding is separate from fee-claim reserves. An
-                    expired offer still needs cancellation to return your USDC.
-                  </p>
-                  {s.fundedOffers.length === 0 ? (
+                {positions && (
+                  <section className="claim-holdings">
+                    <div className="section-top">
+                      <h2>
+                        Your fruit <small>fee claims</small>
+                      </h2>
+                      <span className="source-tag">Native USDC income</span>
+                    </div>
+                    {s.markets
+                      .filter((m) => s.wallet.claims[m.id] !== undefined)
+                      .map((m) => (
+                        <div className="holding-row" key={m.id}>
+                          <Pair market={m} />
+                          <span>
+                            {formatClaims(s.wallet.claims[m.id])}{" "}
+                            <small>fee claims held</small>
+                          </span>
+                          <span>
+                            {BigInt(s.wallet.claims[m.id]) === 0n
+                              ? "No unredeemed claims in this wallet"
+                              : m.phase === "allocated"
+                                ? "Ready to redeem"
+                                : m.phase === "captured"
+                                  ? "Proof allocation pending"
+                                  : m.phase === "matured"
+                                    ? "Capture pending"
+                                    : "Earning period open"}
+                            <small>
+                              All unpaid sold-period income travels with claims
+                            </small>
+                          </span>
+                          <div className="holding-actions">
+                            <a className="button" href={"#market/" + m.id}>
+                              Read claim &amp; recovery <Icon />
+                            </a>
+                            {m.phase !== "closed" && (
+                              <button
+                                className="button"
+                                onClick={() =>
+                                  setMakerQuoteSeries(
+                                    makerQuoteSeries === m.id ? null : m.id,
+                                  )
+                                }
+                              >
+                                {BigInt(s.wallet.claims[m.id]) > 0n
+                                  ? "Publish sell quote"
+                                  : "Publish buy quote"}
+                              </button>
+                            )}
+                          </div>
+                          {m.phase !== "closed" &&
+                            BigInt(s.wallet.claims[m.id]) > 0n && (
+                              <SellToBid
+                                market={m}
+                                balance={s.wallet.claims[m.id]}
+                                disabled={wrongNetwork}
+                                onReview={begin}
+                              />
+                            )}
+                          <EntitlementReceipt
+                            market={m}
+                            quantity={s.wallet.claims[m.id]}
+                            chainId={s.chainId}
+                            sourceBlock={s.sourceBlock}
+                            feeStrip={s.feeStrip}
+                            mode={s.mode}
+                            compact
+                          />
+                          {makerQuoteSeries === m.id && (
+                            <MakerQuote
+                              market={m}
+                              balance={s.wallet.claims[m.id]}
+                              cashBalance={s.wallet.usdcBalanceMicros}
+                              timestamp={s.timestamp}
+                              onReview={begin}
+                            />
+                          )}
+                        </div>
+                      ))}
+                  </section>
+                )}
+                {positions && (
+                  <section
+                    className="funded-offers"
+                    aria-label="Your funded offers"
+                  >
+                    <div className="section-top">
+                      <h2>Your funded offers</h2>
+                      <span className="source-tag">
+                        {money(
+                          s.fundedOffers.reduce(
+                            (sum, o) => sum + BigInt(o.fundedMicros),
+                            0n,
+                          ),
+                          6,
+                        )}{" "}
+                        USDC in unaccepted offers
+                      </span>
+                    </div>
                     <p className="fine">
-                      No USDC is waiting in your unaccepted offers.
+                      Unaccepted funding is separate from fee-claim reserves. An
+                      expired offer still needs cancellation to return your
+                      USDC.
                     </p>
-                  ) : (
-                    s.fundedOffers.map((offer) => (
-                      <article className="funded-offer-row" key={offer.id}>
-                        <div>
-                          <b>
-                            Offer #{offer.id} · NFT #{offer.tokenId}
-                          </b>
-                          <small>
-                            {offer.expired
-                              ? "Expired · funds recoverable"
-                              : "Awaiting seller acceptance"}
-                          </small>
-                        </div>
-                        <div>
-                          <b>{money(offer.fundedMicros, 6)} USDC</b>
-                          <small>
-                            {formatClaims(offer.claims)} of{" "}
-                            {formatClaims(offer.originalSupply)} claims
-                          </small>
-                          <small>Ends block {integer(offer.endBlock)}</small>
-                        </div>
-                        <button
-                          disabled={wrongNetwork}
-                          onClick={() =>
-                            begin({
-                              title: "Cancel funded offer",
-                              action: {
-                                type: "cancelOffer",
-                                offerId: offer.id,
-                              },
-                              lines: [
-                                ["Offer", "#" + offer.id],
-                                ["Original NFT", "#" + offer.tokenId],
-                                [
-                                  "USDC returned to your wallet",
-                                  money(offer.fundedMicros, 6) + " USDC",
+                    {s.fundedOffers.length === 0 ? (
+                      <p className="fine">
+                        No USDC is waiting in your unaccepted offers.
+                      </p>
+                    ) : (
+                      s.fundedOffers.map((offer) => (
+                        <article className="funded-offer-row" key={offer.id}>
+                          <div>
+                            <b>
+                              Offer #{offer.id} · NFT #{offer.tokenId}
+                            </b>
+                            <small>
+                              {offer.expired
+                                ? "Expired · funds recoverable"
+                                : "Awaiting seller acceptance"}
+                            </small>
+                          </div>
+                          <div>
+                            <b>{money(offer.fundedMicros, 6)} USDC</b>
+                            <small>
+                              {formatClaims(offer.claims)} of{" "}
+                              {formatClaims(offer.originalSupply)} claims
+                            </small>
+                            <small>Ends block {integer(offer.endBlock)}</small>
+                          </div>
+                          <button
+                            disabled={wrongNetwork}
+                            onClick={() =>
+                              begin({
+                                title: "Cancel funded offer",
+                                action: {
+                                  type: "cancelOffer",
+                                  offerId: offer.id,
+                                },
+                                lines: [
+                                  ["Offer", "#" + offer.id],
+                                  ["Original NFT", "#" + offer.tokenId],
+                                  [
+                                    "USDC returned to your wallet",
+                                    money(offer.fundedMicros, 6) + " USDC",
+                                  ],
+                                  ["Seller", offer.seller],
                                 ],
-                                ["Seller", offer.seller],
-                              ],
-                              warning:
-                                "The refund is confirmed only when cancellation succeeds onchain. If the seller accepts first, cancellation reverts. Cancelling this unaccepted offer does not redeem claims or take money from another series.",
-                              button: fixture
-                                ? "Cancel fixture offer"
-                                : "Cancel offer and recover USDC",
-                            })
+                                warning:
+                                  "The refund is confirmed only when cancellation succeeds onchain. If the seller accepts first, cancellation reverts. Cancelling this unaccepted offer does not redeem claims or take money from another series.",
+                                button: fixture
+                                  ? "Cancel fixture offer"
+                                  : "Cancel offer and recover USDC",
+                              })
+                            }
+                          >
+                            Review cancellation
+                          </button>
+                        </article>
+                      ))
+                    )}
+                  </section>
+                )}
+                {positions && (
+                  <MakerStrategies
+                    strategies={s.strategies.filter(
+                      (q) =>
+                        q.maker.toLowerCase() ===
+                        s.wallet.address?.toLowerCase(),
+                    )}
+                    markets={s.markets}
+                    disabled={wrongNetwork}
+                    onReview={begin}
+                  />
+                )}
+                {pin && (
+                  <section className="pin-selection">
+                    <div className="pin-step-heading">
+                      <i>i.</i>
+                      <div>
+                        <h2>Choose a tree</h2>
+                        <p>
+                          A tree is one canonical Uniswap position. Its USDC fee
+                          leg is the fruit.
+                        </p>
+                      </div>
+                    </div>
+                    <fieldset className="tree-options">
+                      <legend className="sr-only">
+                        Choose a position to pin
+                      </legend>
+                      {pinCandidates.map((p) => (
+                        <label
+                          className={
+                            pinPosition?.tokenId === p.tokenId
+                              ? "tree-option chosen"
+                              : "tree-option"
                           }
+                          key={p.tokenId}
                         >
-                          Review cancellation
-                        </button>
-                      </article>
-                    ))
+                          <input
+                            type="radio"
+                            name="pin-position"
+                            checked={pinPosition?.tokenId === p.tokenId}
+                            onChange={() => {
+                              setPinToken(p.tokenId);
+                              setFunding(false);
+                            }}
+                          />
+                          <span>
+                            <b>{p.pair}</b>{" "}
+                            {p.feeTier ?? "Fee tier unavailable"}{" "}
+                            <small>#{p.tokenId}</small>
+                          </span>
+                          <span>
+                            {p.ownedByWallet === false
+                              ? "Other wallet · offer target"
+                              : "In your wallet"}
+                            <small>
+                              Range ${p.lowerPrice}–${p.upperPrice}
+                            </small>
+                          </span>
+                          <span>
+                            {p.offer
+                              ? "Funded offer available"
+                              : "No funded offer yet"}
+                          </span>
+                        </label>
+                      ))}
+                    </fieldset>
+                  </section>
+                )}
+                <section
+                  className={
+                    "position-list " +
+                    (pin ? "pin-workflow" : "cabinet-positions")
+                  }
+                >
+                  {pin && (
+                    <div className="pin-step-heading">
+                      <i>ii.</i>
+                      <div>
+                        <h2>Read the harvest terms</h2>
+                        <p>
+                          Fee claims share one exact earning period. The
+                          original quantity Q stays fixed.
+                        </p>
+                      </div>
+                    </div>
                   )}
-                </section>
-                <MakerStrategies
-                  strategies={s.strategies.filter(
-                    (q) =>
-                      q.maker.toLowerCase() === s.wallet.address?.toLowerCase(),
-                  )}
-                  markets={s.markets}
-                  disabled={wrongNetwork}
-                  onReview={begin}
-                />
-                <section className="position-list">
                   <div className="section-top">
-                    <h2>Original positions</h2>
+                    <h2>{pin ? "Selected position" : "Your pinned trees"}</h2>
                     <span className="source-tag">
                       {fixture ? "Fixture wallet" : s.wallet.address}
                     </span>
                   </div>
-                  {s.scenario === "no-positions" || s.positions.length === 0 ? (
+                  {s.scenario === "no-positions" ||
+                  visiblePositions.length === 0 ? (
                     <div className="empty">
-                      <h3>No supported positions</h3>
+                      <h3>
+                        {pin
+                          ? "No supported positions to pin"
+                          : "No pinned trees in this wallet"}
+                      </h3>
                       <p>
                         Only validated, nonempty, hookless canonical Uniswap v4
                         NFTs containing authentic USDC can be sold.
                       </p>
+                      <a className="text-link" href={pin ? "#market" : "#pin"}>
+                        {pin ? "Explore the orchard ↗" : "Pin a tree ↗"}
+                      </a>
                     </div>
                   ) : (
-                    s.positions.map((p) => {
+                    visiblePositions.map((p) => {
                       const market = s.markets.find((m) => m.id === p.seriesId);
                       return (
                         <article className="position-entry" key={p.tokenId}>
                           <div className="position-title">
                             <Pair
-                              market={{ ...p, feeTier: p.feeTier ?? "0.05%" }}
+                              market={{
+                                ...p,
+                                feeTier: p.feeTier ?? "Fee tier unavailable",
+                              }}
                             />
                             <span className="source-tag">
                               {market
@@ -1284,7 +1463,7 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                                   className="button"
                                   href={"#market/" + market.id}
                                 >
-                                  View fee strip <Icon />
+                                  View fee claim <Icon />
                                 </a>
                                 {market.phase === "matured" && (
                                   <button
@@ -1347,9 +1526,24 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                             </>
                           ) : (
                             <>
-                              <div className="offer-columns">
+                              <div className="offer-columns accession-terms">
                                 <div>
-                                  <h3>Sell a defined period of fees</h3>
+                                  <div className="specimen-ticket">
+                                    <span>specimen no. {p.tokenId}</span>
+                                    <h3>{p.pair}</h3>
+                                    <p>
+                                      One original NFT.
+                                      <br /> One agreed earning window.
+                                    </p>
+                                    <div className="specimen-seal">
+                                      <Ticket />
+                                      <span>
+                                        Original NFT #{p.tokenId}
+                                        <br /> Range fixed on acceptance
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <h3>What is pinned</h3>
                                   <p className="fine">
                                     Freeze this exact NFT, its range and
                                     liquidity. Pre-activation fees are cleared
@@ -1364,6 +1558,18 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                                 </div>
                                 <FundedOffer position={p} fixture={fixture} />
                               </div>
+                              {pin && (
+                                <div className="pin-step-heading pin-sign">
+                                  <i>iii.</i>
+                                  <div>
+                                    <h2>Sign and pin</h2>
+                                    <p>
+                                      Approval grants permission. Only accepting
+                                      the exact funded offer starts the sale.
+                                    </p>
+                                  </div>
+                                </div>
+                              )}
                               <div className="position-buttons">
                                 <button
                                   className={p.approved ? "" : "primary"}
@@ -1549,81 +1755,6 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                     })
                   )}
                 </section>
-                <section className="claim-holdings">
-                  <div className="section-top">
-                    <h2>Your fee claims</h2>
-                    <span className="source-tag">Native USDC income</span>
-                  </div>
-                  {s.markets
-                    .filter((m) => s.wallet.claims[m.id] !== undefined)
-                    .map((m) => (
-                      <div className="holding-row" key={m.id}>
-                        <Pair market={m} />
-                        <span>
-                          {formatClaims(s.wallet.claims[m.id])}{" "}
-                          <small>claims held</small>
-                        </span>
-                        <span>
-                          {m.phase === "allocated"
-                            ? BigInt(s.wallet.claims[m.id]) > 0n
-                              ? "Redeemable"
-                              : "Redeemed"
-                            : m.phase === "captured"
-                              ? "Proof pending"
-                              : "Not yet redeemable"}
-                          <small>
-                            All unpaid sold-period income travels with claims
-                          </small>
-                        </span>
-                        <div className="holding-actions">
-                          <a className="button" href={"#market/" + m.id}>
-                            View claim <Icon />
-                          </a>
-                          {m.phase !== "closed" && (
-                            <button
-                              className="button"
-                              onClick={() =>
-                                setMakerQuoteSeries(
-                                  makerQuoteSeries === m.id ? null : m.id,
-                                )
-                              }
-                            >
-                              {BigInt(s.wallet.claims[m.id]) > 0n
-                                ? "Publish sell quote"
-                                : "Publish buy quote"}
-                            </button>
-                          )}
-                        </div>
-                        {m.phase !== "closed" &&
-                          BigInt(s.wallet.claims[m.id]) > 0n && (
-                            <SellToBid
-                              market={m}
-                              balance={s.wallet.claims[m.id]}
-                              disabled={wrongNetwork}
-                              onReview={begin}
-                            />
-                          )}
-                        <EntitlementReceipt
-                          market={m}
-                          quantity={s.wallet.claims[m.id]}
-                          chainId={s.chainId}
-                          sourceBlock={s.sourceBlock}
-                          feeStrip={s.feeStrip}
-                          mode={s.mode}
-                          compact
-                        />
-                        {makerQuoteSeries === m.id && (
-                          <MakerQuote
-                            market={m}
-                            balance={s.wallet.claims[m.id]}
-                            cashBalance={s.wallet.usdcBalanceMicros}
-                            timestamp={s.timestamp}
-                            onReview={begin}
-                          />
-                        )}
-                      </div>
-                    ))}
-                </section>
               </>
             )}
           </>
@@ -1690,13 +1821,12 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
       </main>
       <footer>
         <span>
-          Uniswap v4 positions · Trading powered by SwapVM
-          <br />
-          <span>Integration acceptance: see project evidence</span>
+          usufruct · Uniswap v4 positions · Trading powered by SwapVM
+          <br /> <span>Integration acceptance: see project evidence</span>
         </span>
         <span>
           Variable income. No guaranteed return.
-          <br />
+          <br />{" "}
           <a
             href="https://github.com/ScopeLift/fixed-fee-swap"
             target="_blank"
@@ -1851,20 +1981,32 @@ function FundedOffer({
       <strong>
         {money(p.offer.fundedMicros)} <small>USDC upfront</small>
       </strong>
-      <p className="fine">
-        For {formatClaims(p.offer.claims)} of{" "}
-        {formatClaims(p.offer.originalSupply)} claims · ends block{" "}
-        {integer(p.offer.endBlock)}
-      </p>
-      <p className="fine">
-        Residual owner keeps{" "}
-        {formatClaims(BigInt(p.offer.originalSupply) - BigInt(p.offer.claims))}{" "}
-        fee claims and the separate NFT return right.
-      </p>
-      <p className="fine">
-        Buyer {p.offer.maker} · offer expires{" "}
-        {deadlineDate(p.offer.deadlineTimestamp)}
-      </p>
+      <dl className="accession-facts">
+        <div>
+          <dt>Claims sold / original Q</dt>
+          <dd>
+            {formatClaims(p.offer.claims)} /{" "}
+            {formatClaims(p.offer.originalSupply)}
+          </dd>
+          <small>
+            Residual owner keeps{" "}
+            {formatClaims(
+              BigInt(p.offer.originalSupply) - BigInt(p.offer.claims),
+            )}{" "}
+            fee claims and the separate NFT return right.
+          </small>
+        </div>
+        <div>
+          <dt>One earning window</dt>
+          <dd>Through block {integer(p.offer.endBlock)}</dd>
+          <small>Fees before activation are cleared to the owner.</small>
+        </div>
+        <div>
+          <dt>Offer expires</dt>
+          <dd>{deadlineDate(p.offer.deadlineTimestamp)}</dd>
+        </div>
+      </dl>
+      <p className="fine">Buyer {p.offer.maker}</p>
     </div>
   );
 }
@@ -1942,7 +2084,7 @@ function MakerQuote({
               ["Expires", deadlineDate(expiresAt)],
               ["Series", market.pair + " · NFT #" + market.tokenId],
             ],
-            warning: `Approve only this ${claimsIn ? "USDC" : "claim"} inventory to Aqua, then ship the exact FeeStrip strategy. Tokens remain in your wallet. Other apps can share this inventory; a quote is not separately locked capital or guaranteed resale liquidity. A series state change invalidates this strategy.`,
+            warning: `Approve only this ${claimsIn ? "USDC" : "claim"} inventory to Aqua, then ship the exact fee-claim strategy. Tokens remain in your wallet. Other apps can share this inventory; a quote is not separately locked capital or guaranteed resale liquidity. A series state change invalidates this strategy.`,
             button: "Approve and publish quote",
           });
           setError("");
@@ -2165,10 +2307,9 @@ function AnalysisPanel({
             <summary>Source identity &amp; analysis limits</summary>
             <p className="fine">
               Subgraph deployment: <code>{available.subgraphDeployment}</code>
-              <br />
-              Substreams package: <code>{available.substreamsPackage}</code>
-              <br />
-              Cursor: <code>{available.substreamsCursor}</code>
+              <br /> Substreams package:{" "}
+              <code>{available.substreamsPackage}</code>
+              <br /> Cursor: <code>{available.substreamsCursor}</code>
             </p>
             {available.caveats.map((text, i) => (
               <p className="fine" key={i}>
