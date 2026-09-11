@@ -1,0 +1,10 @@
+{
+  "scope": "Read-only public NFT and balance check through credential-free PublicNode, separate from signing RPC.",
+  "blockNumber": "11684206",
+  "blockHash": "0x32514a78dae543d240fcd3197188ccf2452d885677854ea95e34ea250d9fbb25",
+  "nftId": "39216",
+  "owner": "0x92AAe0857979a139344f5b6F008e71F27A507522",
+  "liquidity": "3411586204",
+  "walletUSDC": "15050000",
+  "decimals": 6
+}

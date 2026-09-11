@@ -29,3 +29,19 @@ Mint price/range/liquidity, wrap amount and deadlines are saved before sends. Ex
 `deployment.json` and `evidence.json` beside the journal omit RPC credentials and raw signed bytes. Only the sanitized files are candidates for publication. The browser manifest uses a credential-free public RPC. Copy it to ignored `apps/web/public/deployment.json` and run with `VITE_DATA_MODE=testnet`; leave `VITE_ENABLE_TEST_WALLET` unset. Public web hosting also needs the data/recovery services; Vite's local proxy configuration does not deploy them.
 
 Before a public sale, configure witness retention for the deployed contracts, choose N after setup, and arrange a checkpoint within N+1…N+256. Retention alone does not send a checkpoint transaction. Keep participant wallet testing, native historical collection comparison and live Graph composition as separate acceptance gates.
+
+After deployment, `node scripts/public/retention-config.mjs` validates code through the project RPC and PublicNode, checks the genesis against go-ethereum's independent Sepolia pin, and creates `.scratch/retention/sepolia/operator.generated.json` with private permissions. PublicNode did not serve block0 during qualification; its latest-code check is separate from the project provider's genesis check. Start the read-only recovery service with:
+
+```sh
+RETENTION_CONFIG="$PWD/.scratch/retention/sepolia/operator.generated.json" FEESTRIP_PROOF_PYTHON=/path/to/proof-venv/bin/python node packages/settlement/src/cli.mjs --serve
+```
+
+To preview the public deployment without overwriting a local development manifest:
+
+```sh
+VITE_DATA_MODE=testnet pnpm build
+cp deployments/sepolia.json apps/web/dist/deployment.json
+pnpm --filter @feestrip/web exec vite preview --host 127.0.0.1 --port 4187 --strictPort
+```
+
+The preview is local. It reads public Sepolia state and uses an injected wallet; it is not a publicly hosted website. Rebuilding replaces the dist manifest, so copy the public manifest again after each build.

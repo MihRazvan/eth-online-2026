@@ -739,16 +739,18 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
               </div>
               {filtered.length === 0 && (
                 <div className="empty">
-                  <h3>No matching fee markets</h3>
-                  <p>Try another pool pair, NFT number, or market filter.</p>
-                  <button
+                  <h3>{s.markets.length ? "No matching fee markets" : "No fee sales yet"}</h3>
+                  <p>{s.markets.length
+                    ? "Try another pool pair, NFT number, or market filter."
+                    : "A market appears when a position owner accepts a funded offer."}</p>
+                  {s.markets.length ? <button
                     onClick={() => {
                       setSearch("");
                       setFilter("all");
                     }}
                   >
                     Clear filters
-                  </button>
+                  </button> : <a className="button" href="#positions">Explore positions</a>}
                 </div>
               )}
             </section>
