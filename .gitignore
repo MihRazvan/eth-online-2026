@@ -22,3 +22,4 @@ apps/web/public/deployment.json
 apps/web/public/witness-*.json
 contracts/out-proof/
 contracts/cache-proof/
+__pycache__/

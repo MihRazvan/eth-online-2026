@@ -2,7 +2,7 @@
   "scope": "actual local Anvil transactions; canonical Uniswap sources, local faucet currencies; real header/account/storage verifier. Not public-chain FeeStrip deployment.",
   "chainId": 31337,
   "endpointBlock": "124",
-  "endpointHash": "0xe89006bee2ae5a8c2469b2e2dc2b560cf0cce2f6ab7f0029c3c9a554ee7e3392",
+  "endpointHash": "0x8408ca01179840a7b7b20976e8eb2efaeae7885068ec257e660a8b15d06caf9d",
   "oldFees": "122999999",
   "nativeAtN": "799999999",
   "capturedUSDC": "1199999999",
@@ -58,7 +58,7 @@
     },
     {
       "function": "ship",
-      "hash": "0x9d579b60d9ff5639fdbcdbb455a00557d219abf379c85d399ce934627e89eac4",
+      "hash": "0x58ce3c39fd16609ab9a6f058265be0c6291c955eea7a14b58432549b05aef72d",
       "block": "31",
       "gas": "87411"
     },
@@ -70,7 +70,7 @@
     },
     {
       "function": "swap",
-      "hash": "0x49604798b5de3e29df71b3d560390f3be73f1b2ca895621ced5e088ed33556a1",
+      "hash": "0x3d0449dfbc36743d516129c2a67902ca4c83f89983942b5f32ee892f1b193de1",
       "block": "33",
       "gas": "164072"
     },
@@ -100,9 +100,9 @@
     },
     {
       "function": "settle",
-      "hash": "0x3a66b380e4b68039e2b92d9349b8d7743fdbf763ccb8c1e56441a4a1f533e8b6",
+      "hash": "0x35e264c8758464832fc035f59038b9488952a37e7d47b33d8ebfac1e95d5222d",
       "block": "130",
-      "gas": "1555680"
+      "gas": "1425145"
     },
     {
       "function": "redeem",
@@ -132,7 +132,7 @@
   "contracts": {
     "mode": "local",
     "chainId": 31337,
-    "rpcUrl": "http://127.0.0.1:8545",
+    "rpcUrl": "http://127.0.0.1:8551",
     "feeStrip": "0x0b306bf915c4d645ff596e518faf3f9669b97016",
     "usdc": "0x9fe46736679d2d9a65f0992f2272de9f3c7fa6e0",
     "other": "0xcf7ed3acca5a467e9e704c703e8d87f634fb0fc9",
@@ -155,5 +155,14 @@
     "offerId": "1",
     "endBlock": "124",
     "deploymentBlock": "0x1"
+  },
+  "retention": {
+    "artifactDigest": "b6090fe51dda57207534e0002589fb608626b7b48a4558cff10f099f863c60df",
+    "filesystemCopies": 2,
+    "checkpointSaved": true,
+    "offlineMptValidation": true,
+    "restartWithoutNewProof": true,
+    "corruptCopyRepaired": true,
+    "apiArtifactValidated": true
   }
 }

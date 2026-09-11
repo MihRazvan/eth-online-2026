@@ -14,7 +14,7 @@
   "receipts": [
     {
       "action": "fundOffer",
-      "hash": "0x09b9a00cc05776078e2dd96c8a5775cc548b6eb5f6b5eb6884687af6f1e66366"
+      "hash": "0x84c54cdaa0611d593529e552c011454cee5544c10bb71bbaa1473944bf906825"
     },
     {
       "action": "approveNFT",
@@ -26,11 +26,11 @@
     },
     {
       "action": "shipAquaStrategy",
-      "hash": "0x05ee7a2f55ff34deb00b910691ad4b6bdbd5bf590681bdf7d5cf545fd7b711b5"
+      "hash": "0x66ade363270e12bfc654c47db443c303c20dfe7a964aea8c2f110558fe4fb7f6"
     },
     {
       "action": "swapClaims",
-      "hash": "0xf36afd7fdc05bc233c3e4fb408c63cae434edd43b973dcfecf8bbe89ed55fc14"
+      "hash": "0x2ecc12e5b7a3dd7b1ea740ce82fdb92d6347429996b18c6b861b4573ad4f81ea"
     },
     {
       "action": "capture",
@@ -42,7 +42,7 @@
     },
     {
       "action": "settleRetainedWitness",
-      "hash": "0xaf4e284048af9c5c42eaeb30de22194d39e55fa7673575bc428de3b195dce5f6"
+      "hash": "0xf8fd1fc3d5078848dd669cd0588ed3ecb9862a6e1c18490c024d0f8d16c1f46c"
     },
     {
       "action": "redeem:holder",

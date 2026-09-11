@@ -4,6 +4,6 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 4174, host: "127.0.0.1", fs: { allow: ["../.."] },
-    proxy: { "/api/analysis": "http://127.0.0.1:8787" },
+    proxy: { "/api/analysis": "http://127.0.0.1:8787", "/api/recovery": "http://127.0.0.1:8788" },
   },
 });

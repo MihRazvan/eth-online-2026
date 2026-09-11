@@ -186,8 +186,8 @@ class WitnessValidationTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     validate_witness(artifact, expected)
 
-    def test_canonical_integer_and_zero_storage_leaf_rules(self):
-        for encoded in [rlp.encode(b'\x00\x07'), rlp.encode(b''), rlp.encode([])]:
+    def test_canonical_integer_and_claimed_storage_value_rules(self):
+        for encoded in [rlp.encode(b'\x00\x07'), rlp.encode(b'\x00'), rlp.encode(b''), rlp.encode([])]:
             artifact, expected = synthetic(storage_encoded=encoded)
             with self.assertRaises(ValueError):
                 validate_witness(artifact, expected)
@@ -204,6 +204,15 @@ class WitnessValidationTests(unittest.TestCase):
         self.assertNotEqual(failure.returncode, 0)
         self.assertEqual(failure.stdout, '')
         self.assertIn('Duplicate JSON object key', failure.stderr)
+
+    def test_authenticated_zero_leaf_matches_solidity_but_cannot_replace_a_nonzero_root(self):
+        zero, expected = synthetic(storage_encoded=rlp.encode(b''))
+        zero['proof']['storageProof'][0]['value'] = '0x0'
+        self.assertEqual(validate_witness(zero, expected)['values'], ['0', '9', '0'])
+        original, expected = synthetic()
+        original['proof']['storageProof'][0] = copy.deepcopy(zero['proof']['storageProof'][0])
+        with self.assertRaises(ValueError):
+            validate_witness(original, expected)
 
 
 if __name__ == '__main__':

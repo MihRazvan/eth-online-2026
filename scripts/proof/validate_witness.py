@@ -173,8 +173,9 @@ def validate_witness(artifact, expected):
         entry = by_key[key]
         encoded_value = authenticate_path(account[2], keccak(key), entry.get('proof'), 'storage')
         value = scalar(canonical_rlp(encoded_value, 'storage value'), 'storage value') if encoded_value else 0
-        # Ethereum deletes zero-valued slots. Only an absent trie value canonically represents zero.
-        require(not encoded_value or value != 0, 'Noncanonical zero-valued storage leaf')
+        # Public Ethereum normally deletes zero slots; Anvil can retain an authenticated
+        # canonical RLP integer-zero leaf. Both decode to zero in the Solidity verifier.
+        # The full path/root still has to authenticate; noncanonical integers are rejected above.
         require(value == quantity(entry.get('value'), 'proof storage value'), 'Claimed storage value differs from authenticated value')
         values.append(str(value))
     if 'values' in artifact:

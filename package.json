@@ -24,7 +24,10 @@
     "test:fork": "forge script scripts/proof/VerifyPublic.s.sol --fork-url https://ethereum-sepolia-rpc.publicnode.com --fork-block-number 11682192 -vv",
     "test:browser:chain": "playwright test -c apps/web/playwright.chain.config.ts",
     "test:substreams": "packages/substreams/verify.sh",
-    "dev:data": "node packages/data/src/server.mjs"
+    "dev:data": "node packages/data/src/server.mjs",
+    "test:settlement": "node packages/settlement/test/run.mjs",
+    "dev:recovery": "node packages/settlement/src/cli.mjs --serve",
+    "local:retention-config": "node scripts/chain/retention-config.mjs"
   },
   "dependencies": {
     "react": "19.3.0",

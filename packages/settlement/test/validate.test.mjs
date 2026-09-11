@@ -84,3 +84,12 @@ test('caller mutation while Python runs cannot change the authenticated snapshot
 test('missing validator process fails closed',async()=>{
  await assert.rejects(validateWitness(artifact,expected,{python:'/nonexistent/feestrip-python'}),/failed or is unavailable/);
 });
+
+test('genuine Anvil zero-valued leaves authenticate and preserve onchain verifier semantics',async()=>{
+ const retained=JSON.parse(readFileSync(new URL('./fixtures/anvil-zero-witness.json',import.meta.url)));
+ const result=await validateWitness(retained.artifact,retained.expected,options);
+ assert.deepEqual(result,retained.result);
+ assert.deepEqual(result.values.slice(2),['0','0']);
+ const tampered=structuredClone(retained.artifact);tampered.proof.storageProof[2].value='0x1';
+ await assert.rejects(validateWitness(tampered,retained.expected,options),/Claimed storage value/);
+});
