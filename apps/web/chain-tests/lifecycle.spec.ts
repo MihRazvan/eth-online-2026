@@ -58,12 +58,12 @@ async function login(
 ) {
   await page.goto(`/?wallet=${actor}#${route}`);
   await expect(page.getByText("Onchain local", { exact: true })).toBeVisible();
-  await page
-    .getByRole("button", { name: "Connect wallet", exact: true })
-    .first()
-    .click();
-  await expect(page.locator(".wallet-button")).not.toContainText(
-    "Connect wallet",
+  // Navigating to the same URL/hash can preserve the already connected app.
+  // Reuse that connection only after asserting it is the requested actor.
+  const connect = page.getByRole("button", { name: "Connect wallet", exact: true }).first();
+  if (await connect.isVisible()) await connect.click();
+  await expect(page.locator(".wallet-button")).toContainText(
+    getAddress(deployment.actors![actor]).slice(0, 6),
   );
 }
 async function confirm(page: Page, button: string, action: string) {
