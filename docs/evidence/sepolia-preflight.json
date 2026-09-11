@@ -1,0 +1,23 @@
+{
+  "scope": "Read-only public deployment preflight. No deployment, signer or proof-provider availability established. USDC proxy runtime pin does not freeze implementation upgrades.",
+  "chainId": 11155111,
+  "block": "11682357",
+  "blockHash": "0xe90a469016092f749b713609233f92e23bcb911678073b724e5c4f9062abe258",
+  "verified": [
+    {
+      "name": "PoolManager",
+      "address": "0xE03A1074c86CFeDd5C142C4F04F1a1536e203543",
+      "codeHash": "0x09930125a49f5b95caf8052991cc14d1240dca8b43f42b899115b86867e4bce1"
+    },
+    {
+      "name": "PositionManager",
+      "address": "0x429ba70129df741B2Ca2a85BC3A2a3328e5c09b4",
+      "codeHash": "0xcffd746f78c2b50aafd19076bbe9c48f14446e5248fc5d76b9b4896610e51aab"
+    },
+    {
+      "name": "USDC",
+      "address": "0x1c7d4b196cb0c7b01d743fbc6116a902379c7238",
+      "codeHash": "0xcd3f29e2ea9c61dadd48bfeaf8b2884b6de9dfee7bf45329452c4c33d0868ceb"
+    }
+  ]
+}

@@ -8,7 +8,7 @@ Start with [status](docs/STATUS.md), [product requirements](feestrip-handoff/PRO
 
 ## Development
 
-Node 24, pnpm 12, Foundry 1.5.1 (Cancun support) and Slither 0.11.5 are available on the initial development host. Dependency pins and commands will accompany each executable component. `node scripts/check-handoff.mjs` validates the baseline packet.
+Node 24, pnpm 12, Foundry 1.5.1 (Cancun support) and Slither 0.11.5 are available on the initial development host. Follow the [reproducible development commands](docs/development.md). `node scripts/check-handoff.mjs` validates the baseline packet.
 
 ## Prior work and attribution
 
@@ -16,6 +16,8 @@ Node 24, pnpm 12, Foundry 1.5.1 (Cancun support) and Slither 0.11.5 are availabl
 
 ## Implemented and verified
 
-The local suite now exercises funded sale → actual Aqua claim trade → exact historical verification → late capture → same NFT return before proof → independent redemption. Local full-lifecycle evidence and transaction gas are in [local-lifecycle](docs/evidence/local-lifecycle.md); genuine Sepolia witness/native collection evidence is [separate](docs/evidence/proof.md). Public FeeStrip deployment and live Graph composition remain pending access and operational verification.
+The local suite now exercises funded sale → actual Aqua claim trade → late capture → same NFT return before proof → exact historical verification → independent redemption. Local full-lifecycle evidence and transaction gas are in [local-lifecycle](docs/evidence/local-lifecycle.md); genuine Sepolia witness/native collection evidence is [separate](docs/evidence/proof.md). Public FeeStrip deployment and live Graph composition remain pending access and operational verification.
 
 Powered by SwapVM — © Degensoft Ltd 2025. FeeStrip's market integration uses the official Aqua/SwapVM sources and their retained licenses; [runtime decision](docs/decisions/002-aqua-runtime.md). Other upstream notices remain under contracts/lib and apps/web/public/fonts. No upstream audit extends to FeeStrip.
+
+Sponsor evidence, outstanding gates and the human-narrated demo script are in [the submission packet](docs/submission.md). Uniswap developer feedback is in [FEEDBACK.md](FEEDBACK.md).

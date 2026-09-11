@@ -1,0 +1,97 @@
+{
+  "tool": "slither-analyzer0.11.5",
+  "scope": "first-party deployed contracts; excludes vendored libraries, tests, scripts and local faucet fixtures",
+  "findings": [
+    {
+      "check": "uninitialized-local",
+      "impact": "Medium",
+      "description": "HistoricalFeeVerifier.verify(uint256,bytes32,int24,int24,bool,bytes).v (contracts/src/proof/HistoricalFeeVerifier.sol#80) is a local variable never initialized\n",
+      "sha256": "9ca5e15ce0f3430da245d769ad5b54e154ff6695593eab1698e5abac10c856ba",
+      "disposition": "Solidity zero-initializes these memory values. Zero is required for absent storage values and unset maker/taker trait flags. Proof tampering tests and actual router transfers exercise their consumers."
+    },
+    {
+      "check": "uninitialized-local",
+      "impact": "Medium",
+      "description": "FeeStripMarket.takerData(address,address,address,uint256,uint40).a (contracts/src/market/FeeStripMarket.sol#76) is a local variable never initialized\n",
+      "sha256": "627f83a37ad5e569cd00675120f13db908ca76348f80891e85552f76bf5a3e26",
+      "disposition": "Solidity zero-initializes these memory values. Zero is required for absent storage values and unset maker/taker trait flags. Proof tampering tests and actual router transfers exercise their consumers."
+    },
+    {
+      "check": "uninitialized-local",
+      "impact": "Medium",
+      "description": "FeeStripMarket.buildOrder(uint256,address,bool,uint256,uint256,uint40,bytes32).a (contracts/src/market/FeeStripMarket.sol#46) is a local variable never initialized\n",
+      "sha256": "a35caf72f60eb452628ba84cab3ffdf5230d0e2d7c39cafda76eacc4319f3b23",
+      "disposition": "Solidity zero-initializes these memory values. Zero is required for absent storage values and unset maker/taker trait flags. Proof tampering tests and actual router transfers exercise their consumers."
+    },
+    {
+      "check": "unused-return",
+      "impact": "Medium",
+      "description": "FeeStrip._clearedGrowth(PoolKey,int24,int24,uint256) (contracts/src/FeeStrip.sol#343-351) ignores return value by (None,growth0,growth1) = poolManager.getPositionInfo(key.toId(),address(positionManager),lower,upper,bytes32(tokenId)) (contracts/src/FeeStrip.sol#348-349)\n",
+      "sha256": "a3394c06c7b71ca1b0556ea66874f5a0e120b2a46e930a5ec3e0e73e7d92ea3f",
+      "disposition": "Only the native cleared growth baseline is used; PositionManager liquidity is validated separately at activation and custody prevents later mutation."
+    },
+    {
+      "check": "reentrancy-benign",
+      "impact": "Low",
+      "description": "Reentrancy in FeeStrip.redeem(uint256,uint256,address) (contracts/src/FeeStrip.sol#279-289):\n\tExternal calls:\n\t- s.claim.consume(msg.sender,amount) (contracts/src/FeeStrip.sol#283)\n\tState variables written after the call(s):\n\t- reservedUSDC -= payout (contracts/src/FeeStrip.sol#286)\n",
+      "sha256": "b3e4377b881b10419a4fcd21f0c2c307cfd486130461699bcdc78a1ccb81016a",
+      "disposition": "All affected external entrypoints are nonReentrant. Dependencies are code-pinned; FeeClaim.consume has no callbacks. State and reserves roll back if an external call fails. Native lifecycle and adversarial recipient tests exercise this boundary."
+    },
+    {
+      "check": "reentrancy-benign",
+      "impact": "Low",
+      "description": "Reentrancy in FeeStrip.acceptOffer(uint256,uint256) (contracts/src/FeeStrip.sol#197-225):\n\tExternal calls:\n\t- positionManager.transferFrom(msg.sender,address(this),o.tokenId) (contracts/src/FeeStrip.sol#207)\n\t- (oldUSDC,oldOther) = _collect(o.tokenId,key) (contracts/src/FeeStrip.sol#208)\n\t\t- positionManager.modifyLiquidities(abi.encode(actions,params),block.timestamp) (contracts/src/FeeStrip.sol#369)\n\tState variables written after the call(s):\n\t- s.tokenId = o.tokenId (contracts/src/FeeStrip.sol#211)\n\t- s.residualOwner = msg.sender (contracts/src/FeeStrip.sol#212)\n\t- s.key = key (contracts/src/FeeStrip.sol#213)\n\t- s.tickLower = info.tickLower() (contracts/src/FeeStrip.sol#214)\n\t- s.tickUpper = info.tickUpper() (contracts/src/FeeStrip.sol#215)\n\t- s.liquidity = liquidity (contracts/src/FeeStrip.sol#216)\n\t- s.activationBlock = uint64(block.number) (contracts/src/FeeStrip.sol#217)\n\t- s.endBlock = o.endBlock (contracts/src/FeeStrip.sol#218)\n\t- s.baselineX128 = _clearedGrowth(key,s.tickLower,s.tickUpper,o.tokenId) (contracts/src/FeeStrip.sol#219)\n\t- s.quantity = o.quantity (contracts/src/FeeStrip.sol#220)\n\t- s.claim = new FeeClaim(o.quantity,o.buyer,o.buyerQuantity,msg.sender) (contracts/src/FeeStrip.sol#221)\n\t- id = nextSeriesId ++ (contracts/src/FeeStrip.sol#209)\n",
+      "sha256": "a2224b723a2fcc0becb4d141894a6a0dcd48f43b1e021b832f1f2d0d96af142c",
+      "disposition": "All affected external entrypoints are nonReentrant. Dependencies are code-pinned; FeeClaim.consume has no callbacks. State and reserves roll back if an external call fails. Native lifecycle and adversarial recipient tests exercise this boundary."
+    },
+    {
+      "check": "reentrancy-benign",
+      "impact": "Low",
+      "description": "Reentrancy in FeeStrip.capture(uint256) (contracts/src/FeeStrip.sol#228-235):\n\tExternal calls:\n\t- (s.capturedUSDC,s.otherReserve) = _collect(s.tokenId,s.key) (contracts/src/FeeStrip.sol#232)\n\t\t- positionManager.modifyLiquidities(abi.encode(actions,params),block.timestamp) (contracts/src/FeeStrip.sol#369)\n\tState variables written after the call(s):\n\t- reservedUSDC += s.capturedUSDC (contracts/src/FeeStrip.sol#233)\n",
+      "sha256": "23f5d747e6a4ef2f91076a5efed39edb14e2a122cf285f2e965e18638513fe40",
+      "disposition": "All affected external entrypoints are nonReentrant. Dependencies are code-pinned; FeeClaim.consume has no callbacks. State and reserves roll back if an external call fails. Native lifecycle and adversarial recipient tests exercise this boundary."
+    },
+    {
+      "check": "timestamp",
+      "impact": "Low",
+      "description": "FeeStrip.acceptOffer(uint256,uint256) (contracts/src/FeeStrip.sol#197-225) uses timestamp for comparisons\n\tDangerous comparisons:\n\t- o.consumed || o.endBlock <= block.number || o.deadline < block.timestamp || o.proceeds < minProceeds (contracts/src/FeeStrip.sol#200)\n",
+      "sha256": "bbe443a88367ae82e5d6186256d98c0d0d88b92698fc373eebee4badd27e6e70",
+      "disposition": "Timestamp checks only expire offers and trade orders. Sold fee income uses the frozen end-of-block number and authenticated historical state."
+    },
+    {
+      "check": "timestamp",
+      "impact": "Low",
+      "description": "FeeStrip.fundOffer(address,uint256,uint256,uint256,uint256,uint64,uint64) (contracts/src/FeeStrip.sol#151-184) uses timestamp for comparisons\n\tDangerous comparisons:\n\t- seller == address(0) || quantity == 0 || buyerQuantity == 0 || buyerQuantity > quantity || proceeds == 0 || endBlock <= block.number || deadline < block.timestamp (contracts/src/FeeStrip.sol#161-162)\n",
+      "sha256": "be650d1070b4d3ac130d226e95679ed6cf298f28bb5296c71b962e19bc5c9776",
+      "disposition": "Timestamp checks only expire offers and trade orders. Sold fee income uses the frozen end-of-block number and authenticated historical state."
+    },
+    {
+      "check": "timestamp",
+      "impact": "Low",
+      "description": "FeeStripMarket.buildOrder(uint256,address,bool,uint256,uint256,uint40,bytes32) (contracts/src/market/FeeStripMarket.sol#37-68) uses timestamp for comparisons\n\tDangerous comparisons:\n\t- require(bool,error)(maker != address(0) && claim != address(0) && claim != cash && claimUnits > 0 && usdcUnits > 0 && deadline > block.timestamp,revert InvalidOrder()()) (contracts/src/market/FeeStripMarket.sol#42-43)\n",
+      "sha256": "d318956f4f11b0574133a8f9d725a4e9f0137a706c0ab220391b0286fc3b3197",
+      "disposition": "Timestamp checks only expire offers and trade orders. Sold fee income uses the frozen end-of-block number and authenticated historical state."
+    },
+    {
+      "check": "cyclomatic-complexity",
+      "impact": "Informational",
+      "description": "HistoricalFeeVerifier.verify(uint256,bytes32,int24,int24,bool,bytes) (contracts/src/proof/HistoricalFeeVerifier.sol#42-92) has a high cyclomatic complexity (12).\n",
+      "sha256": "e11d5a29917c36edcda2a0c21c4205989105eb9d2fbfbf170ca062d7f5d3a49b",
+      "disposition": "Proof verification has independent header, account, storage and endpoint bounds; removing checks for complexity would weaken verification."
+    },
+    {
+      "check": "dead-code",
+      "impact": "Informational",
+      "description": "FeeStripRouter._runOpcode(Context,uint256,bytes) (contracts/src/market/FeeStripRouter.sol#15-19) is never used and should be removed\n",
+      "sha256": "dc701f1568690bf8b558b2f2a84b4fb9581f8c80e2e3633699e6fdb33a22a76b",
+      "disposition": "The official VM invokes the overridden virtual dispatcher. Actual Aqua transfers require both extension opcodes; runtime tests demonstrate reachability."
+    },
+    {
+      "check": "solc-version",
+      "impact": "Informational",
+      "description": "Version constraint >=0.8.26<=0.8.30 is too complex.\nIt is used by:\n\t- >=0.8.26<=0.8.30 (contracts/src/FeeClaim.sol#2)\n",
+      "sha256": "08795f9f6cce92d175d8bec01c78ffd7906b10a44b3560f585bac68127c63d63",
+      "disposition": "FeeClaim is deliberately shared across native Uniswap0.8.26 and pinned SwapVM0.8.30 compilation graphs. Both builds and integrated transfers pass."
+    }
+  ]
+}

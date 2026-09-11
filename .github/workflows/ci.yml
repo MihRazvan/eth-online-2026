@@ -1,0 +1,58 @@
+name: Verify FeeStrip
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: foundry-rs/foundry-toolchain@908c540300062bd5a7e473851cdb4282204cee09
+        with:
+          version: v1.5.1
+      - run: forge test
+      - run: node scripts/generate-abis.mjs
+      - run: git diff --exit-code -- apps/web/src/generated/contracts.ts packages/subgraph/abis/FeeStrip.json
+      - run: python3 contracts/scripts/check-denominator-mutation.py
+      - run: pip install slither-analyzer==0.11.5
+      - run: python3 scripts/static/check.py
+  application:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 24.12.0
+      - run: npm install --global pnpm@12.3.4
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test
+      - run: pnpm build
+      - run: pnpm build:subgraph
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm test:browser
+      - uses: foundry-rs/foundry-toolchain@908c540300062bd5a7e473851cdb4282204cee09
+        with:
+          version: v1.5.1
+      - name: Start dedicated local chain
+        run: |
+          anvil --host 127.0.0.1 --port 8545 --chain-id 31337 --hardfork cancun --silent > /tmp/feestrip-anvil.log 2>&1 &
+      - run: pnpm test:browser:chain
+  substreams:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 24.12.0
+      - run: npm install --global pnpm@12.3.4
+      - run: pnpm install --frozen-lockfile
+      - run: rustup toolchain install 1.95.0 --profile minimal --target wasm32-unknown-unknown
+      - name: Install checksum-pinned Substreams CLI
+        run: |
+          mkdir -p .scratch/bin
+          curl -fsSL https://github.com/streamingfast/substreams/releases/download/v1.22.0/substreams_linux_x86_64.tar.gz -o /tmp/feestrip-substreams.tar.gz
+          echo '6eef6182d8d9e3c0147a3d03f38fc2b9c0f96900d040132294a0b540e691ae67  /tmp/feestrip-substreams.tar.gz' | sha256sum --check
+          tar -xzf /tmp/feestrip-substreams.tar.gz -C .scratch/bin
+      - run: SUBSTREAMS_BIN="$PWD/.scratch/bin/substreams" packages/substreams/verify.sh

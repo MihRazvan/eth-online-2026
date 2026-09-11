@@ -11,7 +11,7 @@ export function composeAnalysis({series,stream,subgraph,chainHead,quantity,price
   const occupancy=rangeOccupancy({samples:stream.samples,fromBlock:series.activationBlock,toBlock,tickLower:series.tickLower,tickUpper:series.tickUpper});
   return {
     seriesId:series.id,poolKey:key(series),sourceBlock:subgraph.block,sourceHash:subgraph.hash,
-    subgraphDeployment:subgraph.deployment,substreamsPackage:stream.package,substreamsCursor:stream.cursor,
+    subgraphDeployment:subgraph.deployment,substreamsPackage:stream.package,substreamsCursor:stream.cursor,substreamsFinalBlock:stream.finalBlockHeight??null,sourceFinalized:stream.finalBlockHeight===undefined?false:subgraph.block<=stream.finalBlockHeight,
     lagBlocks:chainHead-subgraph.block,stale:chainHead-subgraph.block>maxLag,
     grossBreakEvenUSDC:breakEven({price,quantity,originalSupply:BigInt(series.originalSupply)}).toString(),
     netBreakEvenUSDC:breakEven({price,quantity,originalSupply:BigInt(series.originalSupply),executionCost}).toString(),
@@ -21,7 +21,7 @@ export function composeAnalysis({series,stream,subgraph,chainHead,quantity,price
 }
 /** Query an immutable block selection; credentials stay in request headers, never results or error text. */
 export async function querySubgraph({url,deployment,block,headers={},fetchImpl=fetch}) {
-  const response=await fetchImpl(url,{method:'POST',headers:{'content-type':'application/json',...headers},body:JSON.stringify({query:`query FeeStrip($block: Int!) { _meta(block: {number: $block}) { block { number hash } deployment hasIndexingErrors } series_collection: series(first: 100, block: {number: $block}, orderBy: id) { id chainId poolManager poolId activationBlock endBlock tickLower tickUpper originalSupply } }`,variables:{block}}),signal:AbortSignal.timeout(15000)});
+  const response=await fetchImpl(url,{method:'POST',headers:{'content-type':'application/json',...headers},body:JSON.stringify({query:`query FeeStrip($block: Int!) { _meta(block: {number: $block}) { block { number hash } deployment hasIndexingErrors } series_collection(first: 100, block: {number: $block}, orderBy: id) { id chainId poolManager poolId activationBlock endBlock tickLower tickUpper originalSupply } }`,variables:{block}}),signal:AbortSignal.timeout(15000)});
   if(!response.ok)throw new Error(`Subgraph HTTP ${response.status}`);
   const body=await response.json();if(body.errors?.length)throw new Error('Subgraph query failed');
   const meta=body.data?._meta;

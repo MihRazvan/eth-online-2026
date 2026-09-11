@@ -13,8 +13,11 @@ export class HistoryStore {
    this.db.exec('COMMIT');
   }catch(e){this.db.exec('ROLLBACK');throw e;}
  }
- undo(number,hash) {const retained=this.db.prepare('SELECT hash FROM blocks WHERE number=?').get(number);if(retained?.hash!==hash)throw new Error('Undo block not retained; resync required');this.db.exec('BEGIN');try{this.db.prepare('DELETE FROM swaps WHERE block>?').run(number);this.db.prepare('DELETE FROM blocks WHERE number>?').run(number);this.db.exec('COMMIT');}catch(e){this.db.exec('ROLLBACK');throw e;}}
+ undo(number,hash,cursor) {const retained=this.db.prepare('SELECT hash FROM blocks WHERE number=?').get(number);if(retained?.hash!==hash)throw new Error('Undo block not retained; resync required');this.db.exec('BEGIN');try{this.db.prepare('DELETE FROM swaps WHERE block>?').run(number);this.db.prepare('DELETE FROM blocks WHERE number>?').run(number);if(cursor!==undefined){if(typeof cursor!=='string'||!cursor)throw new Error('Invalid undo cursor');this.db.prepare('UPDATE blocks SET cursor=? WHERE number=?').run(cursor,number);}this.db.exec('COMMIT');}catch(e){this.db.exec('ROLLBACK');throw e;}}
  head(){return this.db.prepare('SELECT * FROM blocks ORDER BY number DESC LIMIT 1').get();}
+ block(number){return this.db.prepare('SELECT * FROM blocks WHERE number=?').get(number);}
+ first(){return this.db.prepare('SELECT * FROM blocks ORDER BY number LIMIT 1').get();}
+ snapshotSamples({number,...query}) {this.db.exec('BEGIN');try{const block=this.block(number),first=this.first(),samples=this.samples({...query,toBlock:number});this.db.exec('COMMIT');return {block,first,samples};}catch(e){this.db.exec('ROLLBACK');throw e;}}
  samples({chainId,manager,pool,fromBlock,toBlock}) {const args=[chainId,manager.toLowerCase(),pool.toLowerCase()];const initial=this.db.prepare('SELECT block,logIndex,tick FROM swaps WHERE chainId=? AND manager=? AND pool=? AND block<=? ORDER BY block DESC,logIndex DESC LIMIT 1').get(...args,fromBlock);return [...(initial?[initial]:[]),...this.db.prepare('SELECT block,logIndex,tick FROM swaps WHERE chainId=? AND manager=? AND pool=? AND block>? AND block<=? ORDER BY block,logIndex').all(...args,fromBlock,toBlock)];}
  close(){this.db.close();}
 }

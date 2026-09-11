@@ -12,8 +12,19 @@
     "build": "pnpm --filter @feestrip/web build",
     "test": "node --test packages/core/test/*.test.mjs packages/data/test/*.test.mjs",
     "test:contracts": "forge test",
-    "test:browser": "pnpm --filter @feestrip/web test:e2e",
-    "check:handoff": "node scripts/check-handoff.mjs"
+    "test:browser": "pnpm --filter @feestrip/web test",
+    "check:handoff": "node scripts/check-handoff.mjs",
+    "test:mutation": "python3 contracts/scripts/check-denominator-mutation.py",
+    "test:static": "python3 scripts/static/check.py",
+    "generate:abis": "node scripts/generate-abis.mjs",
+    "build:subgraph": "graph codegen packages/subgraph/subgraph.yaml --output-dir packages/subgraph/generated && graph build packages/subgraph/subgraph.yaml --output-dir packages/subgraph/build",
+    "local:reset": "node scripts/chain/reset-and-seed.mjs --reset",
+    "local:mature": "node scripts/chain/mature.mjs",
+    "test:chain": "node scripts/chain/lifecycle.mjs",
+    "test:fork": "forge script scripts/proof/VerifyPublic.s.sol --fork-url https://ethereum-sepolia-rpc.publicnode.com --fork-block-number 11682192 -vv",
+    "test:browser:chain": "playwright test -c apps/web/playwright.chain.config.ts",
+    "test:substreams": "packages/substreams/verify.sh",
+    "dev:data": "node packages/data/src/server.mjs"
   },
   "dependencies": {
     "react": "19.3.0",
@@ -21,7 +32,13 @@
     "viem": "2.56.3"
   },
   "devDependencies": {
+    "@bufbuild/protobuf": "1.10.1",
+    "@connectrpc/connect": "1.7.0",
+    "@connectrpc/connect-node": "1.7.0",
+    "@graphprotocol/graph-cli": "0.98.1",
+    "@graphprotocol/graph-ts": "0.38.2",
     "@playwright/test": "1.63.0",
+    "@substreams/core": "0.17.0",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
     "@vitejs/plugin-react": "5.1.4",

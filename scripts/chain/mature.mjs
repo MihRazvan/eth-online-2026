@@ -1,0 +1,24 @@
+// Development-only companion for the browser lifecycle. Never assigns settlement amounts.
+import {readFileSync,writeFileSync} from 'node:fs';
+import {encodeAbiParameters,keccak256,toHex} from 'viem';
+import {client,read,send,assertLocal} from './common.mjs';
+import {acquireWitness} from './proof.mjs';
+await assertLocal();
+const d=JSON.parse(readFileSync('apps/web/public/deployment.json'));
+const id=BigInt(process.argv[2]??'1');
+const s=await read(d.feeStrip,'FeeStrip','series',[id]);
+if(s.quantity===0n||s.captured||s.closed)throw new Error('Expected an active, accepted local series');
+const end=s.endBlock;
+const current=await client.getBlockNumber({cacheTime:0});
+if(current+1n>=end)throw new Error('Not enough blocks before N; reseed for this development scenario');
+await send(d.actors.buyer,d.activityRouter,'LocalActivityRouter','donate',[800_000_000n,200_000_000n]);
+const after=await client.getBlockNumber({cacheTime:0});
+await client.request({method:'anvil_mine',params:[toHex(end-after)]});
+const poolId=keccak256(encodeAbiParameters([{type:'tuple',components:[{name:'currency0',type:'address'},{name:'currency1',type:'address'},{name:'fee',type:'uint24'},{name:'tickSpacing',type:'int24'},{name:'hooks',type:'address'}]}],[s.key]));
+const slots=await read(d.verifier,'HistoricalFeeVerifier','storageSlots',[poolId,s.tickLower,s.tickUpper,s.key.currency0.toLowerCase()===d.usdc.toLowerCase()]);
+const retained=await acquireWitness(client,{manager:d.poolManager,slots,blockNumber:end});
+const path=`apps/web/public/witness-${id}.json`;
+writeFileSync(path,JSON.stringify(retained,null,2)+'\n');
+await client.request({method:'anvil_mine',params:['0x1']});
+await send(d.actors.buyer,d.activityRouter,'LocalActivityRouter','donate',[400_000_000n,100_000_000n]);
+console.log(JSON.stringify({series:id.toString(),endpoint:end.toString(),blockHash:retained.blockHash,witness:path}));

@@ -1,0 +1,32 @@
+type Series @entity(immutable: false) {
+  id: ID!
+  chainId: BigInt!
+  poolManager: Bytes!
+  poolId: Bytes!
+  positionManager: Bytes!
+  tokenId: BigInt!
+  claim: Bytes!
+  residualOwner: Bytes!
+  tickLower: Int!
+  tickUpper: Int!
+  liquidity: BigInt!
+  activationBlock: BigInt!
+  endBlock: BigInt!
+  originalSupply: BigInt!
+  captured: Boolean!
+  allocated: Boolean!
+  nftReturned: Boolean!
+  closed: Boolean!
+  capturedUSDC: BigInt!
+  soldUSDC: BigInt!
+  redeemedQuantity: BigInt!
+  updatedAtBlock: BigInt!
+}
+type LifecycleEvent @entity(immutable: true) {
+  id: Bytes!
+  series: Series!
+  kind: String!
+  transactionHash: Bytes!
+  blockNumber: BigInt!
+  blockHash: Bytes!
+}
