@@ -34,6 +34,7 @@ jobs:
           python3 -m venv /tmp/feestrip-proof-venv
           /tmp/feestrip-proof-venv/bin/python -m pip install -r scripts/proof/requirements.txt
       - run: pnpm test
+      - run: pnpm test:public-setup
       - run: pnpm test:settlement
       - run: pnpm build
       - run: pnpm build:subgraph
