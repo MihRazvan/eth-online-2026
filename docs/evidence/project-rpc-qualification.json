@@ -1,0 +1,76 @@
+{
+  "scope": "Read-only project RPC qualification; no transaction broadcast, public deployment or uptime guarantee.",
+  "observedAt": "2026-09-11T19:50:26.910Z",
+  "chainId": 11155111,
+  "blockNumber": "11684066",
+  "blockHash": "0x394801e0692fe1011a7ef9f73dc6ed23755d778c0d69240b8de3f695d442efc5",
+  "checks": [
+    {
+      "name": "PoolManager",
+      "address": "0xE03A1074c86CFeDd5C142C4F04F1a1536e203543",
+      "codeHashMatches": true
+    },
+    {
+      "name": "PositionManager",
+      "address": "0x429ba70129df741B2Ca2a85BC3A2a3328e5c09b4",
+      "codeHashMatches": true
+    },
+    {
+      "name": "USDC",
+      "address": "0x1c7d4b196cb0c7b01d743fbc6116a902379c7238",
+      "codeHashMatches": true
+    }
+  ],
+  "proofs": [
+    {
+      "offset": 0,
+      "blockNumber": "11684066",
+      "status": "failed",
+      "kind": "request-failed",
+      "rpcCode": -32000
+    },
+    {
+      "offset": 1,
+      "blockNumber": "11684065",
+      "blockHash": "0xf1917a534ae3d9ea7e8338d940662c3e1f118a9ae17c3af2aa42f3d5d4c156cc",
+      "selector": "hash",
+      "status": "independently-authenticated",
+      "elapsedMs": 854,
+      "witnessBytes": 14400
+    },
+    {
+      "offset": 128,
+      "blockNumber": "11683938",
+      "blockHash": "0x45964620309723a8be54f5cb4fbfe440102841a8ee108f3f1e48dce2eb422e20",
+      "selector": "hash",
+      "status": "independently-authenticated",
+      "elapsedMs": 695,
+      "witnessBytes": 14400
+    },
+    {
+      "offset": 8191,
+      "blockNumber": "11675875",
+      "blockHash": "0x17558aebd7b4f112f1c8d51e30f542143497267559f4a458c17d0f9a3945afc3",
+      "selector": "hash",
+      "status": "independently-authenticated",
+      "elapsedMs": 753,
+      "witnessBytes": 14400
+    }
+  ],
+  "provider": "Alchemy project endpoint (credentials and endpoint omitted)",
+  "rechecks": [
+    {
+      "blockNumber": "11684066",
+      "status": "independently-authenticated",
+      "blockHash": "0x394801e0692fe1011a7ef9f73dc6ed23755d778c0d69240b8de3f695d442efc5",
+      "selector": "hash"
+    },
+    {
+      "blockNumber": "11684070",
+      "status": "independently-authenticated",
+      "blockHash": "0xc4300076e07f0af7b295ee126893b5dfdf3e382db4ba9ea4261504bf44795498",
+      "selector": "hash"
+    }
+  ],
+  "conclusion": "Hash-selected account/storage proofs independently authenticated at sampled historical offsets 1,128,8191. Initial tip request returned RPC -32000; the identical block and a later head authenticated on recheck. Point-in-time capability only, not an availability SLA or public FeeStrip lifecycle."
+}

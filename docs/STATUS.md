@@ -19,7 +19,7 @@ Full financial acceptance gates in the product contract remain pending; componen
 
 ## Access gaps
 
-No project RPC, Graph credentials or deployment signer supplied yet. Public providers/local chains will be tested first. Never substitute trusted-server settlement for missing proof access. Do not log secrets.
+Project Sepolia RPC and a local deployment key are now configured in ignored `.env`. Read-only qualification confirmed chain11155111, canonical deployment/code pins, and independently authenticated historical account/storage proofs at sampled offsets1,128,8191; a transient tip failure passed on recheck. The configured wallet has test ETH but no native test USDC at this observation. Graph/Substreams credentials, public deployment and participant-wallet acceptance remain pending. No transaction was broadcast during qualification. [Sanitized RPC evidence](evidence/project-rpc-qualification.json). Never substitute trusted-server settlement for missing proof access. Do not log secrets.
 
 ## Execution
 
