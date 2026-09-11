@@ -1,6 +1,10 @@
-# FeeStrip
+# usufruct
+
+Keep the tree. Share the fruit.
 
 Sell your Uniswap fees upfront, keep your position.
+
+Formerly FeeStrip. The application now uses the user-selected **usufruct** orchard identity; deployed contract names and typed-data domains keep their existing identities. See [the design system](DESIGN.md).
 
 Implementation in progress. The product escrows an existing canonical Uniswap v4 NFT for a fixed earning window, sells transferable claims to its native USDC fee income, and returns the same NFT after late capture. Exact historical settlement must be authenticated; estimates never authorize payouts.
 

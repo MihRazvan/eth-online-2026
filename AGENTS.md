@@ -1,4 +1,6 @@
-# FeeStrip
+# usufruct
+
+Brand and frontend direction: DESIGN.md. Product context: PRODUCT.md. The user renamed the application from FeeStrip to usufruct; deployed contract identifiers and financial requirements retain their existing identities.
 
 Read docs/STATUS.md first and reconcile Git before work. Economic authority: feestrip-handoff/PRODUCT_CONTRACT.md. Implementation brief: feestrip-handoff/START_HERE.md. Load supporting handoff documents selectively.
 

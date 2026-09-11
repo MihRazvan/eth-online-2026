@@ -1,0 +1,29 @@
+{
+  "conversion": "fonttools4.65.0, brotli1.2.0; full glyph set, no subsetting",
+  "fonts": [
+    {
+      "family": "instrumentserif",
+      "source": "https://raw.githubusercontent.com/google/fonts/0b58fb370093f9a9f4ff785d94405710b79de67c/ofl/instrumentserif/InstrumentSerif-Italic.ttf",
+      "sourceSha256": "08939b8bdf534afec24ae0ef5e03f948940cd9a8fe08e7fecbad040e62327385",
+      "file": "InstrumentSerif-Italic.woff2",
+      "sha256": "1fc4f1b98bb2430d01ecf3d7ba8ecd64b045c351c4a5f720672e1824792ba0f0",
+      "license": "instrumentserif-OFL.txt"
+    },
+    {
+      "family": "courierprime",
+      "source": "https://raw.githubusercontent.com/google/fonts/7204f5a9b1e530633e00c67bd4954ceb7d8c2483/ofl/courierprime/CourierPrime-Regular.ttf",
+      "sourceSha256": "72f793376f8e2841656bf21d77a5de010f2929bd6956a22ee848ad0c7eb978af",
+      "file": "CourierPrime-Regular.woff2",
+      "sha256": "6ae92a5a6f152c6dd06c301dac463f03c39a5a31a2cc38429720ffd78f981659",
+      "license": "courierprime-OFL.txt"
+    },
+    {
+      "family": "courierprime",
+      "source": "https://raw.githubusercontent.com/google/fonts/7204f5a9b1e530633e00c67bd4954ceb7d8c2483/ofl/courierprime/CourierPrime-Bold.ttf",
+      "sourceSha256": "ff1f38786c849d1c41fa8e447960abdb2bd75fdfb0cfcdeb524fad65a5af3638",
+      "file": "CourierPrime-Bold.woff2",
+      "sha256": "ccdbb3bf8a4c3a2947b904aef715a844d1388d93fcfa77c3cf81ec936304b61a",
+      "license": "courierprime-OFL.txt"
+    }
+  ]
+}

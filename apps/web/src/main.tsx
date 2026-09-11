@@ -5,6 +5,7 @@ import { App } from "./App";
 import { FixtureAdapter } from "./fixtureAdapter";
 import type { FeeStripAdapter } from "./types";
 import "./styles.css";
+import "./fonts.css";
 const root = createRoot(document.getElementById("root")!);
 async function start() {
   const mode = import.meta.env.VITE_DATA_MODE ?? "fixture";

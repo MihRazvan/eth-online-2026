@@ -1,5 +1,7 @@
 # Frontend design evidence
 
+Current visual authority: the user-selected **usufruct** orchard references, recorded in [DESIGN.md](../../DESIGN.md). The original FeeStrip concepts below are historical evidence, not the current design target.
+
 AI-assisted implementation by Codex, 11 September 2026. Economic authority remains `feestrip-handoff/PRODUCT_CONTRACT.md`.
 
 Primary workflow: Impeccable 4.1.0 source `cb56ed6c19a07329a9fa0cd4e657bee040156593`, Apache-2.0. Inspected manifest scripts and source skill plus new-work, craft-floor and operate references. CLI downloads a platform binary and installer can write hooks; not installed. Source guidance is used directly; context launcher unavailable. The user explicitly delegates routine direction selection, superseding the skill's user-choice ceremony. No Impeccable source is copied into this product. Secondary React guidance: Vercel `vercel-react-best-practices`, source `063bee94c3f4df8453406c830b0a7df0f2860278`, MIT; render derived state directly, fetch independent resources concurrently, avoid broad barrel imports. Browser: pinned @playwright/cli 0.1.19 (ephemeral execution) and repository @playwright/test 1.63.0.

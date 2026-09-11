@@ -312,8 +312,8 @@ export class ChainAdapter implements FeeStripAdapter {
       id: deployment.chainId,
       name:
         deployment.mode === "local"
-          ? "Local FeeStrip chain"
-          : "FeeStrip testnet",
+          ? "Local development chain"
+          : "Ethereum Sepolia",
       nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
       rpcUrls: { default: { http: [deployment.rpcUrl] } },
     });
@@ -1115,7 +1115,7 @@ export class ChainAdapter implements FeeStripAdapter {
       throw new Error("Connect a wallet before continuing.");
     if ((await this.wallet.getChainId()) !== this.deployment.chainId)
       throw new Error(
-        "Wrong wallet network. Switch to the configured FeeStrip chain.",
+        "Wrong wallet network. Switch to the configured application chain.",
       );
     const account = expectedAccount ?? this.account;
     if (!same(this.account, account))
