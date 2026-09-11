@@ -1,0 +1,19 @@
+{
+  "repository": "https://github.com/polytope-labs/solidity-merkle-trees",
+  "commit": "6bbc83d5ac33f85761725cf2eba4f8700164e8ba",
+  "license": "Apache-2.0",
+  "files": {
+    "LICENSE": "d8ddd6435eae4d5e7df65248f19a347fcf67e2d454d0826cb418a33648e2dd54",
+    "README.md": "5b9bdf39f6fd532f226d59b7d9b65ff75c3361edd90e3916cd134b7fd1101198",
+    "src/EthereumTrie.sol": "21062e62d9faadc18ba745c2472bd7983b52b3906106a628a15185c5692c9b75",
+    "src/trie/NibbleSlice.sol": "767eca1ade73616f11ce3f05316c23aaaa8df609c673a7d798050180066fc3e8",
+    "src/trie/Option.sol": "38af9332ec448a8c22ec6d1ae098e7ae5665aa4d46dd3544d67d5d6b3e2d6592",
+    "src/trie/TrieDB.sol": "f308a7b6e84c83694a8124573db9b5ab229049bd858898cd62fe457228fde17c",
+    "src/trie/Bytes.sol": "85478a889569a3e090c4d5442fa727fc93e800c35832df26eaec01a527f41cff",
+    "src/trie/Node.sol": "d6989639d561b0a8305ef1b00321c1313e34e1a616e53fca5ae1a6393f20abf3",
+    "src/trie/Memory.sol": "ea8087343d5cf3098e1677f4fc79f0e9f753cac5f9ebffc26390b1095e81733c",
+    "src/trie/ethereum/EthereumTrieDB.sol": "b117ac9389855e355abbe67af09352f55970084e252e8162ce56eb957ce56f63",
+    "src/trie/ethereum/RLPReader.sol": "0956fe913f553dadb66340b9791b7d4b413e9903ab7f001750df3aa32727cf6a"
+  },
+  "modifications": "none; unrelated algorithms excluded"
+}
