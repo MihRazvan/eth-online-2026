@@ -37,6 +37,7 @@ jobs:
       - run: pnpm test:public-setup
       - run: pnpm test:settlement
       - run: pnpm build
+      - run: pnpm build:vercel
       - run: pnpm build:subgraph
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm test:browser

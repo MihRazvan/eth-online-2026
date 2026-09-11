@@ -30,3 +30,5 @@ The human user selected the name usufruct and supplied two visual references on1
 
 
 The usufruct interface was integrated and independently checked by the lead. A separate browser critic reviewed all four routes and transaction dialogs at desktop/mobile widths; the proof specialist reviewed financial meaning and action payloads. The lead preserved the confirmation receipt across post-sale navigation, migrated the existing regression suite without weakening payout assertions, added tiny-inventory/mobile coverage, and recorded integrated screenshots. All 38 UI tests and the actual local-chain browser lifecycle pass. This is agent implementation/review; the user's human design feedback and participant-wallet session are still pending.
+
+On 12 September 2026, at the user’s request, the lead prepared the isolated public build, created the usufruct Vercel project under the existing authenticated workspace, published production, and connected GitHub. The lead verified the actual public site at desktop/mobile sizes and recorded the external-worker limitation. No credentials, local deployment state or wallet transaction were included in the publication.

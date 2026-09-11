@@ -2,6 +2,8 @@
 
 Project: **usufruct**, workspace: **mihrazvans-projects**. The repository root is the Vercel root. Node 24 and pnpm 12.3.4 are used; build settings live in `vercel.json`.
 
+Live frontend: **https://usufruct-mu.vercel.app**. GitHub repository `MihRazvan/eth-online-2026` is connected for automatic deployment from `main`. Initial production deployment: `dpl_FgLUKkoSa7LVTryiJaDZ83cKaxhn`, source commit `0d5398e`. [Public browser evidence](evidence/vercel/browser-smoke.json) records unauthenticated desktop/mobile checks, all three routes, brand assets, the authentic Sepolia manifest, and rejected test-wallet injection.
+
 `pnpm build:vercel` type-checks the application and produces `dist/vercel`. It always builds the Sepolia application with unlocked test wallets disabled, reads the committed `deployments/sepolia.json`, and copies only the brand/font directories as public assets. Local Vite environment files, generated development manifests and witness files are excluded. The existing `apps/web/dist` preview is unaffected.
 
 The browser reads Sepolia through the credential-free public RPC in the manifest. No private key, deployer key, Alchemy credential or wallet seed belongs in Vercel environment variables. Users sign with their own injected Ethereum wallet.
