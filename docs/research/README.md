@@ -2,6 +2,8 @@
 
 Research completed 2026-09-11 by Codex lead and three specialist lanes. Starting implementation: `22a8996`. The user explicitly prioritized the actual product over hackathon requirements. This report is the synthesis; the linked memos retain source detail, immutable revisions, experiments and limitations.
 
+Update 12 September: the user has now confirmed **ETHOnline 2026 Classic** and renewed the bounty objective. The [current bounty readiness plan](bounty-readiness.md) supersedes the scheduling and inactive-submission statements below. This earlier research remains useful product and infrastructure context; its completion states are historical.
+
 ## Recommendation
 
 Make FeeStrip the clearest way to buy and sell a specific position's unpaid fee income, with reliable recovery throughout its lifecycle. The strongest next investments are recoverable capital, understandable rights, executable quotes and dependable endpoint evidence. These follow from the financial contract, observed implementation gaps and primary-source research. Commercial demand, viable trade sizes and repeatable liquidity remain hypotheses requiring real users and markets.

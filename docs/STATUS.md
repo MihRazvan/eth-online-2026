@@ -1,17 +1,19 @@
 # usufruct status
 
-Updated 2026-09-11. Integration owner: Codex lead. Remote: MihRazvan/eth-online-2026, main. Remote was verified empty; no rulesets. Local folder originally held only the handoff.
+Updated 2026-09-12. Integration owner: Codex lead. Remote: MihRazvan/eth-online-2026, main. Remote was verified empty; no rulesets. Local folder originally held only the handoff.
 
-Current direction: the user renamed the product **usufruct**, supplied two orchard/specimen references, and requested a full branding and frontend redesign while preparing wallet testing. [DESIGN.md](../DESIGN.md) owns the selected visual direction. The user explicitly deprioritized hackathon requirements. Active work focuses on the actual product. The [research synthesis and ordered backlog](research/README.md) covers product workflows, historical-proof reliability, open projects, skills and native coordination. Submission documents are retained as historical material, not an active workstream.
+Current direction: **usufruct**, with the implemented orchard identity in [DESIGN.md](../DESIGN.md), is now preparing for ETHOnline 2026 **Classic**, explicitly confirmed by the user. The local folder name is accidental. This supersedes the earlier instruction to defer hackathon work. The [bounty readiness and implementation plan](research/bounty-readiness.md) prioritizes operated endpoint preservation, a complete public lifecycle, bounded offer terms and live Graph composition. Uniswap and 1inch are the primary targets; The Graph remains conditional on real provider integration. Deadline: 13 September 2026, 19:00 Bucharest. The earlier [product research](research/README.md) remains supporting context.
 
 | Work | Owner | State | Evidence / next action |
 | --- | --- | --- | --- |
+| Classic bounty readiness | Lead / separate protocol and frontend reviewers | assessment complete; implementation gates open | [Decision memo](research/bounty-readiness.md), [sponsor matrix](evidence/sponsors.md); no new transactions or hosted services in this assessment |
 | Baseline / capability check | Lead | verified | GitHub write authentication; Node 24.12.0, pnpm 12.3.4, Foundry 1.5.1, Slither 0.11.5; baseline packet check |
 | Contract lifecycle and accounting | Protocol specialist | local lifecycle verified | Native canonical collection + funded custody + independent real-proof lifecycle; dynamic4-NFT lifecycle and custody bypasses verified |
 | Historical endpoint | Proof specialist | component verified | Genuine Sepolia witness + fork BLOCKHASH + native collection match; full local real-proof lifecycle verified; controlled public lifecycle pending; tip-only public proof retention |
 | usufruct identity / application | Frontend specialist / lead | integrated and locally verified | User-directed orchard identity; 38 UI regressions; desktop/mobile review; both real-chain browser recovery variants; public-data preview |
 | Aqua/SwapVM | Lead | local verified | Actual escrow-issued FeeClaim/USDC transfer;11 market tests; callback finding fixed and independently reviewed |
 | Graph composition | Lead | live blocked / hermetic verified | 17math/sink/join tests;5Rust+12WASM/sink tests; Subgraph build passes; live CLI Unauthenticated |
+| Public endpoint operations | Lead | not operated end to end | Retention worker does not submit checkpoints; implement bounded keeper, independent storage/fallback and HTTPS recovery before activating a public sale |
 | Independent economic / browser review | Separate reviewers / lead | increment reviewed | Callback correction verified by second reviewer; actual rendered/browser financial-label fixes; integration-review.md |
 | Product research / recovery | Lead / research specialists | research complete; first increments verified | Cited research synthesis; buyer cancellation, authenticated durable retention/API, shared entitlement receipt, bid execution and maker recovery verified locally; recovery UI and exact onchain cache path integrated |
 

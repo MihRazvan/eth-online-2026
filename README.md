@@ -12,6 +12,8 @@ Implementation in progress. The product escrows an existing canonical Uniswap v4
 
 Start with [status](docs/STATUS.md), [product requirements](feestrip-handoff/PRODUCT_CONTRACT.md), and [implementation brief](feestrip-handoff/START_HERE.md).
 
+Current milestone: [ETHOnline 2026 Classic readiness](docs/research/bounty-readiness.md). Public endpoint operations, participant-wallet acceptance and live Graph composition are explicit unfinished gates.
+
 ## Development
 
 Node 24, pnpm 12, Foundry 1.5.1 (Cancun support) and Slither 0.11.5 are available on the initial development host. Follow the [reproducible development commands](docs/development.md). `node scripts/check-handoff.mjs` validates the baseline packet.
