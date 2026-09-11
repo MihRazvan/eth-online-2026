@@ -27,6 +27,8 @@ JavaScript structure checks do **not** authenticate the account/storage tries. S
 - `pnpm test:browser`:16fixture/scope tests pass.
 - `LOCAL_RPC_URL=http://127.0.0.1:8546 pnpm test:browser:chain`:complete real local lifecycle passes in7.3seconds, including seed/reset.
 - Separate browser artifact directories prevent one suite deleting the other's screenshots. The dedicated8546 node avoids resetting8545; generated deployment files remain checkout-local shared resources.
-- Lead visually inspected the390px cancellation review: exact refund, seller address, race explanation and confirmation control fit within the viewport. Retained image: [mobile cancellation](../design/evidence/local-offer-cancellation-mobile.png).
+- Lead and independent frontend reviewer visually inspected the390px cancellation review: exact refund, seller address, race explanation and confirmation control fit within the viewport. Retained image: [mobile cancellation](../design/evidence/local-offer-cancellation-mobile.png).
+
+Hosted verification also passed all three jobs for `8704827`: [run34620553425](https://github.com/MihRazvan/eth-online-2026/actions/runs/34620553425). This includes the complete browser transaction lifecycle from a fresh checkout, contract/static/mutation checks and Substreams verification.
 
 All local transactions use explicitly enabled unlocked Anvil actors and faucet assets. Actual injected-wallet signing, live Graph composition and the controlled public lifecycle still require the access the user is gathering. These checks are not an audit.
