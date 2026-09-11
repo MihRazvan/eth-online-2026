@@ -6,11 +6,15 @@ libs = ["contracts/lib"]
 out = "contracts/out"
 cache_path = "contracts/cache"
 auto_detect_solc = true
+fs_permissions = [{ access = "read", path = "scripts/proof" }]
 evm_version = "cancun"
 optimizer = true
 optimizer_runs = 200
 via_ir = true
 remappings = [
+  "@1inch/aqua/=contracts/lib/aqua/",
+  "@1inch/solidity-utils/=contracts/lib/solidity-utils/",
+  "swap-vm/=contracts/lib/swap-vm/",
   "@uniswap/v4-periphery/=contracts/lib/v4-periphery/",
   "@uniswap/v4-core/=contracts/lib/v4-core/",
   "permit2/=contracts/lib/permit2/",

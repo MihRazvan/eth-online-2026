@@ -46,7 +46,7 @@ contract VerifyPublic {
     event GasMeasured(string step, uint256 gasUsed);
 
     function run() external {
-        string memory j = vm.readFile("../../../scripts/proof/sepolia-witness.json");
+        string memory j = vm.readFile("scripts/proof/sepolia-witness.json");
         uint256 n = vm.parseJsonUint(j, ".blockNumber");
         require(block.chainid == 11155111 && block.number == n + 1, "fork at N+1 on Sepolia");
         BlockHashCheckpoints cache = new BlockHashCheckpoints();

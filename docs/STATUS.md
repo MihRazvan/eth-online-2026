@@ -5,15 +5,15 @@ Updated 2026-09-11. Integration owner: Codex lead. Remote: MihRazvan/eth-online-
 | Work | Owner | State | Evidence / next action |
 | --- | --- | --- | --- |
 | Baseline / capability check | Lead | verified | GitHub write authentication; Node 24.12.0, pnpm 12.3.4, Foundry 1.5.1, Slither 0.11.5; baseline packet check |
-| Contract lifecycle and accounting | Protocol specialist | pending | Fix interfaces, canonical NFT adapter, independent model and invariant tests |
-| Historical endpoint | Proof specialist | pending | Public RPC proof, authenticated checkpoint and native N-snapshot collection |
-| Visual exploration / application | Frontend specialist | pending | Reference study; render distinct concepts then independent critique |
-| Aqua/SwapVM | Lead | pending | Resolve runtime/encoder pins; actual transfers and adverse quotes |
-| Graph composition | Lead | pending | Verify live access; reusable join with freshness and explicit blockers |
-| Independent economic / browser review | Unassigned | pending | Actual code and running app, reproducible findings |
+| Contract lifecycle and accounting | Protocol specialist | local lifecycle verified | Native canonical collection + funded custody + independent real-proof lifecycle; dynamic stateful expansion running |
+| Historical endpoint | Proof specialist | component verified | Genuine Sepolia witness + fork BLOCKHASH + native collection match; full FeeStrip lifecycle integration next; tip-only public proof retention |
+| Visual exploration / application | Frontend specialist | running | Three rendered concepts compared by lead; light ledger selected with denominator/endpoint fixes |
+| Aqua/SwapVM | Lead | local verified | Actual escrow-issued FeeClaim/USDC transfer;11 market tests; callback finding fixed and independently reviewed |
+| Graph composition | Lead | live blocked / code running | Seven math/sink/join tests pass; live CLI returns Unauthenticated, subgraph build underway |
+| Independent economic / browser review | Separate reviewers / lead | increment reviewed | Callback correction verified by second reviewer; actual rendered/browser financial-label fixes; integration-review.md |
 | Submission | Lead | pending | Sponsor checklist, measured lifecycle gas, human-narrated demo script |
 
-All financial acceptance gates in the product contract remain pending. Prior archive tests are inherited component evidence only. No live FeeStrip deployment or public settlement is claimed.
+Full financial acceptance gates in the product contract remain pending; component results above have their stated limits. Prior archive tests are inherited component evidence only. No live FeeStrip deployment or public settlement is claimed. Complete local chain lifecycle passed: nativeN799999999, capture1199999999, residual400000000, final dust2 USDC base units; evidence local-lifecycle.json.
 
 ## Access gaps
 

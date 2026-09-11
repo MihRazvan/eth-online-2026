@@ -12,3 +12,13 @@ broadcast/
 playwright-report/
 test-results/
 .playwright-cli/
+packages/subgraph/generated/
+packages/subgraph/build/
+packages/substreams/target/
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+apps/web/public/deployment.json
+apps/web/public/witness-*.json
+contracts/out-proof/
+contracts/cache-proof/

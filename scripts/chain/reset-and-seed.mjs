@@ -1,0 +1,11 @@
+import {execFileSync} from 'node:child_process';
+import {client,assertLocal,rpcURL} from './common.mjs';
+await assertLocal();
+if(!['localhost','127.0.0.1','[::1]'].includes(new URL(rpcURL).hostname))throw new Error('Reset restricted to loopback development RPC');
+if(!process.argv.includes('--reset'))throw new Error('Use --reset to explicitly reset the dedicated local FeeStrip chain');
+await client.request({method:'anvil_reset',params:[]});
+const actors=await client.request({method:'eth_accounts'});
+execFileSync('forge',['script','contracts/script/DeployLocalNative.s.sol:DeployLocalNative','--sig','run(address,address)',actors[0],actors[1],'--rpc-url',rpcURL,'--unlocked','--sender',actors[0],'--broadcast','--slow'],{stdio:'pipe'});
+execFileSync('forge',['build','-q'],{stdio:'inherit'});
+execFileSync('node',['scripts/generate-abis.mjs'],{stdio:'inherit'});
+execFileSync('node',['scripts/chain/seed.mjs'],{stdio:'inherit'});

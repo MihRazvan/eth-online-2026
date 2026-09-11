@@ -36,11 +36,11 @@ From repository root, with Foundry 1.5.1 and Solidity 0.8.26:
 python3 -m venv /tmp/feestrip-proof-venv
 /tmp/feestrip-proof-venv/bin/pip install -r scripts/proof/requirements.txt
 /tmp/feestrip-proof-venv/bin/python scripts/proof/check_retained.py
-forge test --root contracts/test/proof -vv
-forge script scripts/proof/VerifyPublic.s.sol --root contracts/test/proof --fork-url https://ethereum-sepolia-rpc.publicnode.com --fork-block-number 11682192 -vvvv
+forge test --match-path "contracts/test/proof/*" -vv
+forge script scripts/proof/VerifyPublic.s.sol --fork-url https://ethereum-sepolia-rpc.publicnode.com --fork-block-number 11682192 -vvvv
 ```
 
-The first verification is offline, using independent Python `HexaryTrie` and RLP implementations. The hermetic Solidity suite injects the retained hash and manager bytecode **only for replay testing**. Its scoped Foundry config is independent of the integrated contract suite. Foundry 1.5.1's source-lint display can emit `file ... not found` for the scoped relative imports after successful compilation; the executable test summary and process status report the actual result.
+The first verification is offline, using independent Python `HexaryTrie` and RLP implementations. The hermetic Solidity suite injects the retained hash and manager bytecode **only for replay testing**. The integrated root Foundry configuration now runs the proof suite alongside lifecycle and market tests. Foundry 1.5.1's source-lint display can emit `file ... not found` for the scoped relative imports after successful compilation; the executable test summary and process status report the actual result.
 
 The final script has **no `setBlockhash`, `etch`, or caller-root shortcut**. It forks the public chain at N+1, deploys a local checkpoint/verifier, obtains EVM `blockhash(N)`, checks equality with the retained header, and verifies the proof. It then creates an independent fork at N, reads native StateView position baseline, impersonates the existing NFT owner locally and performs canonical `DECREASE_LIQUIDITY(0)` followed by `TAKE_PAIR`. Actual USDC balance delta is the oracle. Impersonation authorizes the local collection only; it is not a public transaction or a holder signature. The script fails if the RPC cannot serve required state.
 

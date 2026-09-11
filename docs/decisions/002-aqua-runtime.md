@@ -1,0 +1,13 @@
+# Aqua fixed-price claim market
+
+2026-09-11. Official SwapVM pin afd99c408b4ed610027f4426c6f98650acac9f5f; Aqua v1.0.0 81c26e4 (full hash in dependency manifest). Solidity-utils6.9.10 and OZ5.4.0. Sources/licenses inspected and retained; no vendor installation scripts run. Powered by SwapVM — © Degensoft Ltd 2025.
+
+Experiment: source-matched StaticBalances + LimitSwap encoding on the default AquaSwapVMRouter fails UnknownOpcode(144). Its dispatcher omits both fixed-price instructions despite their presence in the repository. Therefore FeeStripRouter extends its virtual opcode dispatcher with those two unmodified official instructions. All other dispatch and asset transfers stay in official SwapVM/Aqua. No incompatible external SDK encoder is used. Custom runtime deployment is explicit, and permitted by the selected partner track; no address is mislabeled as an existing official deployment.
+
+FeeStripMarket builds a one-direction fixed-price program with exact price ratio, expiry, salt and a maker hook binding the FeeStrip market state. Capture/allocation/redemption invalidate old terms, while pure claim transfers do not. A fresh quote may continue trading after maturity and proof delays. Amounts are limited to uint128 to keep upstream fixed-price multiplication bounded. The wallet uses exact input, minimum output and expiry, approving the router directly; there is no custom taker custody/callback.
+
+Aqua allocations remain virtual. Tests demonstrate that shipping the same maker inventory twice does not make both orders executable after the first spends it. Reserve accounting never approves the router or Aqua.
+
+Rejected: constant-product prices as a substitute for advertised fixed-price offers; use of non-dispatched bytecode; market-making with captured reserves. Quote availability is never a liquidity guarantee.
+
+Independent review identified that takers can bypass helper-produced safe flags and provide callbacks to the official runtime. Initial pre-transfer-only state validation was insufficient. Final maker orders bind identical state checks before input and after BOTH transfers. Four callback/transfer-order regression permutations verify atomic rollback; the final hook after either ordering catches a lifecycle change. A second independent reviewer confirmed the correction. Both buy and sell direction now execute with real FeeClaim tokens in unit tests; the complete local protocol lifecycle also trades an actually escrow-issued token.

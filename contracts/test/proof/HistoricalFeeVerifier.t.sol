@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.26;
+pragma solidity 0.8.26;
 
 import {HistoricalFeeVerifier} from "../../src/proof/HistoricalFeeVerifier.sol";
 import {BlockHashCheckpoints} from "../../src/proof/BlockHashCheckpoints.sol";
@@ -38,7 +38,7 @@ contract HistoricalFeeVerifierTest {
     event GasMeasured(string step, uint256 gasUsed);
 
     function setUp() public {
-        string memory json = vm.readFile("../../../scripts/proof/sepolia-witness.json");
+        string memory json = vm.readFile("scripts/proof/sepolia-witness.json");
         endpoint = vm.parseJsonUint(json, ".blockNumber");
         pool = vm.parseJsonBytes32(json, ".poolId");
         hash = vm.parseJsonBytes32(json, ".blockHash");

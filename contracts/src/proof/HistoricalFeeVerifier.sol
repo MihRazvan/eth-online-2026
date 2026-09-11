@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.26;
+pragma solidity 0.8.26;
 
 import {IHistoricalFeeVerifier} from "./IHistoricalFeeVerifier.sol";
 import {BlockHashCheckpoints} from "./BlockHashCheckpoints.sol";

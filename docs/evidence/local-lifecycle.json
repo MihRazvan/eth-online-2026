@@ -1,0 +1,159 @@
+{
+  "scope": "actual local Anvil transactions; canonical Uniswap sources, local faucet currencies; real header/account/storage verifier. Not public-chain FeeStrip deployment.",
+  "chainId": 31337,
+  "endpointBlock": "124",
+  "endpointHash": "0xe89006bee2ae5a8c2469b2e2dc2b560cf0cce2f6ab7f0029c3c9a554ee7e3392",
+  "oldFees": "122999999",
+  "nativeAtN": "799999999",
+  "capturedUSDC": "1199999999",
+  "residualUSDC": "400000000",
+  "dust": "2",
+  "payouts": [
+    {
+      "actor": "0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc",
+      "quantity": "1000000000000000000000",
+      "usdc": "79999999"
+    },
+    {
+      "actor": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+      "quantity": "6500000000000000000000",
+      "usdc": "519999999"
+    },
+    {
+      "actor": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
+      "quantity": "2500000000000000000000",
+      "usdc": "199999999"
+    }
+  ],
+  "receipts": [
+    {
+      "function": "approve",
+      "hash": "0x8c49a034d7ba621e78d5113614e6740b04e9515c8cb9858895c0cede39986369",
+      "block": "26",
+      "gas": "48284"
+    },
+    {
+      "function": "acceptOffer",
+      "hash": "0x3a3c6c17fc5a944fe3f7567cca396fce18f82d81359f491d4dce5da2481e1e6a",
+      "block": "27",
+      "gas": "1204073"
+    },
+    {
+      "function": "donate",
+      "hash": "0x4abc84449ca05e659ed6d4a25b0bf49518401d76e058f95841b965d0795af31b",
+      "block": "28",
+      "gas": "103406"
+    },
+    {
+      "function": "approve",
+      "hash": "0x2582c75857b058ae3c2d132497e1738f0b934b60d40384678e4900fefe3fb6c1",
+      "block": "29",
+      "gas": "45961"
+    },
+    {
+      "function": "approve",
+      "hash": "0x69ae8d8224a77a1642aea506755c77b4376c957c9ae136bcc73b2a65b0257fc8",
+      "block": "30",
+      "gas": "46249"
+    },
+    {
+      "function": "ship",
+      "hash": "0x9d579b60d9ff5639fdbcdbb455a00557d219abf379c85d399ce934627e89eac4",
+      "block": "31",
+      "gas": "87411"
+    },
+    {
+      "function": "approve",
+      "hash": "0x096c00384d2df38b4d68e542b7c4284361df8e803a0932df8b30bb8507a3fc20",
+      "block": "32",
+      "gas": "45901"
+    },
+    {
+      "function": "swap",
+      "hash": "0x49604798b5de3e29df71b3d560390f3be73f1b2ca895621ced5e088ed33556a1",
+      "block": "33",
+      "gas": "164072"
+    },
+    {
+      "function": "donate",
+      "hash": "0x233836651aa60a58efc703679dadcbc16a50ed0f5295f063e3b14b85df393a66",
+      "block": "126",
+      "gas": "103406"
+    },
+    {
+      "function": "capture",
+      "hash": "0xd68e825cd40f31dda4c8a9669510d87bdcb13a9ce1a76fd9c04b63d7702b90b7",
+      "block": "127",
+      "gas": "272114"
+    },
+    {
+      "function": "withdrawNFT",
+      "hash": "0xf19cb2a6a620d35e89d7cd75e31bdb598ac03ddfdab7214a037a2defad62c947",
+      "block": "128",
+      "gas": "83912"
+    },
+    {
+      "function": "checkpoint",
+      "hash": "0x3d8f10f14ae59db72d0331f3ac91f9f500568e1d5fafae38111944b1d302e9d8",
+      "block": "129",
+      "gas": "45126"
+    },
+    {
+      "function": "settle",
+      "hash": "0x3a66b380e4b68039e2b92d9349b8d7743fdbf763ccb8c1e56441a4a1f533e8b6",
+      "block": "130",
+      "gas": "1555680"
+    },
+    {
+      "function": "redeem",
+      "hash": "0x4035084fef03a3a764adff08f5d69f800295ee150776f86155d184b34873899d",
+      "block": "131",
+      "gas": "110993"
+    },
+    {
+      "function": "redeem",
+      "hash": "0x5eb9e6ce5493d9e573efb3e84a0bfc57d0d3e5f0f2343f70b9a335f1f7114b7e",
+      "block": "132",
+      "gas": "81214"
+    },
+    {
+      "function": "redeem",
+      "hash": "0x4b35b1bcb4f76af380611afe099294be532ba1f69d2fd2fa132733da56346101",
+      "block": "133",
+      "gas": "81204"
+    },
+    {
+      "function": "withdrawResidual",
+      "hash": "0x9d87f826a44ab75bf67323862cc5c933f9588a88c6c03eba80094ea8c6b4bb61",
+      "block": "134",
+      "gas": "84436"
+    }
+  ],
+  "contracts": {
+    "mode": "local",
+    "chainId": 31337,
+    "rpcUrl": "http://127.0.0.1:8545",
+    "feeStrip": "0x0b306bf915c4d645ff596e518faf3f9669b97016",
+    "usdc": "0x9fe46736679d2d9a65f0992f2272de9f3c7fa6e0",
+    "other": "0xcf7ed3acca5a467e9e704c703e8d87f634fb0fc9",
+    "positionManager": "0xe7f1725e7734ce288f8367e1bb143e90bb3f0512",
+    "poolManager": "0x5fbdb2315678afecb367f032d93f642f64180aa3",
+    "verifier": "0x9a676e781a523b5d0c0e43731313a708cb607508",
+    "checkpoints": "0x0dcd1bf9a1b36ce34237eeafef220932846bcd82",
+    "market": "0x68b1d87f95878fe05b998f19b66f4baba5de1aed",
+    "swapRouter": "0x9a9f2ccfde556a7e9ff0848998aa4a0cfd8863ae",
+    "aqua": "0x959922be3caee4b8cd9a407cc3ac1c251c2007b1",
+    "activityRouter": "0x5fc8d32690cc91d4c39d9d3abcbd16989f875707",
+    "nftIds": [
+      "1"
+    ],
+    "actors": {
+      "seller": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
+      "buyer": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+      "holder": "0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc"
+    },
+    "offerId": "1",
+    "endBlock": "124",
+    "deploymentBlock": "0x1"
+  }
+}

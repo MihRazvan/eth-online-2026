@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.26;
+pragma solidity 0.8.26;
 
 /// @notice Permissionless permanent checkpoints of this chain's recent canonical block hashes.
 /// @dev Call at N+1 through N+256 inclusive. Missing this window leaves allocation unresolved.
