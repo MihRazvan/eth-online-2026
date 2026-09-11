@@ -1,0 +1,8 @@
+target/
+node_modules/
+sink/node_modules/
+*.spkg
+!upstream/*.spkg
+*.db
+*.db-shm
+*.db-wal

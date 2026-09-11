@@ -1,0 +1,2 @@
+# Retain byte-exact upstream sources; source.test.mjs verifies their recorded hashes.
+upstream/** -whitespace

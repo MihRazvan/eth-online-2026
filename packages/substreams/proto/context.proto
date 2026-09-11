@@ -1,0 +1,50 @@
+syntax = "proto3";
+package feestrip.context.v1;
+
+// Every block is emitted, including blocks with no selected events. Cursor/finality are transport metadata.
+message PoolContextBlock {
+  uint64 chain_id = 1;
+  string pool_manager = 2;
+  uint64 number = 3;
+  string hash = 4;
+  string parent_hash = 5;
+  uint64 timestamp = 6;
+  repeated PoolInitialized initialized = 7;
+  repeated Swap swaps = 8;
+  repeated LiquidityChange liquidity_changes = 9;
+  bool donations_included = 10;
+  string allocation_authority = 11;
+}
+message PoolInitialized {
+  string pool_id = 1;
+  string currency0 = 2;
+  string currency1 = 3;
+  string hooks = 4;
+  uint32 fee = 5;
+  int32 tick_spacing = 6;
+  int32 tick = 7;
+  string sqrt_price_x96 = 8;
+  uint32 log_index = 9;
+  string transaction_hash = 10;
+}
+message Swap {
+  string pool_id = 1;
+  uint32 log_index = 2;
+  string transaction_hash = 3;
+  int32 tick = 4;
+  string amount0 = 5;
+  string amount1 = 6;
+  string liquidity = 7;
+  string sqrt_price_x96 = 8;
+  uint32 fee = 9;
+}
+message LiquidityChange {
+  string pool_id = 1;
+  uint32 log_index = 2;
+  string transaction_hash = 3;
+  int32 tick_lower = 4;
+  int32 tick_upper = 5;
+  string liquidity_delta = 6;
+  string sender = 7;
+  string salt = 8;
+}

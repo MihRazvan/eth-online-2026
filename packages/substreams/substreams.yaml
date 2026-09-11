@@ -1,0 +1,48 @@
+specVersion: v0.1.0
+package:
+  name: feestrip-pool-context
+  version: v0.1.0
+  url: https://github.com/MihRazvan/eth-online-2026/tree/main/packages/substreams
+  description: Typed Uniswap v4 pool activity and block continuity for independent range-risk analytics. Never payout authority.
+imports:
+  v4: ./upstream/uniswap-v4-v0.1.1.spkg
+protobuf:
+  files:
+    - context.proto
+  importPaths:
+    - ./proto
+  excludePaths:
+    - google
+    - sf/substreams
+binaries:
+  default:
+    type: wasm/rust-v1
+    file: ./target/wasm32-unknown-unknown/release/feestrip_context.wasm
+network: sepolia
+modules:
+  - name: map_pool_context
+    kind: map
+    initialBlock: 7258946
+    inputs:
+      - params: string
+      - map: v4:map_events
+      - source: sf.ethereum.type.v2.Block
+    output:
+      type: proto:feestrip.context.v1.PoolContextBlock
+params:
+  map_pool_context: chain_id=11155111&pool_manager=0xe03a1074c86cfedd5c142c4f04f1a1536e203543&pool_ids=*
+networks:
+  sepolia:
+    initialBlock:
+      map_pool_context: 7258946
+      v4:map_events: 7258946
+    params:
+      map_pool_context: chain_id=11155111&pool_manager=0xe03a1074c86cfedd5c142c4f04f1a1536e203543&pool_ids=*
+      v4:map_events: pool_manager=0xe03a1074c86cfedd5c142c4f04f1a1536e203543&position_manager=0x429ba70129df741b2ca2a85bc3a2a3328e5c09b4
+  mainnet:
+    initialBlock:
+      map_pool_context: 21688329
+      v4:map_events: 21688329
+    params:
+      map_pool_context: chain_id=1&pool_manager=0x000000000004444c5dc75cb358380d2e3de08a90&pool_ids=*
+      v4:map_events: pool_manager=0x000000000004444c5dc75cb358380d2e3de08a90&position_manager=0xbd216513d74c8cf14cf4747e6aaa6420ff64ee9e

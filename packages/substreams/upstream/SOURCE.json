@@ -1,0 +1,34 @@
+{
+  "recorded": "2026-09-11",
+  "note": "Registry SPKG is the downloaded published binary, not claimed rebuilt from source. Its package includes the same upstream event message field names/types. The source pin records inspected maintained implementation. Rust message code is generated during build; no generated Rust vendored.",
+  "files": {
+    "events.proto": {
+      "source": "https://github.com/streamingfast/substreams-chain-modules/blob/d054c303c1e39e3a1c9da8296ac0a4bff7110233/dex/uniswap-v4-substreams/proto/events.proto",
+      "commit": "d054c303c1e39e3a1c9da8296ac0a4bff7110233",
+      "license": "Apache-2.0",
+      "sha256": "8b22f3eba2615803b212ba5e94c1b577b87ee542d16acc45cf108f4456fceb36",
+      "modifications": "none"
+    },
+    "uniswap-v4-v0.1.1.spkg": {
+      "source": "https://spkg.io/v1/packages/uniswap-v4-substreams/v0.1.1",
+      "commit": null,
+      "license": "Apache-2.0",
+      "sha256": "d9e4f57698f153c8782adb7e03c266216143f9f595d37c812c169934b7b44c34",
+      "modifications": "none"
+    },
+    "sf/substreams/sink/sql/schema/v1/schema.proto": {
+      "source": "https://github.com/streamingfast/substreams/blob/be35ad36f63a52ff49d3e15cf993de4cad6bfbd9/proto/sf/substreams/sink/sql/schema/v1/schema.proto",
+      "commit": "be35ad36f63a52ff49d3e15cf993de4cad6bfbd9",
+      "license": "Apache-2.0",
+      "sha256": "cb688ac5bed9142de00554fe0900cb4a93e0009ebbec43b8e793f20d9890542c",
+      "modifications": "none"
+    },
+    "LICENSE": {
+      "source": "https://github.com/streamingfast/substreams-chain-modules/blob/d054c303c1e39e3a1c9da8296ac0a4bff7110233/LICENSE",
+      "commit": "d054c303c1e39e3a1c9da8296ac0a4bff7110233",
+      "license": "Apache-2.0",
+      "sha256": "0f3d1ff06b9dea4640c679ca27ca8f01ef071af32e09c36ccca6bee8186c5e9c",
+      "modifications": "none"
+    }
+  }
+}
