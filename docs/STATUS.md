@@ -2,16 +2,18 @@
 
 Updated 2026-09-11. Integration owner: Codex lead. Remote: MihRazvan/eth-online-2026, main. Remote was verified empty; no rulesets. Local folder originally held only the handoff.
 
+Current direction: the user explicitly deprioritized hackathon requirements and is gathering access for the end-to-end user test. Active work focuses on the actual product. The [research synthesis and ordered backlog](research/README.md) covers product workflows, historical-proof reliability, open projects, skills and native coordination. Submission documents are retained as historical material, not an active workstream.
+
 | Work | Owner | State | Evidence / next action |
 | --- | --- | --- | --- |
 | Baseline / capability check | Lead | verified | GitHub write authentication; Node 24.12.0, pnpm 12.3.4, Foundry 1.5.1, Slither 0.11.5; baseline packet check |
 | Contract lifecycle and accounting | Protocol specialist | local lifecycle verified | Native canonical collection + funded custody + independent real-proof lifecycle; dynamic4-NFT lifecycle and custody bypasses verified |
 | Historical endpoint | Proof specialist | component verified | Genuine Sepolia witness + fork BLOCKHASH + native collection match; full local real-proof lifecycle verified; controlled public lifecycle pending; tip-only public proof retention |
-| Visual exploration / application | Frontend specialist | local verified | Three rendered concepts compared by lead;14fixture/safety tests and saved real-transaction browser lifecycle; independent integrated browser rerun passed |
+| Visual exploration / application | Frontend specialist / lead | local verified | Three rendered concepts;16fixture/safety tests; actual browser lifecycle now includes exact100USDC expired-offer refund without touching series reserves |
 | Aqua/SwapVM | Lead | local verified | Actual escrow-issued FeeClaim/USDC transfer;11 market tests; callback finding fixed and independently reviewed |
 | Graph composition | Lead | live blocked / hermetic verified | 17math/sink/join tests;5Rust+12WASM/sink tests; Subgraph build passes; live CLI Unauthenticated |
 | Independent economic / browser review | Separate reviewers / lead | increment reviewed | Callback correction verified by second reviewer; actual rendered/browser financial-label fixes; integration-review.md |
-| Submission | Lead / protocol specialist | materials prepared | docs/submission.md and FEEDBACK.md; current rules verified; human review/narration and live gates pending |
+| Product research / recovery | Lead / research specialists | research complete; first increments verified | Four cited memos; buyer cancellation UI and canonical witness acquisition integrated; durable retention/recovery, entitlement receipt and executable quote controls next |
 
 Full financial acceptance gates in the product contract remain pending; component results above have their stated limits. Prior archive tests are inherited component evidence only. No live FeeStrip deployment or public settlement is claimed. Complete local chain lifecycle passed: nativeN799999999, capture1199999999, residual400000000, final dust2 USDC base units; evidence local-lifecycle.json.
 
@@ -26,3 +28,5 @@ One ledger, native agents, isolated worktrees. Lead owns shared ABI, root files 
 Reproducibility: docs/development.md. Static analysis reproduces13 explicitly reviewed findings, not a clean report/audit. Incorrect-denominator mutation is killed in a disposable project. Independent data review corrected mixed-fork snapshot attribution, Graph collection naming, checkpoint provenance and closed-series purchase metrics; see data-review.md. Hosted CI is green for implementation `6ce74e1`: [run34609205562](https://github.com/MihRazvan/eth-online-2026/actions/runs/34609205562), all three jobs successful. This includes47contract tests, reviewed static findings, mutation kill,17core/data tests,14fixture/scope browser tests, the complete real-chain browser lifecycle, Subgraph build and5Rust/12WASM-sink tests. Counts overlap across shared sink suites and are not an aggregate unique-test claim. The initial browser job exposed the documented same-URL login harness issue; the corrected helper passes both independent local and hosted runs. Full public/live financial acceptance remains blocked by the access gaps above.
 
 Follow-up check: latest published documentation commit `78bb15e` also passed all hosted jobs: [run34609641305](https://github.com/MihRazvan/eth-online-2026/actions/runs/34609641305). Submission checklist reconciled with completed browser and reusable Substreams work; live/provider and human gates remain open.
+
+Research increment: `pnpm test` passes27tests (17existing core/data +10witness acquisition), `pnpm build` passes,16fixture/scope browser tests pass, and the complete real-chain browser suite passes with EIP-1898 witness acquisition and cancellation of the100test-USDC seed offer. A separate Anvil node at8546 isolated this run from8545. Independent reviewers checked acquisition and refund paths; browser integration caught and fixed decimal-string chain metadata compatibility. Evidence and remaining validation limits: [research implementation review](evidence/research-implementation.md). Current increment's hosted result is recorded after push; earlier green runs above do not establish its CI status.

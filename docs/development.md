@@ -32,6 +32,8 @@ The seed creates an existing nonempty hookless NFT, clears no sale terms automat
 
 For the independent transaction-level regression, start with `pnpm local:reset` and run `pnpm test:chain`. It compares settlement against a native collection branch at the identical N snapshot, then checks actual payouts, residual assets and dust. It consumes the seeded offer, so reset before another run. Run `pnpm test:browser:chain` for the saved browser lifecycle; it resets the dedicated node itself. Its receipts and screenshots are distinct from fixture tests.
 
+To isolate browser transactions from a running8545 development node, start another Anvil on8546 and run `LOCAL_RPC_URL=http://127.0.0.1:8546 pnpm test:browser:chain`. It still writes this checkout's generated deployment/witness files; use a separate checkout if another app needs those files unchanged. Browser artifacts are separated under `apps/web/test-results/fixtures` and `apps/web/test-results/chain`. The transaction suite now also cancels the buyer's expired, unaccepted seed offer and verifies its exact refund without changing settled reserves. Buyers can do this through **Your positions → Your funded offers → Review cancellation**; expiry alone does not refund capital.
+
 ## Independent checks
 
 ```sh
