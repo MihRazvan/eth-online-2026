@@ -1957,3 +1957,223 @@ dialog h2 {
     max-width: none;
   }
 }
+
+/* A persistent record of fee rights; separate from the executable purchase. */
+.detail-main > .entitlement-receipt {
+  padding: 0;
+  border: 1px solid var(--line);
+  margin-bottom: 38px;
+}
+.entitlement-receipt {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.entitlement-receipt .receipt-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 22px 26px;
+  background: #e8ecde;
+}
+.detail-main .entitlement-receipt h2 {
+  margin: 0;
+  font-size: 23px;
+}
+.entitlement-receipt .receipt-header > span {
+  white-space: nowrap;
+  font-size: 11px;
+  font-weight: 600;
+}
+.receipt-body {
+  padding: 24px 26px;
+}
+.receipt-identity {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  font-size: 11px;
+  color: var(--muted);
+}
+.receipt-share {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin: 22px 0 9px;
+}
+.receipt-share > div {
+  min-width: 0;
+}
+.receipt-share span {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  margin-bottom: 7px;
+}
+.receipt-share strong {
+  font-family: var(--heading-font, "Manrope", sans-serif);
+  font-size: clamp(20px, 2.2vw, 30px);
+  line-height: 1.25;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+.receipt-share > div + div {
+  border-left: 1px solid var(--line);
+  padding-left: 24px;
+}
+.receipt-share-note,
+.receipt-period {
+  font-size: 12px;
+  line-height: 1.65;
+  margin: 10px 0 20px;
+}
+.receipt-window {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  border-block: 1px solid var(--line);
+  padding-block: 15px;
+  font-size: 11px;
+  line-height: 1.6;
+}
+.receipt-window span {
+  flex: 1;
+}
+.receipt-window span:last-child {
+  text-align: right;
+}
+.receipt-window b {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+.receipt-window svg {
+  width: 28px;
+  flex: 0 0 28px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1;
+}
+.receipt-period {
+  margin-top: 13px;
+}
+.receipt-rights {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 25px;
+}
+.receipt-rights h3 {
+  margin: 0 0 9px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.receipt-rights p,
+.receipt-settlement p,
+.receipt-record p {
+  font-size: 12px;
+  line-height: 1.7;
+  margin: 0;
+}
+.receipt-rights > div + div {
+  color: var(--muted);
+}
+.receipt-settlement {
+  padding-top: 18px;
+  margin-top: 21px;
+  border-top: 1px solid var(--line);
+}
+.receipt-settlement > b {
+  font-size: 13px;
+  display: block;
+  margin-bottom: 7px;
+}
+.receipt-settlement p strong {
+  font-weight: 600;
+}
+.receipt-record {
+  font-size: 11px;
+  margin-top: 21px;
+}
+.receipt-record summary {
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.receipt-record p {
+  margin: 13px 0;
+}
+.receipt-record button {
+  min-height: 44px;
+  font-size: 12px;
+}
+.receipt-record small {
+  display: block;
+  margin-top: 9px;
+  font-size: 10px;
+  color: var(--muted);
+}
+.holding-row > .compact-receipt {
+  grid-column: 1 / -1;
+  width: 100%;
+  border-top: 1px dashed var(--line);
+}
+.compact-receipt > summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  cursor: pointer;
+  padding: 14px 0 0;
+  list-style: none;
+  font-size: 13px;
+}
+.compact-receipt > summary::-webkit-details-marker {
+  display: none;
+}
+.compact-receipt > summary small {
+  margin-top: 6px;
+}
+.compact-receipt .receipt-disclosure {
+  font-size: 22px;
+  font-weight: 400;
+}
+.compact-receipt[open] .receipt-disclosure {
+  transform: rotate(45deg);
+}
+.compact-receipt .receipt-body {
+  padding: 24px 0 4px;
+  max-width: 760px;
+}
+@media (max-width: 680px) {
+  .entitlement-receipt .receipt-header {
+    padding: 19px 18px;
+    align-items: start;
+  }
+  .detail-main .entitlement-receipt h2 {
+    font-size: 20px;
+  }
+  .receipt-body {
+    padding: 19px 18px;
+  }
+  .receipt-share {
+    gap: 16px;
+  }
+  .receipt-share > div + div {
+    padding-left: 16px;
+  }
+  .receipt-rights {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+  .receipt-identity {
+    flex-wrap: wrap;
+  }
+  .receipt-window {
+    gap: 10px;
+  }
+  .receipt-window svg {
+    flex-basis: 20px;
+  }
+}

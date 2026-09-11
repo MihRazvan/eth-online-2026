@@ -10,6 +10,10 @@ import type {
 } from "./types";
 import { FixtureAdapter } from "./fixtureAdapter";
 import {
+  EntitlementReceipt,
+  FEE_CLAIM_RIGHTS,
+} from "./components/EntitlementReceipt";
+import {
   integer,
   money,
   parseUsdc,
@@ -441,7 +445,7 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
         ["Earning cutoff", "End of block " + integer(selected.endBlock)],
       ],
       warning:
-        "These claims carry all unpaid income for the sold window, including income earned before this purchase. Income and resale liquidity are not guaranteed.",
+        FEE_CLAIM_RIGHTS + " Income and resale liquidity are not guaranteed.",
       button: "Confirm claim purchase",
     });
   };
@@ -785,6 +789,15 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
             </div>
             <div className="detail-layout">
               <div className="detail-main">
+                <EntitlementReceipt
+                  market={selected}
+                  quantity={
+                    connected ? (s.wallet.claims[selected.id] ?? "0") : null
+                  }
+                  chainId={s.chainId}
+                  sourceBlock={s.sourceBlock}
+                  mode={s.mode}
+                />
                 <section className="instrument">
                   <div className="section-top">
                     <h2>Behind this fee strip</h2>
@@ -1545,6 +1558,14 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                               </button>
                             )}
                         </div>
+                        <EntitlementReceipt
+                          market={m}
+                          quantity={s.wallet.claims[m.id]}
+                          chainId={s.chainId}
+                          sourceBlock={s.sourceBlock}
+                          mode={s.mode}
+                          compact
+                        />
                         {!fixture && makerQuoteSeries === m.id && (
                           <MakerQuote
                             market={m}
