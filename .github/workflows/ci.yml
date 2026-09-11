@@ -46,6 +46,7 @@ jobs:
         run: |
           anvil --host 127.0.0.1 --port 8545 --chain-id 31337 --hardfork cancun --silent > /tmp/feestrip-anvil.log 2>&1 &
       - run: pnpm test:browser:chain
+      - run: USE_VERIFIED_GROWTH_CACHE=true pnpm test:browser:chain
       - run: pnpm local:reset
       - run: pnpm test:chain
       - name: Start isolated quote chain

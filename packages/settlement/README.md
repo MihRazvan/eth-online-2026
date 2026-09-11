@@ -20,7 +20,7 @@ For a seeded disposable local chain, run `pnpm local:retention-config`, then sta
 RETENTION_CONFIG="$PWD/.scratch/retention/local/local.generated.json" pnpm dev:recovery
 ```
 
-This explicit setup command refreshes only its generated local config; the SQLite history and retained copies survive restart. It never resets the chain or signs a transaction.
+This explicit setup command refreshes only its generated local config; the SQLite history and retained copies survive restart. It never resets the chain or signs a transaction. After deliberately resetting a local chain, use a fresh database/copy directory (keep the previous directory as an archive): a reset can invalidate recorded finality even when deterministic deployment addresses are reused. Normal process restarts reuse the existing store.
 
 The config is private, ignored operator material. It contains `chainId` (31337 or11155111), `genesisHash`, `feeStrip`, `verifier`, `checkpoints`, `poolManager`, `usdc`, `managerCodeHash`, `codeHashes` (the four named deployed runtime hashes), `rpcUrls` (one to three), `database`, two distinct `artifactRoots`, and optional `intervalMs` (default1000) / `port` (default8788). Addresses and runtime/genesis hashes must come from the operator's verified deployment record. Never derive public trust pins from an untrusted proof response. `local-config.mjs` generates pins solely for a disposable loopback development chain; the real lifecycle test demonstrates its use.
 

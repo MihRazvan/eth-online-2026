@@ -1,10 +1,18 @@
 import { test, expect, type Page } from "@playwright/test";
 import { execFileSync } from "node:child_process";
-import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import { readFileSync, writeFileSync, mkdirSync, mkdtempSync, rmSync, unlinkSync } from "node:fs";
 import { resolve } from "node:path";
+import { tmpdir } from "node:os";
+import { RetentionStore, digest } from "../../../packages/settlement/src/store.mjs";
+import { RetentionWorker } from "../../../packages/settlement/src/worker.mjs";
+import { localRetentionConfig } from "../../../packages/settlement/src/local-config.mjs";
+import { recoveryServer } from "../../../packages/settlement/src/server.mjs";
 import { fileURLToPath } from "node:url";
 import {
   createPublicClient,
+  createWalletClient,
+  encodeAbiParameters,
+  keccak256,
   http,
   erc20Abi,
   parseAbi,
@@ -21,7 +29,9 @@ const repo =
   process.env.FEESTRIP_REPO_ROOT ??
   fileURLToPath(new URL("../../../", import.meta.url));
 let deployment: Deployment;
+let recoveryDirectory: string, recoveryStore: RetentionStore, recoveryWorker: RetentionWorker, recoveryAPI: ReturnType<typeof recoveryServer>;
 const receipts: { action: string; hash: Hex }[] = [];
+const cacheOnly=process.env.USE_VERIFIED_GROWTH_CACHE === "true";
 const rpcURL = process.env.LOCAL_RPC_URL ?? "http://127.0.0.1:8545";
 if (!["localhost", "127.0.0.1", "[::1]"].includes(new URL(rpcURL).hostname))
   throw new Error("Chain browser suite requires a loopback RPC.");
@@ -97,6 +107,16 @@ test.beforeAll(async () => {
   );
   expect(deployment.mode).toBe("local");
   expect(deployment.chainId).toBe(31337);
+  recoveryDirectory=mkdtempSync(resolve(tmpdir(), 'feestrip-browser-recovery-'));
+  recoveryStore=new RetentionStore(resolve(recoveryDirectory,'keeper.sqlite'),{artifactRoots:[resolve(recoveryDirectory,'a'),resolve(recoveryDirectory,'b')]});
+  recoveryWorker=new RetentionWorker(await localRetentionConfig(deployment,client),recoveryStore);
+  recoveryAPI=recoveryServer({store:recoveryStore,scope:recoveryWorker.scope});
+  await new Promise<void>((resolve,reject)=>{recoveryAPI.once('error',reject);recoveryAPI.listen(8788,'127.0.0.1',resolve);});
+});
+test.afterAll(async()=>{
+  if(recoveryAPI?.listening)await new Promise<void>(resolve=>recoveryAPI.close(resolve));
+  recoveryStore?.close();
+  if(recoveryDirectory)rmSync(recoveryDirectory,{recursive:true,force:true});
 });
 
 test("real browser funding, exact NFT sale, Aqua maker publication, trade, late capture, NFT return and independent payouts", async ({
@@ -143,6 +163,8 @@ test("real browser funding, exact NFT sale, Aqua maker publication, trade, late 
   await expect(page.getByRole("dialog")).toContainText("8,000 / 10,000");
   await confirm(page, "Accept exact funded terms", "acceptOffer");
   const activated = await state();
+  expect((await recoveryWorker.tick()).status).toBe("observed");
+  expect(recoveryStore.publicStatus(recoveryWorker.scope,"1").state).toBe("scheduled");
   expect(activated.tokenId).toBe(1n);
   expect(activated.quantity).toBe(10000n * 10n ** 18n);
   expect(
@@ -196,6 +218,13 @@ test("real browser funding, exact NFT sale, Aqua maker publication, trade, late 
     fullPage: true,
   });
   run("mature.mjs", "1");
+  expect((await recoveryWorker.tick()).status).toBe("observed");
+  const retained=recoveryStore.publicStatus(recoveryWorker.scope,"1");
+  expect(retained.state).toBe("retained");expect(retained.copies).toBe(2);
+  // The browser must use the real recovery service; the legacy static fallback is absent.
+  unlinkSync(resolve(repo,"apps/web/public/witness-1.json"));
+  const recoveredResponse=await fetch(`http://127.0.0.1:8788/api/recovery/artifact?seriesId=1&digest=${retained.artifactDigest}`);
+  expect(recoveredResponse.ok).toBe(true);expect(digest(await recoveredResponse.text())).toBe(retained.artifactDigest);
   await page
     .getByRole("button", { name: "Refresh chain state", exact: true })
     .click();
@@ -236,9 +265,31 @@ test("real browser funding, exact NFT sale, Aqua maker publication, trade, late 
     path: testInfo.outputPath("nft-returned-proof-pending.png"),
     fullPage: true,
   });
+  expect((await recoveryWorker.tick()).status).toBe("observed");
   await login(page, "holder", "market/1");
+  const recoveryPanel=page.getByRole("region",{name:"Historical proof recovery"});
+  await expect(recoveryPanel).toBeVisible();
+  const downloadPromise=page.waitForEvent("download");
+  await recoveryPanel.getByRole("button",{name:"Download proof JSON",exact:true}).click();
+  const proofDownload=await downloadPromise,downloadPath=testInfo.outputPath("retained-proof.json");
+  await proofDownload.saveAs(downloadPath);expect(digest(readFileSync(downloadPath))).toBe(retained.artifactDigest);
+  await recoveryPanel.screenshot({path:testInfo.outputPath("actual-recovery-panel.png")});
+  if(cacheOnly){
+    const proof=JSON.parse(readFileSync(downloadPath,'utf8'));
+    const poolId=keccak256(encodeAbiParameters([{type:'tuple',components:[{name:'currency0',type:'address'},{name:'currency1',type:'address'},{name:'fee',type:'uint24'},{name:'tickSpacing',type:'int24'},{name:'hooks',type:'address'}]}],[s.key]));
+    const hash=await createWalletClient({account:holder,transport:http(rpcURL)}).writeContract({chain:null,address:deployment.verifier,abi:parseAbi(['function cacheGrowth(uint256,bytes32,int24,int24,bool,bytes) returns(uint256)']),functionName:'cacheGrowth',args:[s.endBlock,poolId,s.tickLower,s.tickUpper,s.key.currency0.toLowerCase()===deployment.usdc.toLowerCase(),proof.witness]});
+    expect((await client.waitForTransactionReceipt({hash})).status).toBe('success');receipts.push({action:'cacheAuthenticatedGrowth',hash});
+    // Simulate loss of all retained artifact bytes after the exact onchain cache is verified.
+    recoveryStore.db.exec('DELETE FROM job_artifacts; DELETE FROM artifacts;');
+    for(const root of recoveryStore.roots)unlinkSync(resolve(root,`${retained.artifactDigest}.json`));
+    expect((await recoveryWorker.tick()).status).toBe('observed');
+    const cached=recoveryStore.publicStatus(recoveryWorker.scope,'1');expect(cached.state).toBe('cached-onchain');expect(cached.artifactDigest).toBeNull();
+    await recoveryPanel.getByRole('button',{name:'Refresh recovery status',exact:true}).click();
+    await expect(recoveryPanel).toContainText('Cached onchain · observed');
+    await expect(recoveryPanel.getByRole('button',{name:'Download proof JSON',exact:true})).toBeDisabled();
+  }
   await page
-    .getByRole("button", { name: "Submit historical proof", exact: true })
+    .getByRole("button", { name: "Allocate fee reserve", exact: true })
     .click();
   await confirm(page, "Confirm transaction", "settleRetainedWitness");
   s = await state();
@@ -350,10 +401,11 @@ test("real browser funding, exact NFT sale, Aqua maker publication, trade, late 
     claimPayoutTotal: paid.toString(),
     reservedDust: reserve.toString(),
     cancelledOfferRefund: funded.toString(),
+    recovery:{artifactDigest:retained.artifactDigest,filesystemCopies:cacheOnly?0:2,actualApi:true,staticWitnessRemoved:true,settledFromVerifiedCache:cacheOnly},
     unconsumedFundedOffers: fundedAfterCancellation.toString(),
     receipts,
   };
-  const path = resolve(repo, "docs/evidence/browser-chain-lifecycle.json");
+  const path = resolve(repo, cacheOnly ? "docs/evidence/browser-cache-lifecycle.json" : "docs/evidence/browser-chain-lifecycle.json");
   mkdirSync(resolve(repo, "docs/evidence"), { recursive: true });
   writeFileSync(path, JSON.stringify(evidence, null, 2) + "\n");
   await testInfo.attach("chain-evidence", {
