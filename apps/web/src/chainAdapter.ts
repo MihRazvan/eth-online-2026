@@ -41,8 +41,12 @@ import type {
   MakerStrategy,
   Snapshot,
   WalletState,
+  RecoveryResult,
+  RecoveryDownload,
+  RecoveryObservation,
 } from "./types";
 import { CLAIM_UNIT } from "./amounts";
+import { validateRecovery, verifyArtifactDigest } from "./recovery";
 
 export interface Deployment {
   mode: "local" | "testnet";
@@ -832,6 +836,7 @@ export class ChainAdapter implements FeeStripAdapter {
       blockNumber: bn.toString(),
       timestamp: block.timestamp.toString(),
       sourceBlock: bn.toString(),
+      feeStrip: d.feeStrip,
       markets,
       positions: positions.filter((p): p is Position => !!p),
       fundedOffers: offers
@@ -1122,6 +1127,122 @@ export class ChainAdapter implements FeeStripAdapter {
           amount,
         ]),
       );
+  }
+  private async recoveryScope(seriesId: string) {
+    if (!/^[1-9][0-9]*$/.test(seriesId))
+      throw new Error("Invalid recovery series.");
+    await this.validate();
+    const s = await this.read<Series>(
+      this.deployment.feeStrip,
+      feeStripAbi,
+      "series",
+      [BigInt(seriesId)],
+    );
+    if (s.endBlock === 0n)
+      throw new Error("Series is unavailable on this deployment.");
+    return {
+      chainId: this.deployment.chainId,
+      feeStrip: this.deployment.feeStrip,
+      verifier: this.deployment.verifier,
+      manager: this.deployment.poolManager,
+      seriesId,
+      endBlock: s.endBlock.toString(),
+    };
+  }
+  async readRecovery(seriesId: string): Promise<RecoveryResult> {
+    let scope, response;
+    try {
+      scope = await this.recoveryScope(seriesId);
+      response = await fetch(
+        "/api/recovery?" + new URLSearchParams({ seriesId }),
+        { cache: "no-store", signal: AbortSignal.timeout(10000) },
+      );
+      if (!response.ok)
+        return {
+          status: "unavailable",
+          failure: [404, 500, 502, 503, 504].includes(response.status)
+            ? "service"
+            : "scope",
+          reason:
+            response.status === 404
+              ? "This series is not registered with the recovery service."
+              : "The recovery service could not provide an observation.",
+        };
+    } catch {
+      return {
+        status: "unavailable",
+        failure: "service",
+        reason:
+          "Recovery observation unavailable. The service or chain could not be reached.",
+      };
+    }
+    try {
+      return validateRecovery(await response.json(), scope);
+    } catch (error) {
+      return {
+        status: "unavailable",
+        failure: "scope",
+        reason: (error as Error).message,
+      };
+    }
+  }
+  private async retainedArtifact(
+    seriesId: string,
+    observation: RecoveryObservation,
+  ): Promise<RecoveryDownload> {
+    if (
+      !observation.artifactDigest ||
+      !["retained", "unavailable"].includes(observation.state)
+    )
+      throw new Error(
+        "No current retained artifact is available for this series.",
+      );
+    const response = await fetch(
+      "/api/recovery/artifact?" +
+        new URLSearchParams({ seriesId, digest: observation.artifactDigest }),
+      { cache: "no-store", signal: AbortSignal.timeout(35000) },
+    );
+    if (!response.ok)
+      throw new Error(
+        "The retained artifact is unavailable or changed. Refresh recovery status before trying again.",
+      );
+    const json = await response.text();
+    await verifyArtifactDigest(json, observation.artifactDigest);
+    const file = JSON.parse(json);
+    const scope = await this.recoveryScope(seriesId);
+    // API artifacts must identify the original chain, manager and endpoint;
+    // the compatibility allowance for metadata-free static files is not used here.
+    if (
+      !file ||
+      file.chainId === undefined ||
+      file.manager === undefined ||
+      file.blockNumber === undefined ||
+      !/^0x[0-9a-fA-F]{64}$/.test(file.blockHash ?? "") ||
+      !file.witness ||
+      !/^0x(?:[0-9a-fA-F]{2})+$/.test(file.witness) ||
+      (observation.endpointHash &&
+        file.blockHash?.toLowerCase() !==
+          observation.endpointHash.toLowerCase())
+    )
+      throw new Error(
+        "Recovery artifact metadata is missing or does not match its observed endpoint.",
+      );
+    validateRecovery(observation, scope);
+    assertWitnessScope(file, {
+      chainId: scope.chainId,
+      seriesId: BigInt(seriesId),
+      endBlock: BigInt(scope.endBlock),
+      manager: this.deployment.poolManager,
+    });
+    return {
+      json,
+      filename: `feestrip-witness-${scope.chainId}-${seriesId}-${observation.artifactDigest}.json`,
+    };
+  }
+  async downloadRecoveryArtifact(seriesId: string): Promise<RecoveryDownload> {
+    const status = await this.readRecovery(seriesId);
+    if (status.status === "unavailable") throw new Error(status.reason);
+    return this.retainedArtifact(seriesId, status.observation);
   }
   async readAnalysis(
     seriesId: string,
@@ -1498,38 +1619,97 @@ export class ChainAdapter implements FeeStripAdapter {
             ]),
           );
         } else if (action.type === "settle") {
-          const response = await fetch(`/witness-${id}.json`, {
-            cache: "no-store",
-          });
-          if (!response.ok)
-            throw new Error(
-              "Historical witness unavailable. The captured NFT can return while allocation remains pending; the USDC reserve stays preserved.",
-            );
-          const file = (await response.json()) as {
-            witness?: Hex;
-            seriesId?: string;
-            endBlock?: string;
-            chainId?: number | string;
-            blockNumber?: string;
-            manager?: Address;
-          };
-          if (!file.witness || !/^0x(?:[0-9a-fA-F]{2})+$/.test(file.witness))
-            throw new Error(
-              "Retained witness file is invalid. No allocation was submitted.",
-            );
           const s = await this.read<Series>(d.feeStrip, feeStripAbi, "series", [
             id,
           ]);
-          assertWitnessScope(file, {
-            chainId: d.chainId,
-            seriesId: id,
-            endBlock: s.endBlock,
-            manager: d.poolManager,
-          });
+          if (!same(s.key.currency0, d.usdc) && !same(s.key.currency1, d.usdc))
+            throw new Error(
+              "Series does not use the configured native USDC leg.",
+            );
+          const cacheKey = keccak256(
+            encodeAbiParameters(
+              parseAbiParameters("uint256,bytes32,int24,int24,bool"),
+              [
+                s.endBlock,
+                pairId(s.key),
+                s.tickLower,
+                s.tickUpper,
+                same(s.key.currency0, d.usdc),
+              ],
+            ),
+          );
+          const cached = await this.read<readonly [boolean, bigint]>(
+            d.verifier,
+            parseAbi([
+              "function endpointGrowth(bytes32) view returns (bool verified,uint256 value)",
+            ]),
+            "endpointGrowth",
+            [cacheKey],
+          );
+          let witness: Hex;
+          if (cached[0] === true) witness = "0x";
+          else {
+            const recovery = await this.readRecovery(id.toString());
+            let file: {
+              witness?: Hex;
+              seriesId?: string;
+              endBlock?: string;
+              chainId?: number | string;
+              blockNumber?: string;
+              manager?: Address;
+            };
+            if (
+              recovery.status !== "unavailable" &&
+              recovery.observation.state === "orphaned"
+            )
+              throw new Error(
+                "Recovery service reports an orphaned endpoint. No static fallback or allocation was submitted.",
+              );
+            if (
+              recovery.status === "unavailable" &&
+              recovery.failure === "scope"
+            )
+              throw new Error(recovery.reason);
+            if (
+              recovery.status !== "unavailable" &&
+              recovery.observation.artifactDigest &&
+              ["retained", "unavailable"].includes(recovery.observation.state)
+            ) {
+              file = JSON.parse(
+                (
+                  await this.retainedArtifact(
+                    id.toString(),
+                    recovery.observation,
+                  )
+                ).json,
+              );
+            } else {
+              const response = await fetch(`/witness-${id}.json`, {
+                cache: "no-store",
+                signal: AbortSignal.timeout(10000),
+              });
+              if (!response.ok)
+                throw new Error(
+                  "Historical witness unavailable. The captured NFT can return while allocation remains pending; the USDC reserve stays preserved.",
+                );
+              file = await response.json();
+            }
+            if (!file.witness || !/^0x(?:[0-9a-fA-F]{2})+$/.test(file.witness))
+              throw new Error(
+                "Retained witness file is invalid. No allocation was submitted.",
+              );
+            assertWitnessScope(file, {
+              chainId: d.chainId,
+              seriesId: id,
+              endBlock: s.endBlock,
+              manager: d.poolManager,
+            });
+            witness = file.witness;
+          }
           hashes.push(
             await this.write(account, d.feeStrip, feeStripAbi, "settle", [
               id,
-              file.witness,
+              witness,
             ]),
           );
         } else throw new Error("Unsupported onchain action.");

@@ -140,6 +140,7 @@ export interface Snapshot {
   blockNumber: string;
   timestamp: string;
   sourceBlock: string;
+  feeStrip?: string;
   markets: Market[];
   positions: Position[];
   fundedOffers: FundedOffer[];
@@ -219,6 +220,8 @@ export interface FeeStripAdapter {
   connect(): Promise<WalletState>;
   execute(action: Action): Promise<ActionResult>;
   switchNetwork?(): Promise<void>;
+  readRecovery?(seriesId: string): Promise<RecoveryResult>;
+  downloadRecoveryArtifact?(seriesId: string): Promise<RecoveryDownload>;
   readAnalysis?(
     seriesId: string,
     quantity: string,
@@ -252,3 +255,50 @@ export interface BuyerAnalysis {
 export type AnalysisResult =
   | { status: "available"; analysis: BuyerAnalysis }
   | { status: "unavailable"; reason: string };
+
+export interface RecoveryObservation {
+  schemaVersion: 1;
+  seriesId: string;
+  chainId: number | string;
+  feeStrip: string;
+  verifier: string;
+  manager: string;
+  endBlock: string;
+  state:
+    | "scheduled"
+    | "retained"
+    | "unavailable"
+    | "orphaned"
+    | "cached-onchain"
+    | "not-required";
+  lifecycle: string;
+  endpointHash: string | null;
+  finalized: boolean;
+  checkpointSaved: boolean;
+  checkpointHash: string | null;
+  growthCached: boolean;
+  artifactDigest: string | null;
+  copies: number;
+  storageDescription: string;
+  lastObservedBlock: string | null;
+  lastObservedHash: string | null;
+  lastObservedAt: number | null;
+  finalityObserved: boolean;
+  discoveryComplete: boolean;
+  observationError: string | null;
+  error: string | null;
+  allocationAuthority: "contract-only";
+  updatedAt: number;
+}
+export type RecoveryResult =
+  | { status: "observed" | "stale"; observation: RecoveryObservation }
+  | {
+      status: "unavailable";
+      reason: string;
+      failure?: "service" | "scope";
+      simulated?: boolean;
+    };
+export interface RecoveryDownload {
+  json: string;
+  filename: string;
+}

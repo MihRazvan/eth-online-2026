@@ -8,6 +8,7 @@ import type {
   Scenario,
   Snapshot,
   WalletState,
+  RecoveryResult,
 } from "./types";
 const primary: Market = {
   id: "fs-1482",
@@ -42,6 +43,7 @@ const primary: Market = {
 export function initialFixture(): Snapshot {
   return {
     mode: "fixture",
+    feeStrip: "fixture:no-deployed-contract",
     network: "Sepolia design fixture",
     chainId: 11155111,
     blockNumber: "11843000",
@@ -201,6 +203,14 @@ export class FixtureAdapter implements FeeStripAdapter {
       this.state.blockNumber = (BigInt(market.endBlock) + 1n).toString();
       market.phase = "matured";
     }
+  }
+  async readRecovery(): Promise<RecoveryResult> {
+    return {
+      status: "unavailable",
+      simulated: true,
+      reason:
+        "Fixture mode has no retained RPC artifact or observed checkpoint. The lifecycle controls simulate states; they do not establish proof availability.",
+    };
   }
   async execute(action: Action): Promise<ActionResult> {
     const s = this.state;

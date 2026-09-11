@@ -11,6 +11,7 @@ interface Props {
   quantity: string | null;
   chainId: number;
   sourceBlock: string;
+  feeStrip?: string;
   mode: DataMode;
   compact?: boolean;
 }
@@ -20,6 +21,7 @@ export function receiptSnapshot({
   quantity,
   chainId,
   sourceBlock,
+  feeStrip,
   mode,
 }: Props) {
   return {
@@ -27,6 +29,8 @@ export function receiptSnapshot({
     authority: "informational-only",
     mode,
     chainId,
+    feeStrip:
+      mode === "fixture" ? "fixture:no-deployed-contract" : (feeStrip ?? null),
     sourceBlock,
     seriesId: market.id,
     originalNFT: market.tokenId,
@@ -178,6 +182,12 @@ export function EntitlementReceipt(props: Props) {
           · chain {props.chainId} · source block {integer(sourceBlock)}. Current
           contract state governs ownership and payout. This receipt does not
           establish historical witness availability.
+        </p>
+        <p className="receipt-contract">
+          FeeStrip contract:{" "}
+          {mode === "fixture"
+            ? "Simulated fixture · no deployed contract"
+            : (props.feeStrip ?? "Deployment identity unavailable")}
         </p>
         <button onClick={download}>Download receipt JSON</button>
         <small>Informational snapshot only. Not a settlement proof.</small>

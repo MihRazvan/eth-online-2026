@@ -1,3 +1,4 @@
+import { RecoveryPanel } from "./components/RecoveryPanel";
 import { useEffect, useRef, useState } from "react";
 import type {
   Action,
@@ -503,9 +504,11 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
           ? "The same original NFT returns after capture. The USDC reserve stays segregated while proof is pending; the residual beneficiary remains recorded."
           : type === "settle" && fixture
             ? "This fixture demonstrates the allocated state only. It does not generate or verify a historical proof."
-            : type === "redeem"
-              ? "Redemption uses the immutable original Q denominator with integer rounding down. Your claim tokens are consumed; other holders redeem independently."
-              : "The action follows current contract state. Capture must be in a block strictly after N; proof allocation is a separate step.",
+            : type === "settle"
+              ? "Allocation uses verified onchain endpoint growth when cached; otherwise it verifies retained historical proof. The contract computes the allocation. Unpaid claim reserves stay segregated until allocation succeeds."
+              : type === "redeem"
+                ? "Redemption uses the immutable original Q denominator with integer rounding down. Your claim tokens are consumed; other holders redeem independently."
+                : "The action follows current contract state. Capture must be in a block strictly after N; proof allocation is a separate step.",
       button: fixture ? "Confirm fixture action" : "Confirm transaction",
     });
   };
@@ -803,6 +806,7 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                   }
                   chainId={s.chainId}
                   sourceBlock={s.sourceBlock}
+                  feeStrip={s.feeStrip}
                   mode={s.mode}
                 />
                 <section className="instrument">
@@ -861,6 +865,11 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                     hasQuote={!noQuote && !quoteStale}
                   />
                 )}
+                <RecoveryPanel
+                  adapter={adapter}
+                  market={selected}
+                  sourceBlock={s.sourceBlock}
+                />
                 <section className="settlement-section">
                   <div className="section-top">
                     <h2>The path to redemption</h2>
@@ -934,7 +943,7 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                       >
                         {fixture
                           ? "Preview fixture allocation"
-                          : "Submit historical proof"}{" "}
+                          : "Allocate fee reserve"}{" "}
                         <Icon />
                       </button>
                     )}
@@ -1597,6 +1606,7 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                           quantity={s.wallet.claims[m.id]}
                           chainId={s.chainId}
                           sourceBlock={s.sourceBlock}
+                          feeStrip={s.feeStrip}
                           mode={s.mode}
                           compact
                         />
