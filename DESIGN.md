@@ -1,6 +1,6 @@
 # usufruct
 
-User-selected identity,11September2026. The two supplied references (`ex1.png`, `ex2.png`) replace the earlier FeeStrip visual direction. The financial product remains defined by `feestrip-handoff/PRODUCT_CONTRACT.md`. Mode: Operate, with the visual language of an orchard catalogue and a specimen ledger.
+User-selected identity, 11 September 2026. The two supplied references (`ex1.png`, `ex2.png`) replace the earlier FeeStrip visual direction. The financial product remains defined by `feestrip-handoff/PRODUCT_CONTRACT.md`. Mode: Operate, with the visual language of an orchard catalogue and a specimen ledger.
 
 ## The visual promise
 
@@ -10,14 +10,14 @@ Use lowercase **usufruct** as the brand. “Keep the tree. Share the fruit.” i
 
 ## Typography
 
-- **Instrument Serif Italic**, weight400: wordmark, page headings, section headings and a small number of important specimen values. Wordmark around44px; desktop primary headings64–72px; mobile44–52px. Use the actual italic font, not a synthetic slant. No faux bold.
-- **Courier Prime**, weights400/700: navigation, prose, financial figures, controls, metadata. Main reading copy16–18px, useful metadata14px, very short footnotes12–13px. Monospace is the reference's typewriter voice, not a signal that the product requires technical knowledge.
-- Keep long copy to roughly65characters per line. Financial numbers wrap only between semantic units. Use explicit USDC and claim units. Original integer values remain authoritative.
+- **Instrument Serif Italic**, weight 400: wordmark, page headings, section headings and a small number of important specimen values. Wordmark around 44px; desktop primary headings 64–72px; mobile 44–52px. Use the actual italic font, not a synthetic slant. No faux bold.
+- **Courier Prime**, weights 400/700: navigation, prose, financial figures, controls, metadata. Main reading copy 16–18px, useful metadata 14px, very short footnotes 12–13px. Monospace is the reference's typewriter voice, not a signal that the product requires technical knowledge.
+- Keep long copy to roughly 65 characters per line. Financial numbers wrap only between semantic units. Use explicit USDC and claim units. Original integer values remain authoritative.
 - Self-hosted WOFF2 files, full glyph sets, `font-display: swap`; regular body and display faces preload. Asset pins and licences: `apps/web/public/fonts/usufruct-fonts.json`.
 
 ## Material and colour
 
-Warm paper `#f4f0e3`, ink `#25261f`, secondary ink chosen for readable contrast. Rules are1px and dark enough to remain visible. Surfaces share the page's paper; selection uses a quiet pale pear wash. Corners are square.
+Warm paper `#f4f0e3`, ink `#25261f`, secondary ink chosen for readable contrast. Rules are 1px and dark enough to remain visible. Surfaces share the page's paper; selection uses a quiet pale pear wash. Corners are square.
 
 Fruit accents: apple red `#bd4432`, pear green `#afbf61`, quince yellow `#edcc58`, damson `#754466`. Colour identifies a specimen/position, never its expected profitability. Small outlined fruit discs and picked-ticket shapes echo the reference. Do not make a fruit equal a month, daily payout or fixed monetary amount. Any proportional glyph band needs an explicit original-Q/inventory label; exact quantities remain alongside it.
 
@@ -33,7 +33,7 @@ Fruit accents: apple red `#bd4432`, pear green `#afbf61`, quince yellow `#edcc58
 
 One quiet material response: selection fills a record, the active navigation gets a thin underline, and actionable glyphs respond to hover/focus. No autoplay ornament or moving numbers. Respect reduced motion. All information remains visible without animations.
 
-Keep native semantic controls, visible ink focus outlines and protected transaction dialogs. Touch targets should approach44px. On narrow screens, rows become labelled records without losing price, endpoint or action. Avoid horizontal page scrolling and clipped addresses. Keyboard and wallet failures retain the user's intended context.
+Keep native semantic controls, visible ink focus outlines and protected transaction dialogs. Touch targets should approach 44px. On narrow screens, rows become labelled records without losing price, endpoint or action. Avoid horizontal page scrolling and clipped addresses. Keyboard and wallet failures retain the user's intended context.
 
 ## Language boundaries
 

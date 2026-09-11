@@ -32,6 +32,7 @@ let deployment: Deployment;
 let recoveryDirectory: string, recoveryStore: RetentionStore, recoveryWorker: RetentionWorker, recoveryAPI: ReturnType<typeof recoveryServer>;
 const receipts: { action: string; hash: Hex }[] = [];
 const cacheOnly=process.env.USE_VERIFIED_GROWTH_CACHE === "true";
+const recoveryPort=Number(process.env.FEESTRIP_TEST_RECOVERY_PORT??8788);
 const rpcURL = process.env.LOCAL_RPC_URL ?? "http://127.0.0.1:8545";
 if (!["localhost", "127.0.0.1", "[::1]"].includes(new URL(rpcURL).hostname))
   throw new Error("Chain browser suite requires a loopback RPC.");
@@ -111,7 +112,7 @@ test.beforeAll(async () => {
   recoveryStore=new RetentionStore(resolve(recoveryDirectory,'keeper.sqlite'),{artifactRoots:[resolve(recoveryDirectory,'a'),resolve(recoveryDirectory,'b')]});
   recoveryWorker=new RetentionWorker(await localRetentionConfig(deployment,client),recoveryStore);
   recoveryAPI=recoveryServer({store:recoveryStore,scope:recoveryWorker.scope});
-  await new Promise<void>((resolve,reject)=>{recoveryAPI.once('error',reject);recoveryAPI.listen(8788,'127.0.0.1',resolve);});
+  await new Promise<void>((resolve,reject)=>{recoveryAPI.once('error',reject);recoveryAPI.listen(recoveryPort,'127.0.0.1',resolve);});
 });
 test.afterAll(async()=>{
   if(recoveryAPI?.listening)await new Promise<void>(resolve=>recoveryAPI.close(resolve));
@@ -123,7 +124,7 @@ test("real browser funding, exact NFT sale, Aqua maker publication, trade, late 
   page,
 }, testInfo) => {
   const { seller, buyer, holder } = deployment.actors!;
-  await login(page, "buyer");
+  await login(page, "buyer", "pin");
   await expect(page.locator(".position-entry")).toContainText(
     "Offer target · other wallet",
   );
@@ -142,7 +143,7 @@ test("real browser funding, exact NFT sale, Aqua maker publication, trade, late 
   expect(await balance(deployment.usdc, buyer)).toBe(
     buyerCashBefore - 101000000n,
   );
-  await login(page, "seller");
+  await login(page, "seller", "pin");
   await expect(page.locator(".funded-offer-row")).toHaveCount(0);
   await page
     .getByRole("button", { name: "1. Approve this NFT", exact: true })
@@ -223,7 +224,7 @@ test("real browser funding, exact NFT sale, Aqua maker publication, trade, late 
   expect(retained.state).toBe("retained");expect(retained.copies).toBe(2);
   // The browser must use the real recovery service; the legacy static fallback is absent.
   unlinkSync(resolve(repo,"apps/web/public/witness-1.json"));
-  const recoveredResponse=await fetch(`http://127.0.0.1:8788/api/recovery/artifact?seriesId=1&digest=${retained.artifactDigest}`);
+  const recoveredResponse=await fetch(`http://127.0.0.1:${recoveryPort}/api/recovery/artifact?seriesId=1&digest=${retained.artifactDigest}`);
   expect(recoveredResponse.ok).toBe(true);expect(digest(await recoveredResponse.text())).toBe(retained.artifactDigest);
   await page
     .getByRole("button", { name: "Refresh chain state", exact: true })
@@ -315,7 +316,7 @@ test("real browser funding, exact NFT sale, Aqua maker publication, trade, late 
     paid += payout;
     expect(await balance(activated.claim, address)).toBe(0n);
   }
-  await page.getByRole("link", { name: "Your positions", exact: true }).click();
+  await page.getByRole("link", { name: "My cabinet", exact: true }).click();
   const residualBefore = await balance(deployment.usdc, seller);
   await page
     .getByRole("button", { name: "Withdraw residual fees", exact: true })

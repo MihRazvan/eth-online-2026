@@ -25,4 +25,16 @@ The stylesheet now has one Courier Prime / Instrument Serif identity and a singl
 
 Final browser observations on the isolated fixture server at port 4190: all four routes reported `scrollWidth === innerWidth === 390`, all navigation targets measured 44px high, no joined hero sentences, and no browser page errors. TypeScript and the Vite production build completed successfully. Final desktop and mobile screenshots are retained in the worktree’s `.scratch/usufruct/final-{market,pin,positions,market-fs-1482}-{desktop,mobile}.png`; root integration owns their durable evidence placement and the migrated regression suite. These renders exercise deterministic fixtures, not public-wallet acceptance. Root supplies the pinned font files, page metadata and public network labels separately.
 
-Transaction adapters, contract interfaces and transaction payload construction were not changed in this visual lane. Root integration will run the migrated browser and real-chain suites against the combined changes. Dense audit disclosures remain intentionally detailed when expanded; ordinary holdings and seller actions use progressive disclosure.
+Transaction adapters, contract interfaces and transaction payload construction were not changed in this visual lane. Root integration ran the migrated browser and actual-chain suites against the combined changes. Dense audit disclosures remain intentionally detailed when expanded; ordinary holdings and seller actions use progressive disclosure.
+
+
+## Integrated acceptance
+
+The combined application passes all 38 fixture, wallet-safety, receipt, quote, recovery and orchard regressions. Existing sale, cancellation, payout and original-Q expectations remain unchanged; navigation and visible labels follow the new routes. The added coverage checks tiny positive inventory and mobile navigation. A regression now requires the confirmation receipt to remain visible when acceptance opens My cabinet. Integration found and fixed that receipt being cleared by ordinary hash navigation.
+
+The actual local-chain browser lifecycle passes using dedicated Anvil 8553, application 4193 and recovery API 8793, leaving the public preview and worker untouched. It exercises funded acceptance, Aqua trading, late capture, original NFT return before proof, independent redemption and the exact expired-offer refund. This is local transaction evidence, not a public participant-wallet result.
+
+The lead inspected the combined application, with actual self-hosted fonts and page metadata, at desktop and mobile sizes. [Rendered evidence](evidence/usufruct/render-review.json) records eight route/viewport combinations, no horizontal overflow, the intended font families and 44px navigation targets. Screenshots: [Orchard desktop](evidence/usufruct/1440-market.png), [Orchard mobile](evidence/usufruct/390-market.png), [Pin a tree](evidence/usufruct/1440-pin.png), [My cabinet](evidence/usufruct/1440-positions.png), [mobile transaction review](evidence/usufruct/390-purchase-review.png). All populated examples are explicitly labeled deterministic fixtures.
+
+
+Both retained-witness and verified-cache-only browser lifecycle variants pass after integration. The testnet production build also passes. The existing public-data preview was rebuilt with the Sepolia manifest; its disconnected desktop/mobile check preserves the truthful empty orchard and contains no fixture data. [Public preview evidence](evidence/usufruct/public-review.json). No wallet was connected or public transaction sent for this design check.

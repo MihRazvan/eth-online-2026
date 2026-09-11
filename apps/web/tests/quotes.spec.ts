@@ -81,11 +81,12 @@ test("unavailable bid has no enabled sell action or promised proceeds", async ({
     .getByRole("button", { name: "Use fixture wallet", exact: true })
     .first()
     .click();
-  const sale = page.locator(".sell-to-bid").first();
+  const sale = page.locator(".no-bid-note").first();
   await expect(sale).toContainText("No executable bid");
+  await expect(sale).toContainText("Resale liquidity is not guaranteed");
   await expect(
-    sale.getByRole("button", { name: "Review claim sale" }),
-  ).toBeDisabled();
+    page.getByRole("button", { name: "Review claim sale" }),
+  ).toHaveCount(0);
 });
 test("integer capacity equals exhaustive exact-input execution at small rounding boundaries", () => {
   for (let claims = 1n; claims <= 17n; claims++)

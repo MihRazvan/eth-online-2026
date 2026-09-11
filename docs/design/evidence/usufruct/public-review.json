@@ -1,0 +1,20 @@
+{
+  "scope": "Disconnected read-only Sepolia preview. No wallet connection or transactions.",
+  "date": "2026-09-11T20:51:09.304Z",
+  "results": [
+    {
+      "width": 1440,
+      "title": "usufruct — An orchard for future fees",
+      "emptyPublicMarket": true,
+      "fixtureData": false,
+      "browserErrors": []
+    },
+    {
+      "width": 390,
+      "title": "usufruct — An orchard for future fees",
+      "emptyPublicMarket": true,
+      "fixtureData": false,
+      "browserErrors": []
+    }
+  ]
+}

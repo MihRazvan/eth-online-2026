@@ -59,7 +59,7 @@ test("matured rights survive capture and NFT return; allocation uses original Q 
   });
   await expect(receipt).toContainText("Period ended · capture pending");
   await expect(receipt).toContainText("your unpaid claim remains valid");
-  await page.getByRole("link", { name: "Your positions", exact: true }).click();
+  await page.getByRole("link", { name: "My cabinet", exact: true }).click();
   await page
     .getByRole("button", { name: "Capture actual fees", exact: true })
     .click();
@@ -71,7 +71,7 @@ test("matured rights survive capture and NFT return; allocation uses original Q 
   await page
     .locator(".holding-row")
     .filter({ hasText: "NFT #1484" })
-    .getByRole("link", { name: "View claim" })
+    .getByRole("link", { name: "Read claim & recovery" })
     .click();
   await expect(receipt).toContainText("Proof allocation pending");
   await expect(receipt).toContainText(

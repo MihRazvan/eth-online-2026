@@ -154,7 +154,7 @@ try {
     "Initial virtual claim inventory",
   );
   await login("holder");
-  await page.getByRole("link", { name: "Market", exact: true }).click();
+  await page.getByRole("link", { name: "Orchard", exact: true }).click();
   await page
     .getByRole("link", { name: "Open TEST / USDC NFT 1", exact: true })
     .click();

@@ -149,7 +149,7 @@ test("unavailable recovery never promises proof or a download; fixture receipt h
   await page.getByText("Receipt source & download", { exact: true }).click();
   await expect(
     page.getByText(
-      "FeeStrip contract: Simulated fixture · no deployed contract",
+      "Escrow contract: Simulated fixture · no deployed contract",
     ),
   ).toBeVisible();
   await mount(page, { error: "RECOVERY_UNAVAILABLE" }, json, 503);

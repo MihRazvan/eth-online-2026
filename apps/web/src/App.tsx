@@ -322,7 +322,13 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
       const result = await adapter.execute(review.action);
       await refresh();
       setReview(null);
-      if (review.action.type === "acceptOffer") location.hash = "positions";
+      if (review.action.type === "acceptOffer") {
+        // Keep the confirmed receipt visible when opening the new holding.
+        // A hashchange would clear it as part of ordinary navigation.
+        history.pushState(null, "", "#positions");
+        setRoute("positions");
+        window.scrollTo(0, 0);
+      }
       setMessage(
         result.transactionHash
           ? `${result.description} Transaction: ${result.transactionHash}`

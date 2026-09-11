@@ -11,7 +11,7 @@
   "reservedDust": "2",
   "cancelledOfferRefund": "100000000",
   "recovery": {
-    "artifactDigest": "b73094172cd646d841a65b6f01c9758f528b85c9b9dee3c11627d6241edabc45",
+    "artifactDigest": "f1d25c74d4be186e6501a1d683fd29f3fb282d8eec13170b859a092abc0093d8",
     "filesystemCopies": 2,
     "actualApi": true,
     "staticWitnessRemoved": true,
@@ -21,7 +21,7 @@
   "receipts": [
     {
       "action": "fundOffer",
-      "hash": "0x84c54cdaa0611d593529e552c011454cee5544c10bb71bbaa1473944bf906825"
+      "hash": "0x23c856282522ef998d54825f02a4d023615b185d44ba83b06b478c970f173184"
     },
     {
       "action": "approveNFT",
@@ -33,11 +33,11 @@
     },
     {
       "action": "shipAquaStrategy",
-      "hash": "0xa0358c6a423dfaf37c61f759676773f26f1fb79417a56ffc458327e4ede715c7"
+      "hash": "0xc8e71ddcafd8c8ca6ba2bbfc798330b291caa8c95d19243874d0297ce63ac984"
     },
     {
       "action": "swapClaims",
-      "hash": "0xe24f5b7742e414a0a9e94aed499659f5098ff1b8e241a7da88e6b980d5fd1ead"
+      "hash": "0x65b10e2b92cb3fc4ae0958d4cfdcf3be9e12c2badc4daacb2568665327a2532c"
     },
     {
       "action": "capture",
@@ -49,7 +49,7 @@
     },
     {
       "action": "settleRetainedWitness",
-      "hash": "0xa5d4dcfe6941c60748aec5d0a85d028388c18e3ac635b81b1e06962b5772f10e"
+      "hash": "0x3101489932a2f9b1c1452139d6b960de9417d9856b69d1868ad27cc91feeafa6"
     },
     {
       "action": "redeem:holder",

@@ -1,0 +1,198 @@
+{
+  "mode": "deterministic-fixture",
+  "date": "2026-09-11T20:46:53.275Z",
+  "viewports": [
+    {
+      "width": 1440,
+      "route": "market",
+      "title": "usufruct — An orchard for future fees",
+      "overflow": false,
+      "heading": "The orchard",
+      "headingFont": "\"Instrument Serif\", Georgia, serif",
+      "bodyFont": "\"Courier Prime\", \"Courier New\", monospace",
+      "navTargets": [
+        {
+          "text": "Orchard",
+          "height": 44
+        },
+        {
+          "text": "Pin a tree",
+          "height": 44
+        },
+        {
+          "text": "My cabinet",
+          "height": 44
+        }
+      ],
+      "screenshot": "1440-market.png"
+    },
+    {
+      "width": 1440,
+      "route": "pin",
+      "title": "usufruct — An orchard for future fees",
+      "overflow": false,
+      "heading": "Pin a tree",
+      "headingFont": "\"Instrument Serif\", Georgia, serif",
+      "bodyFont": "\"Courier Prime\", \"Courier New\", monospace",
+      "navTargets": [
+        {
+          "text": "Orchard",
+          "height": 44
+        },
+        {
+          "text": "Pin a tree",
+          "height": 44
+        },
+        {
+          "text": "My cabinet",
+          "height": 44
+        }
+      ],
+      "screenshot": "1440-pin.png"
+    },
+    {
+      "width": 1440,
+      "route": "positions",
+      "title": "usufruct — An orchard for future fees",
+      "overflow": false,
+      "heading": "My cabinet",
+      "headingFont": "\"Instrument Serif\", Georgia, serif",
+      "bodyFont": "\"Courier Prime\", \"Courier New\", monospace",
+      "navTargets": [
+        {
+          "text": "Orchard",
+          "height": 44
+        },
+        {
+          "text": "Pin a tree",
+          "height": 44
+        },
+        {
+          "text": "My cabinet",
+          "height": 44
+        }
+      ],
+      "screenshot": "1440-positions.png"
+    },
+    {
+      "width": 1440,
+      "route": "market/fs-1482",
+      "title": "usufruct — An orchard for future fees",
+      "overflow": false,
+      "heading": "The fruit of this position.",
+      "headingFont": "\"Instrument Serif\", Georgia, serif",
+      "bodyFont": "\"Courier Prime\", \"Courier New\", monospace",
+      "navTargets": [
+        {
+          "text": "Orchard",
+          "height": 44
+        },
+        {
+          "text": "Pin a tree",
+          "height": 44
+        },
+        {
+          "text": "My cabinet",
+          "height": 44
+        }
+      ],
+      "screenshot": "1440-market-fs-1482.png"
+    },
+    {
+      "width": 390,
+      "route": "market",
+      "title": "usufruct — An orchard for future fees",
+      "overflow": false,
+      "heading": "The orchard",
+      "headingFont": "\"Instrument Serif\", Georgia, serif",
+      "bodyFont": "\"Courier Prime\", \"Courier New\", monospace",
+      "navTargets": [
+        {
+          "text": "Orchard",
+          "height": 44
+        },
+        {
+          "text": "Pin a tree",
+          "height": 44
+        },
+        {
+          "text": "My cabinet",
+          "height": 44
+        }
+      ],
+      "screenshot": "390-market.png"
+    },
+    {
+      "width": 390,
+      "route": "pin",
+      "title": "usufruct — An orchard for future fees",
+      "overflow": false,
+      "heading": "Pin a tree",
+      "headingFont": "\"Instrument Serif\", Georgia, serif",
+      "bodyFont": "\"Courier Prime\", \"Courier New\", monospace",
+      "navTargets": [
+        {
+          "text": "Orchard",
+          "height": 44
+        },
+        {
+          "text": "Pin a tree",
+          "height": 44
+        },
+        {
+          "text": "My cabinet",
+          "height": 44
+        }
+      ],
+      "screenshot": "390-pin.png"
+    },
+    {
+      "width": 390,
+      "route": "positions",
+      "title": "usufruct — An orchard for future fees",
+      "overflow": false,
+      "heading": "My cabinet",
+      "headingFont": "\"Instrument Serif\", Georgia, serif",
+      "bodyFont": "\"Courier Prime\", \"Courier New\", monospace",
+      "navTargets": [
+        {
+          "text": "Orchard",
+          "height": 44
+        },
+        {
+          "text": "Pin a tree",
+          "height": 44
+        },
+        {
+          "text": "My cabinet",
+          "height": 44
+        }
+      ],
+      "screenshot": "390-positions.png"
+    },
+    {
+      "width": 390,
+      "route": "market/fs-1482",
+      "title": "usufruct — An orchard for future fees",
+      "overflow": false,
+      "heading": "The fruit of this position.",
+      "headingFont": "\"Instrument Serif\", Georgia, serif",
+      "bodyFont": "\"Courier Prime\", \"Courier New\", monospace",
+      "navTargets": [
+        {
+          "text": "Orchard",
+          "height": 44
+        },
+        {
+          "text": "Pin a tree",
+          "height": 44
+        },
+        {
+          "text": "My cabinet",
+          "height": 44
+        }
+      ],
+      "screenshot": "390-market-fs-1482.png"
+    }
+  ]
+}
