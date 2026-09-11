@@ -190,6 +190,13 @@ for (const [state, message] of [
     await wallet(page);
     await condition(page, state);
     await expect(page.getByText(message, { exact: true })).toBeVisible();
+    if (state === "no-quotes" || state === "stale-quote") {
+      await expect(
+        page
+          .locator(".scenario-results")
+          .getByText("Unavailable", { exact: true }),
+      ).toBeVisible();
+    }
     await expect(
       page.getByRole("button", { name: "Review purchase" }),
     ).toBeDisabled();
@@ -229,7 +236,7 @@ test("keyboard review traps focus and Escape returns to the initiating control",
 });
 test("narrow market and claim stay within viewport; financial labels remain available", async ({
   page,
-}) => {
+}, testInfo) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");
   expect(
@@ -250,7 +257,7 @@ test("narrow market and claim stay within viewport; financial labels remain avai
     page.getByRole("heading", { name: "Buy fee claims" }),
   ).toBeVisible();
   await page.screenshot({
-    path: "docs/design/evidence/detail-mobile.png",
+    path: testInfo.outputPath("detail-mobile.png"),
     fullPage: true,
   });
 });

@@ -2,3 +2,6 @@ dist/
 test-results/
 playwright-report/
 node_modules/
+/deployment.json
+/public/deployment.json
+/public/witness-*.json

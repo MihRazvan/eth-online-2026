@@ -1,0 +1,63 @@
+{
+  "scope": "Real local browser transactions with unlocked Anvil actors; no production signing UI or public testnet acceptance.",
+  "chainId": 31337,
+  "seriesId": "1",
+  "tokenId": "1",
+  "endpoint": "124",
+  "originalSupply": "10000000000000000000000",
+  "capturedUSDC": "1199999999",
+  "soldUSDC": "799999999",
+  "claimPayoutTotal": "799999997",
+  "reservedDust": "2",
+  "unconsumedFundedOffers": "100000000",
+  "receipts": [
+    {
+      "action": "fundOffer",
+      "hash": "0xb8889db72cd4fbcf22760b4cbb8c7b81c59b7939cd7ad1716aca095d2cdac95e"
+    },
+    {
+      "action": "approveNFT",
+      "hash": "0xdf43157ab81bc09cb3b81eb349188ada0b1cf7c04bfe6da959bc7452a7982556"
+    },
+    {
+      "action": "acceptOffer",
+      "hash": "0x97fb902bf2a00bcc557115453290cae16706a4a2c28f80efaab5e3a1c6378f5d"
+    },
+    {
+      "action": "shipAquaStrategy",
+      "hash": "0x844208b83d242eb022f3fa5cb0d9951cb70a414b03ec377c6a7d1df7b1104ce6"
+    },
+    {
+      "action": "swapClaims",
+      "hash": "0x73de6377d8a7c73763000f41edde89219e9a4fd9ed91ab779be25a622615fab9"
+    },
+    {
+      "action": "capture",
+      "hash": "0x186715a5d042f7bb5edc33ba757169f1a6f664a510286fddc2d6f686c499f991"
+    },
+    {
+      "action": "returnOriginalNFT",
+      "hash": "0x468e90143094d1cf5a3a09dc5d554a7baf7ee28c1f657ff4a86b75ae417f6e29"
+    },
+    {
+      "action": "settleRetainedWitness",
+      "hash": "0xefc53f536867a0ad374bac4fcb9dd19fdcfa3b0971972126b610ea79327c920b"
+    },
+    {
+      "action": "redeem:holder",
+      "hash": "0x8c9e3a533cbc1ecd8af5364467e0e0cd9e79519bf87afc2c826c470cc51dece3"
+    },
+    {
+      "action": "redeem:buyer",
+      "hash": "0xd67bb59b1446e4b83bf92ce0ad746fbaf18bc30e8b0ece97f136e716fe3c38f0"
+    },
+    {
+      "action": "redeem:seller",
+      "hash": "0xd84e0829d109d9d62f5fb9cb459c35d76b312c9a4890cd7f76b383a99627b39a"
+    },
+    {
+      "action": "withdrawResidual",
+      "hash": "0x50958280c75461711e9e2aff6188a20c5a194f5291cd98bad7f74f3f1944e47c"
+    }
+  ]
+}

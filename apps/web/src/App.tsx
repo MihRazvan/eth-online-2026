@@ -5,6 +5,8 @@ import type {
   Market,
   Scenario,
   Snapshot,
+  Position,
+  AnalysisResult,
 } from "./types";
 import { FixtureAdapter } from "./fixtureAdapter";
 import {
@@ -113,12 +115,20 @@ function Range({
       <div className="range-caption">
         <span>
           <Icon name="lock" size={12} /> Fixed price range
+          {market.priceIsIndicative ? " · indicative ratios" : ""}
         </span>
         {!compact && <Status market={market} />}
       </div>
       <div className="range-track">
         <div className="range-fill" />
-        <div className={"range-pin " + (!market.inRange ? "outside" : "")}>
+        <div
+          className={"range-pin " + (!market.inRange ? "outside" : "")}
+          style={
+            market.currentRangePercent === undefined
+              ? undefined
+              : { left: `${market.currentRangePercent}%` }
+          }
+        >
           <span>{compact ? "Current price" : `$${market.currentPrice}`}</span>
         </div>
       </div>
@@ -224,6 +234,13 @@ function History({ market, fixture }: { market: Market; fixture: boolean }) {
   );
 }
 function Lifecycle({ market, held }: { market: Market; held: string }) {
+  if (market.phase === "closed")
+    return (
+      <p className="fine">
+        All original rights were recombined and the original NFT returned. This
+        series is closed.
+      </p>
+    );
   const afterCapture =
     market.phase === "captured" || market.phase === "allocated";
   const stages = [
@@ -285,7 +302,8 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
     [error, setError] = useState(""),
     [funding, setFunding] = useState(false),
     [fundAmount, setFundAmount] = useState("672"),
-    [scenarioIncome, setScenarioIncome] = useState("840");
+    [scenarioIncome, setScenarioIncome] = useState("840"),
+    [makerQuoteSeries, setMakerQuoteSeries] = useState<string | null>(null);
   const dialog = useRef<HTMLDialogElement>(null),
     lastFocus = useRef<HTMLElement | null>(null);
   const refresh = async () => setSnapshot(await adapter.load());
@@ -376,12 +394,19 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
         (filter === "settling" && m.phase !== "active")) &&
       (m.pair + " " + m.tokenId).toLowerCase().includes(search.toLowerCase()),
   );
+  const selectedQuote = selected?.quote ?? s.quote;
   const quantityOkay = validQuantity(quantity),
     quantityBase = quantityOkay ? parseClaims(quantity) : 0n,
-    cost = claimCost(quantityBase, selected?.askMicros ?? "0"),
-    quoteStale = BigInt(s.quote.expiresAt) < BigInt(s.timestamp),
+    cost =
+      selectedQuote.ratioClaimUnits && selectedQuote.ratioUsdcUnits
+        ? (quantityBase * BigInt(selectedQuote.ratioUsdcUnits) +
+            BigInt(selectedQuote.ratioClaimUnits) -
+            1n) /
+          BigInt(selectedQuote.ratioClaimUnits)
+        : claimCost(quantityBase, selected?.askMicros ?? "0"),
+    quoteStale = BigInt(selectedQuote.expiresAt) < BigInt(s.timestamp),
     noQuote =
-      !s.quote.available ||
+      !selectedQuote.available ||
       !selected ||
       BigInt(selected.availableClaims) === 0n;
   const canBuy =
@@ -399,7 +424,8 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
         seriesId: selected.id,
         quantity: quantityBase.toString(),
         maximumPaymentMicros: cost.toString(),
-        expiresAt: s.quote.expiresAt,
+        expiresAt: selectedQuote.expiresAt,
+        strategyHash: selectedQuote.strategyHash,
       },
       lines: [
         ["You pay", money(cost, 6) + " USDC"],
@@ -410,8 +436,8 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
             "% of " +
             formatClaims(selected.originalSupply),
         ],
-        ["Maker", s.quote.maker],
-        ["Quote expires", deadlineDate(s.quote.expiresAt)],
+        ["Maker", selectedQuote.maker],
+        ["Quote expires", deadlineDate(selectedQuote.expiresAt)],
         ["Earning cutoff", "End of block " + integer(selected.endBlock)],
       ],
       warning:
@@ -420,10 +446,17 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
     });
   };
   const lifecycleAction = (
-    type: "capture" | "withdrawNFT" | "settle" | "redeem" | "closeEarly",
+    type:
+      | "capture"
+      | "withdrawNFT"
+      | "settle"
+      | "redeem"
+      | "closeEarly"
+      | "withdrawResidual",
     market: Market,
   ) => {
     const titles = {
+      withdrawResidual: "Withdraw residual fees",
       capture: "Capture actual fees",
       withdrawNFT: "Recover original NFT",
       settle: "Allocate fee reserve",
@@ -515,7 +548,7 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
           <span>
             {fixture ? "No live prices or transactions" : s.network}{" "}
             <span className="desktop-only">
-              · Source block {integer(s.sourceBlock)}
+              · {fixture ? "Source" : "Read at"} block {integer(s.sourceBlock)}
             </span>
           </span>
           {BigInt(s.blockNumber) - BigInt(s.sourceBlock) > 100n && (
@@ -526,6 +559,21 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
               )}{" "}
               blocks
             </strong>
+          )}
+          {!fixture && (
+            <button
+              className="text-button"
+              onClick={async () => {
+                try {
+                  await refresh();
+                  setError("");
+                } catch (e) {
+                  setError((e as Error).message);
+                }
+              }}
+            >
+              Refresh chain state
+            </button>
           )}
         </div>
         {wrongNetwork && (
@@ -662,7 +710,13 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                       <small>
                         {m.phase === "active"
                           ? "Fixed through term"
-                          : "Capture available"}
+                          : m.phase === "matured"
+                            ? "Capture available"
+                            : m.phase === "captured"
+                              ? "Proof pending"
+                              : m.phase === "closed"
+                                ? "Recombined"
+                                : "Allocated"}
                       </small>
                     </span>
                     <Icon />
@@ -768,20 +822,38 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                       in-window share separately. NFT ownership does not
                       guarantee dollar value.
                     </p>
+                    {selected.baselineX128 && (
+                      <p className="fine">
+                        Cleared native-USDC fee-growth baseline X128:{" "}
+                        <code>{selected.baselineX128}</code>
+                      </p>
+                    )}
                   </details>
                 </section>
-                <History market={selected} fixture={fixture} />
+                {fixture ? (
+                  <History market={selected} fixture />
+                ) : (
+                  <AnalysisPanel
+                    adapter={adapter}
+                    market={selected}
+                    quantity={quantityBase.toString()}
+                    price={cost.toString()}
+                    hasQuote={!noQuote && !quoteStale}
+                  />
+                )}
                 <section className="settlement-section">
                   <div className="section-top">
                     <h2>The path to redemption</h2>
                     <span className="source-tag">
                       {selected.phase === "active"
                         ? "Earning period"
-                        : selected.phase === "matured"
-                          ? "Cutoff reached"
-                          : selected.phase === "captured"
-                            ? "Proof pending"
-                            : "Allocated"}
+                        : selected.phase === "closed"
+                          ? "Closed"
+                          : selected.phase === "matured"
+                            ? "Cutoff reached"
+                            : selected.phase === "captured"
+                              ? "Proof pending"
+                              : "Allocated"}
                     </span>
                   </div>
                   <Lifecycle market={selected} held={held} />
@@ -789,7 +861,7 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                     selected.phase === "allocated") && (
                     <dl className="instrument-facts">
                       <div>
-                        <dt>Actual captured USDC reserve</dt>
+                        <dt>USDC captured at collection</dt>
                         <dd>{money(selected.capturedMicros, 6)}</dd>
                       </div>
                       <div>
@@ -905,28 +977,34 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                 <dl className="trade-facts">
                   <div>
                     <dt>Price per claim</dt>
-                    <dd>{money(selected.askMicros, 6)} USDC</dd>
+                    <dd>
+                      {noQuote
+                        ? "Unavailable"
+                        : money(selected.askMicros, 6) + " USDC"}
+                    </dd>
                   </div>
                   <div>
                     <dt>You pay</dt>
                     <dd>
-                      {money(cost)} <small>USDC</small>
+                      {noQuote ? "—" : money(cost)} <small>USDC</small>
                     </dd>
                   </div>
                   <div>
                     <dt>Break-even period fees</dt>
                     <dd>
-                      {money(
-                        quantityBase > 0n
-                          ? (cost * BigInt(selected.originalSupply) +
-                              quantityBase -
-                              1n) /
-                              quantityBase
-                          : claimCost(
-                              selected.originalSupply,
-                              selected.askMicros,
-                            ),
-                      )}
+                      {noQuote
+                        ? "—"
+                        : money(
+                            quantityBase > 0n
+                              ? (cost * BigInt(selected.originalSupply) +
+                                  quantityBase -
+                                  1n) /
+                                  quantityBase
+                              : claimCost(
+                                  selected.originalSupply,
+                                  selected.askMicros,
+                                ),
+                          )}
                     </dd>
                   </div>
                 </dl>
@@ -935,8 +1013,10 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                   window for this price to break even, before gas.
                 </p>
                 <div className="quote-info">
-                  <span>Maker: {s.quote.maker}</span>
-                  <span>Expires {deadlineDate(s.quote.expiresAt)}</span>
+                  <span>Maker: {selectedQuote.maker}</span>
+                  {selectedQuote.available && (
+                    <span>Expires {deadlineDate(selectedQuote.expiresAt)}</span>
+                  )}
                   <span>
                     Balances are shared maker inventory, not a locked reserve.
                   </span>
@@ -994,7 +1074,7 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                     income={scenarioIncome}
                     quantity={quantity}
                     supply={selected.originalSupply}
-                    cost={cost}
+                    cost={canBuy ? cost : null}
                   />
                   <p className="fine">
                     An assumption you set, not a forecast. Fees can be zero if
@@ -1032,7 +1112,7 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                       {fixture ? "Fixture wallet" : s.wallet.address}
                     </span>
                   </div>
-                  {s.scenario === "no-positions" ? (
+                  {s.scenario === "no-positions" || s.positions.length === 0 ? (
                     <div className="empty">
                       <h3>No supported positions</h3>
                       <p>
@@ -1046,13 +1126,17 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                       return (
                         <article className="position-entry" key={p.tokenId}>
                           <div className="position-title">
-                            <Pair market={{ ...p, feeTier: "0.05%" }} />
+                            <Pair
+                              market={{ ...p, feeTier: p.feeTier ?? "0.05%" }}
+                            />
                             <span className="source-tag">
                               {market
                                 ? market.nftReturned
                                   ? "NFT returned"
                                   : "Held in escrow"
-                                : "In your wallet"}
+                                : p.ownedByWallet === false
+                                  ? "Offer target · other wallet"
+                                  : "In your wallet"}
                             </span>
                           </div>
                           {market ? (
@@ -1096,6 +1180,24 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                                       Recover NFT #{p.tokenId}
                                     </button>
                                   )}
+                                {!fixture &&
+                                  (market.phase === "captured" ||
+                                    market.phase === "allocated") &&
+                                  (BigInt(market.residualUsdcMicros ?? "0") >
+                                    0n ||
+                                    BigInt(market.otherReserve ?? "0") >
+                                      0n) && (
+                                    <button
+                                      onClick={() =>
+                                        lifecycleAction(
+                                          "withdrawResidual",
+                                          market,
+                                        )
+                                      }
+                                    >
+                                      Withdraw residual fees
+                                    </button>
+                                  )}
                                 {market.nftReturned && (
                                   <p className="fine">
                                     Residual beneficiary preserved.{" "}
@@ -1133,38 +1235,7 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                                     <span>Fixed during term</span>
                                   </div>
                                 </div>
-                                <div className="funded-offer">
-                                  <span className="range-status">
-                                    Funded offer {fixture ? "· fixture" : ""}
-                                  </span>
-                                  <strong>
-                                    {money(p.offer?.fundedMicros ?? "0")}{" "}
-                                    <small>USDC upfront</small>
-                                  </strong>
-                                  <p className="fine">
-                                    For {formatClaims(p.offer?.claims ?? "0")}{" "}
-                                    of{" "}
-                                    {formatClaims(
-                                      p.offer?.originalSupply ??
-                                        "10000000000000000000000",
-                                    )}{" "}
-                                    claims · ends block{" "}
-                                    {integer(p.offer?.endBlock ?? "0")}
-                                  </p>
-                                  <p className="fine">
-                                    You keep{" "}
-                                    {formatClaims(
-                                      (
-                                        BigInt(
-                                          p.offer?.originalSupply ??
-                                            "10000000000000000000000",
-                                        ) - BigInt(p.offer?.claims ?? "0")
-                                      ).toString(),
-                                    )}{" "}
-                                    fee claims and the separate NFT return
-                                    right.
-                                  </p>
-                                </div>
+                                <FundedOffer position={p} fixture={fixture} />
                               </div>
                               <div className="position-buttons">
                                 <button
@@ -1188,7 +1259,11 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                                       button: "Approve NFT transfer",
                                     })
                                   }
-                                  disabled={p.approved}
+                                  disabled={
+                                    p.approved ||
+                                    p.ownedByWallet === false ||
+                                    wrongNetwork
+                                  }
                                 >
                                   {p.approved ? (
                                     <>
@@ -1201,7 +1276,10 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                                 <button
                                   className={p.approved ? "primary" : ""}
                                   disabled={
-                                    !p.approved || !p.offer || wrongNetwork
+                                    !p.approved ||
+                                    !p.offer ||
+                                    wrongNetwork ||
+                                    p.ownedByWallet === false
                                   }
                                   onClick={() => {
                                     if (p.offer)
@@ -1370,9 +1448,33 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                             All unpaid sold-period income travels with claims
                           </small>
                         </span>
-                        <a className="button" href={"#market/" + m.id}>
-                          View claim <Icon />
-                        </a>
+                        <div className="holding-actions">
+                          <a className="button" href={"#market/" + m.id}>
+                            View claim <Icon />
+                          </a>
+                          {!fixture &&
+                            m.phase !== "closed" &&
+                            BigInt(s.wallet.claims[m.id]) > 0n && (
+                              <button
+                                className="button"
+                                onClick={() =>
+                                  setMakerQuoteSeries(
+                                    makerQuoteSeries === m.id ? null : m.id,
+                                  )
+                                }
+                              >
+                                Publish sell quote
+                              </button>
+                            )}
+                        </div>
+                        {!fixture && makerQuoteSeries === m.id && (
+                          <MakerQuote
+                            market={m}
+                            balance={s.wallet.claims[m.id]}
+                            timestamp={s.timestamp}
+                            onReview={begin}
+                          />
+                        )}
                       </div>
                     ))}
                 </section>
@@ -1389,8 +1491,10 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                 : "Onchain state authorizes actions. Graph analytics are contextual and may lag; verified receipt state must take precedence."}
             </p>
             <p className="fine">
-              Current block {integer(s.blockNumber)} · Indexer source{" "}
+              Current block {integer(s.blockNumber)} ·{" "}
+              {fixture ? "Indexer source" : "RPC read block"}{" "}
               {integer(s.sourceBlock)} · Network {s.network}
+              {!fixture && " · Graph provider not connected."}
             </p>
             {fixture && (
               <div className="demo-controls">
@@ -1551,13 +1655,13 @@ function ScenarioResult({
   income: string;
   quantity: string;
   supply: string;
-  cost: bigint;
+  cost: bigint | null;
 }) {
   try {
     const total = parseUsdc(income),
       q = validQuantity(quantity) ? parseClaims(quantity) : 0n,
       payout = (total * q) / BigInt(supply),
-      net = payout - cost;
+      net = cost === null ? null : payout - cost;
     return (
       <dl className="scenario-results">
         <div>
@@ -1566,11 +1670,341 @@ function ScenarioResult({
         </div>
         <div>
           <dt>After purchase, before gas</dt>
-          <dd className={net < 0n ? "negative" : ""}>{money(net)}</dd>
+          <dd className={net !== null && net < 0n ? "negative" : ""}>
+            {net === null ? "Unavailable" : money(net)}
+          </dd>
         </div>
       </dl>
     );
   } catch {
     return <p className="fine">Enter an amount with at most 6 decimals.</p>;
   }
+}
+function FundedOffer({
+  position: p,
+  fixture,
+}: {
+  position: Position;
+  fixture: boolean;
+}) {
+  if (!p.offer)
+    return (
+      <div className="funded-offer">
+        <h3>No funded offer yet</h3>
+        <p className="fine">
+          A buyer can escrow a concrete offer below. The NFT stays with its
+          owner until that owner accepts the exact terms.
+        </p>
+      </div>
+    );
+  return (
+    <div className="funded-offer">
+      <span className="range-status">
+        Funded offer {fixture ? "· fixture" : ""}
+      </span>
+      <strong>
+        {money(p.offer.fundedMicros)} <small>USDC upfront</small>
+      </strong>
+      <p className="fine">
+        For {formatClaims(p.offer.claims)} of{" "}
+        {formatClaims(p.offer.originalSupply)} claims · ends block{" "}
+        {integer(p.offer.endBlock)}
+      </p>
+      <p className="fine">
+        Residual owner keeps{" "}
+        {formatClaims(BigInt(p.offer.originalSupply) - BigInt(p.offer.claims))}{" "}
+        fee claims and the separate NFT return right.
+      </p>
+      <p className="fine">
+        Buyer {p.offer.maker} · offer expires{" "}
+        {deadlineDate(p.offer.deadlineTimestamp)}
+      </p>
+    </div>
+  );
+}
+function MakerQuote({
+  market,
+  balance,
+  timestamp,
+  onReview,
+}: {
+  market: Market;
+  balance: string;
+  timestamp: string;
+  onReview: (review: Review) => void;
+}) {
+  const [amount, setAmount] = useState("1000"),
+    [cash, setCash] = useState("84"),
+    [minutes, setMinutes] = useState("60"),
+    [error, setError] = useState("");
+  return (
+    <form
+      className="maker-form"
+      onSubmit={(e) => {
+        e.preventDefault();
+        try {
+          const quantity = parseClaims(amount),
+            usdc = parseUsdc(cash);
+          if (quantity <= 0n || quantity > BigInt(balance) || usdc <= 0n)
+            throw new Error(
+              "Choose a positive claim quantity within your wallet balance and a positive USDC price.",
+            );
+          if (
+            !/^\d+$/.test(minutes) ||
+            BigInt(minutes) < 1n ||
+            BigInt(minutes) > 10080n
+          )
+            throw new Error("Quote duration must be 1–10,080 minutes.");
+          const expiresAt = (
+            BigInt(timestamp) +
+            BigInt(minutes) * 60n
+          ).toString();
+          onReview({
+            title: "Publish a maker quote",
+            action: {
+              type: "publishQuote",
+              seriesId: market.id,
+              quantity: quantity.toString(),
+              usdcMicros: usdc.toString(),
+              expiresAt,
+            },
+            lines: [
+              ["Claim inventory", formatClaims(quantity)],
+              ["Total ask for this lot", money(usdc, 6) + " USDC"],
+              [
+                "Price ratio",
+                formatClaims(quantity) +
+                  " claims / " +
+                  money(usdc, 6) +
+                  " USDC",
+              ],
+              ["Expires", deadlineDate(expiresAt)],
+              ["Series", market.pair + " · NFT #" + market.tokenId],
+            ],
+            warning:
+              "Approve only this claim inventory to Aqua, then ship the exact FeeStrip strategy. Tokens remain in your wallet. Other apps can share this inventory; a quote is not separately locked capital or guaranteed resale liquidity. A series state change invalidates this strategy.",
+            button: "Approve and publish quote",
+          });
+          setError("");
+        } catch (e) {
+          setError((e as Error).message);
+        }
+      }}
+    >
+      <div>
+        <h3>Offer your claims to the market</h3>
+        <p className="fine">
+          Publish an executable sell quote through Aqua / SwapVM. Available
+          wallet balance: {formatClaims(balance)} claims.
+        </p>
+      </div>
+      <div className="maker-fields">
+        <label>
+          Claim quantity
+          <input
+            aria-label="Maker claim quantity"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            inputMode="decimal"
+          />
+        </label>
+        <label>
+          Total USDC ask
+          <input
+            aria-label="Maker total USDC ask"
+            value={cash}
+            onChange={(e) => setCash(e.target.value)}
+            inputMode="decimal"
+          />
+        </label>
+        <label>
+          Expires in minutes
+          <input
+            aria-label="Maker quote duration"
+            value={minutes}
+            onChange={(e) => setMinutes(e.target.value)}
+            inputMode="numeric"
+          />
+        </label>
+      </div>
+      {error && (
+        <p className="inline-warning" role="alert">
+          {error}
+        </p>
+      )}
+      <button className="primary" type="submit">
+        Review maker quote <Icon />
+      </button>
+    </form>
+  );
+}
+function AnalysisPanel({
+  adapter,
+  market,
+  quantity,
+  price,
+  hasQuote,
+}: {
+  adapter: FeeStripAdapter;
+  market: Market;
+  quantity: string;
+  price: string;
+  hasQuote: boolean;
+}) {
+  const [saved, setSaved] = useState<{
+      key: string;
+      result: AnalysisResult;
+    } | null>(null),
+    [loading, setLoading] = useState(""),
+    [gas, setGas] = useState("0");
+  let executionCost = "0",
+    valid = true;
+  try {
+    executionCost = parseUsdc(gas).toString();
+  } catch {
+    valid = false;
+  }
+  const key = [market.id, quantity, price, executionCost].join(":"),
+    result = saved?.key === key ? saved.result : undefined;
+  const load = async () => {
+    if (!adapter.readAnalysis) return;
+    setLoading(key);
+    try {
+      const value = await adapter.readAnalysis(
+        market.id,
+        quantity,
+        price,
+        executionCost,
+      );
+      setSaved({ key, result: value });
+    } catch {
+      setSaved({
+        key,
+        result: {
+          status: "unavailable",
+          reason: "Verified analysis could not be loaded.",
+        },
+      });
+    } finally {
+      setLoading("");
+    }
+  };
+  const available =
+    result?.status === "available" ? result.analysis : undefined;
+  return (
+    <section className="history-section sourced-analysis">
+      <div className="section-top">
+        <h2>Activity behind the income</h2>
+        <span className="source-tag">Substreams + Subgraph</span>
+      </div>
+      {!available && (
+        <p className="fine">
+          Historical activity unavailable · Graph provider not connected
+        </p>
+      )}
+      <p className="fine">
+        Request a common-block comparison from the configured sources. It
+        informs a purchase; only the onchain historical proof can allocate fees.
+      </p>
+      <div className="analysis-controls">
+        <label>
+          Estimated execution cost, USDC
+          <input
+            aria-label="Analysis execution cost"
+            inputMode="decimal"
+            value={gas}
+            onChange={(e) => setGas(e.target.value)}
+          />
+        </label>
+        <button
+          disabled={
+            !adapter.readAnalysis ||
+            !hasQuote ||
+            !valid ||
+            BigInt(quantity) === 0n ||
+            loading === key
+          }
+          onClick={load}
+        >
+          {loading === key
+            ? "Loading verified sources…"
+            : "Load sourced analysis"}
+        </button>
+      </div>
+      {!hasQuote && (
+        <p className="fine">
+          An executable quote is required to compare purchase break-even.
+        </p>
+      )}
+      {result?.status === "unavailable" && (
+        <p className="inline-warning" role="status">
+          {result.reason}
+        </p>
+      )}
+      {available && (
+        <>
+          <p className="source-tag">
+            {available.sourceFinalized === true &&
+            available.substreamsFinalBlock !== null &&
+            available.substreamsFinalBlock >= available.sourceBlock
+              ? "Finalized at source"
+              : "Provisional source state"}
+          </p>
+          <dl className="instrument-facts">
+            <div>
+              <dt>Break-even, before execution cost</dt>
+              <dd>{money(available.grossBreakEvenUSDC, 6)} USDC</dd>
+            </div>
+            <div>
+              <dt>Break-even, including execution cost</dt>
+              <dd>{money(available.netBreakEvenUSDC, 6)} USDC</dd>
+            </div>
+            <div>
+              <dt>Observed range occupancy</dt>
+              <dd>
+                {available.occupancyBps === null
+                  ? "Unknown"
+                  : (available.occupancyBps / 100).toFixed(2) + "%"}
+              </dd>
+            </div>
+            <div>
+              <dt>History coverage</dt>
+              <dd>
+                {(available.coverageBps / 100).toFixed(2)}% ·{" "}
+                {available.knownBlocks}/{available.totalBlocks} blocks
+              </dd>
+            </div>
+            <div>
+              <dt>Common source block</dt>
+              <dd>{available.sourceBlock.toLocaleString("en-US")}</dd>
+            </div>
+            <div>
+              <dt>Source lag</dt>
+              <dd>
+                {available.lagBlocks} blocks{available.stale ? " · stale" : ""}
+              </dd>
+            </div>
+          </dl>
+          <p className="fine">
+            Block hash <code>{available.sourceHash}</code>
+          </p>
+          <details>
+            <summary>Source identity &amp; analysis limits</summary>
+            <p className="fine">
+              Subgraph deployment: <code>{available.subgraphDeployment}</code>
+              <br />
+              Substreams package: <code>{available.substreamsPackage}</code>
+              <br />
+              Cursor: <code>{available.substreamsCursor}</code>
+            </p>
+            {available.caveats.map((text, i) => (
+              <p className="fine" key={i}>
+                {text}
+              </p>
+            ))}
+          </details>
+        </>
+      )}
+    </section>
+  );
 }

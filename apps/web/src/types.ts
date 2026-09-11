@@ -1,5 +1,10 @@
 export type DataMode = "fixture" | "local" | "testnet";
-export type SeriesPhase = "active" | "matured" | "captured" | "allocated";
+export type SeriesPhase =
+  | "active"
+  | "matured"
+  | "captured"
+  | "allocated"
+  | "closed";
 export type Scenario =
   | "normal"
   | "wrong-network"
@@ -10,6 +15,14 @@ export type Scenario =
   | "transaction-failure"
   | "indexer-lag"
   | "no-positions";
+export interface Quote {
+  maker: string;
+  expiresAt: string;
+  available: boolean;
+  ratioClaimUnits?: string;
+  ratioUsdcUnits?: string;
+  strategyHash?: string;
+}
 export interface Market {
   id: string;
   pair: string;
@@ -19,6 +32,14 @@ export interface Market {
   lowerPrice: string;
   upperPrice: string;
   currentPrice: string;
+  currentRangePercent?: number;
+  priceIsIndicative?: boolean;
+  quote?: Quote;
+  baselineX128?: string;
+  residualOwner?: string;
+  residualUsdcMicros?: string;
+  otherReserve?: string;
+  nativePairLabel?: string;
   lowerTick: number;
   upperTick: number;
   liquidity: string;
@@ -42,6 +63,9 @@ export interface Market {
   sourceToBlock: string;
 }
 export interface Position {
+  feeTier?: string;
+  owner?: string;
+  ownedByWallet?: boolean;
   tokenId: string;
   pair: string;
   lowerPrice: string;
@@ -76,7 +100,7 @@ export interface Snapshot {
   markets: Market[];
   positions: Position[];
   wallet: WalletState;
-  quote: { maker: string; expiresAt: string; available: boolean };
+  quote: Quote;
   scenario: Scenario;
 }
 export type Action =
@@ -101,15 +125,30 @@ export type Action =
       quantity: string;
       maximumPaymentMicros: string;
       expiresAt: string;
+      strategyHash?: string;
     }
   | {
-      type: "capture" | "withdrawNFT" | "settle" | "redeem" | "closeEarly";
+      type: "publishQuote";
+      seriesId: string;
+      quantity: string;
+      usdcMicros: string;
+      expiresAt: string;
+    }
+  | {
+      type:
+        | "capture"
+        | "withdrawNFT"
+        | "settle"
+        | "redeem"
+        | "closeEarly"
+        | "withdrawResidual";
       seriesId: string;
     };
 export interface ActionResult {
   mode: DataMode;
   description: string;
   transactionHash?: `0x${string}`;
+  transactionHashes?: `0x${string}`[];
 }
 export interface FeeStripAdapter {
   readonly mode: DataMode;
@@ -117,4 +156,36 @@ export interface FeeStripAdapter {
   connect(): Promise<WalletState>;
   execute(action: Action): Promise<ActionResult>;
   switchNetwork?(): Promise<void>;
+  readAnalysis?(
+    seriesId: string,
+    quantity: string,
+    price: string,
+    executionCost?: string,
+  ): Promise<AnalysisResult>;
 }
+
+export interface BuyerAnalysis {
+  seriesId: string;
+  poolKey: string;
+  sourceBlock: number;
+  sourceHash: string;
+  subgraphDeployment: string;
+  substreamsPackage: string;
+  substreamsCursor: string;
+  lagBlocks: number;
+  stale: boolean;
+  grossBreakEvenUSDC: string;
+  netBreakEvenUSDC: string;
+  knownBlocks: number;
+  inRangeBlocks: number;
+  totalBlocks: number;
+  occupancyBps: number | null;
+  coverageBps: number;
+  substreamsFinalBlock: number | null;
+  sourceFinalized: boolean;
+  allocationAuthority: "contract-only";
+  caveats: string[];
+}
+export type AnalysisResult =
+  | { status: "available"; analysis: BuyerAnalysis }
+  | { status: "unavailable"; reason: string };
