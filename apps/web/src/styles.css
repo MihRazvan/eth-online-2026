@@ -1264,6 +1264,25 @@ footer > span:last-child {
 .claim-holdings {
   margin-bottom: 40px;
 }
+.funded-offers {
+  margin-bottom: 48px;
+}
+.funded-offer-row {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr auto;
+  align-items: center;
+  gap: 24px;
+  padding: 24px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.funded-offer-row small {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  margin-top: 8px;
+}
 .empty {
   text-align: center;
   padding: 50px 20px;
@@ -1761,6 +1780,17 @@ dialog h2 {
   .holding-row {
     grid-template-columns: 1fr 1fr;
     gap: 22px 15px;
+  }
+  .funded-offer-row {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+  .funded-offers .section-top {
+    display: block;
+  }
+  .funded-offers .source-tag {
+    display: block;
+    margin-top: 12px;
   }
   .holding-row > .pair {
     grid-column: 1/-1;

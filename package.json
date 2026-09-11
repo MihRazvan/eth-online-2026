@@ -10,7 +10,7 @@
   "scripts": {
     "dev": "pnpm --filter @feestrip/web dev",
     "build": "pnpm --filter @feestrip/web build",
-    "test": "node --test packages/core/test/*.test.mjs packages/data/test/*.test.mjs",
+    "test": "node --test packages/core/test/*.test.mjs packages/data/test/*.test.mjs scripts/chain/proof.test.mjs",
     "test:contracts": "forge test",
     "test:browser": "pnpm --filter @feestrip/web test",
     "check:handoff": "node scripts/check-handoff.mjs",

@@ -105,6 +105,47 @@ export async function currencyMetadata(
     ? [18, "ETH"]
     : readToken(currency);
 }
+/** Artifact metadata is a preflight hint; the contract authenticates the witness. */
+export function assertWitnessScope(
+  file: {
+    chainId?: unknown;
+    seriesId?: unknown;
+    endBlock?: unknown;
+    blockNumber?: unknown;
+    manager?: unknown;
+  },
+  expected: {
+    chainId: number;
+    seriesId: bigint;
+    endBlock: bigint;
+    manager: Address;
+  },
+) {
+  const matches = (value: unknown, target: bigint) => {
+    if (value === undefined) return true; // Legacy artifacts have no metadata.
+    if (typeof value === "number")
+      return (
+        Number.isSafeInteger(value) && value >= 0 && BigInt(value) === target
+      );
+    return (
+      typeof value === "string" &&
+      /^(0|[1-9][0-9]*)$/.test(value) &&
+      BigInt(value) === target
+    );
+  };
+  if (
+    !matches(file.chainId, BigInt(expected.chainId)) ||
+    !matches(file.seriesId, expected.seriesId) ||
+    !matches(file.endBlock, expected.endBlock) ||
+    !matches(file.blockNumber, expected.endBlock) ||
+    (file.manager !== undefined &&
+      (typeof file.manager !== "string" ||
+        file.manager.toLowerCase() !== expected.manager.toLowerCase()))
+  )
+    throw new Error(
+      "Witness metadata does not match this series endpoint and chain.",
+    );
+}
 interface PoolKey {
   currency0: Address;
   currency1: Address;
@@ -206,9 +247,9 @@ function message(error: unknown): string {
 }
 function formatPrice(n: number) {
   if (!Number.isFinite(n) || n <= 0) return "Unavailable";
-  return new Intl.NumberFormat("en-US", { maximumSignificantDigits: 7 }).format(
-    n,
-  );
+  return new Intl.NumberFormat("en-US", {
+    maximumSignificantDigits: 7,
+  }).format(n);
 }
 
 /** Direct public-RPC reads and wallet-signed transactions; no trusted amount service. */
@@ -785,6 +826,22 @@ export class ChainAdapter implements FeeStripAdapter {
       sourceBlock: bn.toString(),
       markets,
       positions: positions.filter((p): p is Position => !!p),
+      fundedOffers: offers
+        .filter(
+          (o) => !o.consumed && wallet.address && same(o.buyer, wallet.address),
+        )
+        .map((o) => ({
+          id: o.id.toString(),
+          tokenId: o.tokenId.toString(),
+          seller: o.seller,
+          buyer: o.buyer,
+          fundedMicros: o.proceeds.toString(),
+          claims: o.buyerQuantity.toString(),
+          originalSupply: o.quantity.toString(),
+          endBlock: o.endBlock.toString(),
+          deadlineTimestamp: o.deadline.toString(),
+          expired: o.endBlock <= bn || o.deadline < block.timestamp,
+        })),
       wallet,
       quote: markets[0]?.quote ?? { ...NO_QUOTE },
       scenario: "normal",
@@ -1096,6 +1153,34 @@ export class ChainAdapter implements FeeStripAdapter {
             BigInt(action.deadlineTimestamp),
           ]),
         );
+      } else if (action.type === "cancelOffer") {
+        const offer = await this.read<
+          readonly [
+            Address,
+            Address,
+            bigint,
+            bigint,
+            bigint,
+            bigint,
+            bigint,
+            bigint,
+            Hex,
+            boolean,
+          ]
+        >(d.feeStrip, feeStripAbi, "offers", [BigInt(action.offerId)]);
+        if (!same(offer[0], account))
+          throw new Error(
+            "Only the buyer who funded this offer can cancel it.",
+          );
+        if (offer[9])
+          throw new Error(
+            "This offer was already accepted or cancelled. Refresh its state.",
+          );
+        hashes.push(
+          await this.write(d.feeStrip, feeStripAbi, "cancelOffer", [
+            BigInt(action.offerId),
+          ]),
+        );
       } else if (action.type === "acceptOffer") {
         hashes.push(
           await this.write(d.feeStrip, feeStripAbi, "acceptOffer", [
@@ -1243,7 +1328,9 @@ export class ChainAdapter implements FeeStripAdapter {
             witness?: Hex;
             seriesId?: string;
             endBlock?: string;
-            chainId?: number;
+            chainId?: number | string;
+            blockNumber?: string;
+            manager?: Address;
           };
           if (!file.witness || !/^0x(?:[0-9a-fA-F]{2})+$/.test(file.witness))
             throw new Error(
@@ -1252,15 +1339,12 @@ export class ChainAdapter implements FeeStripAdapter {
           const s = await this.read<Series>(d.feeStrip, feeStripAbi, "series", [
             id,
           ]);
-          if (
-            (file.seriesId !== undefined && BigInt(file.seriesId) !== id) ||
-            (file.endBlock !== undefined &&
-              BigInt(file.endBlock) !== s.endBlock) ||
-            (file.chainId !== undefined && file.chainId !== d.chainId)
-          )
-            throw new Error(
-              "Witness metadata does not match this series endpoint and chain.",
-            );
+          assertWitnessScope(file, {
+            chainId: d.chainId,
+            seriesId: id,
+            endBlock: s.endBlock,
+            manager: d.poolManager,
+          });
           hashes.push(
             await this.write(d.feeStrip, feeStripAbi, "settle", [
               id,

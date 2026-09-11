@@ -9,11 +9,12 @@
   "soldUSDC": "799999999",
   "claimPayoutTotal": "799999997",
   "reservedDust": "2",
-  "unconsumedFundedOffers": "100000000",
+  "cancelledOfferRefund": "100000000",
+  "unconsumedFundedOffers": "0",
   "receipts": [
     {
       "action": "fundOffer",
-      "hash": "0xa074f292836048f7c5170cbf1ea24cacc8ce1cbe766c0200713e48b2fa4d3b47"
+      "hash": "0x09b9a00cc05776078e2dd96c8a5775cc548b6eb5f6b5eb6884687af6f1e66366"
     },
     {
       "action": "approveNFT",
@@ -25,11 +26,11 @@
     },
     {
       "action": "shipAquaStrategy",
-      "hash": "0xc4cd3fd8610f74d6b9ae849822a068d23e70dd591900f3295fda7561b7550b33"
+      "hash": "0x05ee7a2f55ff34deb00b910691ad4b6bdbd5bf590681bdf7d5cf545fd7b711b5"
     },
     {
       "action": "swapClaims",
-      "hash": "0x20ae8dcf25fc18e13d0cd2e0beb10e3069e84bdd2c9d6820f23b029902e4c5f8"
+      "hash": "0xf36afd7fdc05bc233c3e4fb408c63cae434edd43b973dcfecf8bbe89ed55fc14"
     },
     {
       "action": "capture",
@@ -41,7 +42,7 @@
     },
     {
       "action": "settleRetainedWitness",
-      "hash": "0x637fd60741b3d6407c96f1ca44d8d2742399f0a3024b90a297a9471facdd0f91"
+      "hash": "0xaf4e284048af9c5c42eaeb30de22194d39e55fa7673575bc428de3b195dce5f6"
     },
     {
       "action": "redeem:holder",
@@ -58,6 +59,10 @@
     {
       "action": "withdrawResidual",
       "hash": "0x50958280c75461711e9e2aff6188a20c5a194f5291cd98bad7f74f3f1944e47c"
+    },
+    {
+      "action": "cancelUnacceptedOffer",
+      "hash": "0xe513bbdf4370853c59df26d04517a4b7f0bc5a2d7c843f7a41ba46117454f4df"
     }
   ]
 }

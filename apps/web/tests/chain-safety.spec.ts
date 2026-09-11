@@ -2,6 +2,7 @@ import { test, expect } from "@playwright/test";
 import { zeroAddress, type Address } from "viem";
 import {
   assertChainScope,
+  assertWitnessScope,
   currencyMetadata,
   type Deployment,
 } from "../src/chainAdapter";
@@ -13,6 +14,37 @@ const sepolia = {
   positionManager: "0x429ba70129df741B2Ca2a85BC3A2a3328e5c09b4",
   usdc: "0x1c7d4b196cb0c7b01d743fbc6116a902379c7238",
 } as Deployment;
+test("witness metadata accepts producer decimal IDs and rejects substituted or malformed scope", () => {
+  const expected = {
+    chainId: 11155111,
+    seriesId: 1n,
+    endBlock: 11682192n,
+    manager: sepolia.poolManager,
+  };
+  for (const chainId of [11155111, "11155111"]) {
+    expect(() =>
+      assertWitnessScope(
+        { chainId, blockNumber: "11682192", manager: sepolia.poolManager },
+        expected,
+      ),
+    ).not.toThrow();
+  }
+  expect(() => assertWitnessScope({}, expected)).not.toThrow();
+  for (const mismatch of [
+    { chainId: "31337" },
+    { chainId: null },
+    { chainId: true },
+    { chainId: "1.1155111e7" },
+    { chainId: Number.MAX_SAFE_INTEGER + 1 },
+    { blockNumber: "11682193" },
+    { endBlock: "11682193" },
+    { seriesId: "2" },
+    { manager: zeroAddress },
+  ])
+    expect(() => assertWitnessScope(mismatch, expected)).toThrow(
+      "Witness metadata",
+    );
+});
 test("native ETH metadata never calls ERC20 methods at address zero", async () => {
   let calls = 0;
   const read = async (address: Address): Promise<readonly [number, string]> => {

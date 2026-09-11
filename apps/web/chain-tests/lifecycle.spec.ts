@@ -22,7 +22,10 @@ const repo =
   fileURLToPath(new URL("../../../", import.meta.url));
 let deployment: Deployment;
 const receipts: { action: string; hash: Hex }[] = [];
-const client = createPublicClient({ transport: http("http://127.0.0.1:8545") });
+const rpcURL = process.env.LOCAL_RPC_URL ?? "http://127.0.0.1:8545";
+if (!["localhost", "127.0.0.1", "[::1]"].includes(new URL(rpcURL).hostname))
+  throw new Error("Chain browser suite requires a loopback RPC.");
+const client = createPublicClient({ transport: http(rpcURL) });
 function run(script: string, ...args: string[]) {
   return execFileSync(
     process.execPath,
@@ -31,7 +34,7 @@ function run(script: string, ...args: string[]) {
       cwd: repo,
       encoding: "utf8",
       timeout: 120000,
-      env: { ...process.env, LOCAL_RPC_URL: "http://127.0.0.1:8545" },
+      env: { ...process.env, LOCAL_RPC_URL: rpcURL },
     },
   );
 }
@@ -60,7 +63,9 @@ async function login(
   await expect(page.getByText("Onchain local", { exact: true })).toBeVisible();
   // Navigating to the same URL/hash can preserve the already connected app.
   // Reuse that connection only after asserting it is the requested actor.
-  const connect = page.getByRole("button", { name: "Connect wallet", exact: true }).first();
+  const connect = page
+    .getByRole("button", { name: "Connect wallet", exact: true })
+    .first();
   if (await connect.isVisible()) await connect.click();
   await expect(page.locator(".wallet-button")).toContainText(
     getAddress(deployment.actors![actor]).slice(0, 6),
@@ -118,6 +123,7 @@ test("real browser funding, exact NFT sale, Aqua maker publication, trade, late 
     buyerCashBefore - 101000000n,
   );
   await login(page, "seller");
+  await expect(page.locator(".funded-offer-row")).toHaveCount(0);
   await page
     .getByRole("button", { name: "1. Approve this NFT", exact: true })
     .click();
@@ -281,6 +287,46 @@ test("real browser funding, exact NFT sale, Aqua maker publication, trade, late 
   expect(await balance(deployment.usdc, deployment.feeStrip)).toBe(
     reserve + funded,
   );
+  // The original seed offer was never accepted. Expiry does not refund it;
+  // buyer cancellation must recover exactly its capital without touching dust.
+  expect(funded).toBe(100000000n);
+  await login(page, "buyer");
+  await expect(page.locator(".funded-offer-row")).toHaveCount(1);
+  await expect(page.locator(".funded-offer-row")).toContainText(
+    "Expired · funds recoverable",
+  );
+  const beforeCancellation = await balance(deployment.usdc, buyer);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page
+    .getByRole("button", { name: "Review cancellation", exact: true })
+    .click();
+  await expect(page.getByRole("dialog")).toContainText("$100.000000 USDC");
+  await expect(page.getByRole("dialog")).toContainText(
+    "If the seller accepts first, cancellation reverts",
+  );
+  await page.screenshot({
+    path: testInfo.outputPath("offer-cancellation-mobile.png"),
+    fullPage: true,
+  });
+  await confirm(page, "Cancel offer and recover USDC", "cancelUnacceptedOffer");
+  expect(await balance(deployment.usdc, buyer)).toBe(
+    beforeCancellation + funded,
+  );
+  await expect(page.locator(".funded-offer-row")).toHaveCount(0);
+  const fundedAfterCancellation = await client.readContract({
+    address: deployment.feeStrip,
+    abi: feeStripAbi,
+    functionName: "fundedOfferUSDC",
+  });
+  expect(fundedAfterCancellation).toBe(0n);
+  expect(
+    await client.readContract({
+      address: deployment.feeStrip,
+      abi: feeStripAbi,
+      functionName: "reservedUSDC",
+    }),
+  ).toBe(reserve);
+  expect(await balance(deployment.usdc, deployment.feeStrip)).toBe(reserve);
   await page.setViewportSize({ width: 390, height: 844 });
   expect(
     await page.evaluate(
@@ -303,7 +349,8 @@ test("real browser funding, exact NFT sale, Aqua maker publication, trade, late 
     soldUSDC: s.soldUSDC.toString(),
     claimPayoutTotal: paid.toString(),
     reservedDust: reserve.toString(),
-    unconsumedFundedOffers: funded.toString(),
+    cancelledOfferRefund: funded.toString(),
+    unconsumedFundedOffers: fundedAfterCancellation.toString(),
     receipts,
   };
   const path = resolve(repo, "docs/evidence/browser-chain-lifecycle.json");

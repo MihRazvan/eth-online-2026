@@ -1105,6 +1105,84 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
               </div>
             ) : (
               <>
+                <section
+                  className="funded-offers"
+                  aria-label="Your funded offers"
+                >
+                  <div className="section-top">
+                    <h2>Your funded offers</h2>
+                    <span className="source-tag">
+                      {money(
+                        s.fundedOffers.reduce(
+                          (sum, o) => sum + BigInt(o.fundedMicros),
+                          0n,
+                        ),
+                        6,
+                      )}{" "}
+                      USDC in unaccepted offers
+                    </span>
+                  </div>
+                  <p className="fine">
+                    Unaccepted funding is separate from fee-claim reserves. An
+                    expired offer still needs cancellation to return your USDC.
+                  </p>
+                  {s.fundedOffers.length === 0 ? (
+                    <p className="fine">
+                      No USDC is waiting in your unaccepted offers.
+                    </p>
+                  ) : (
+                    s.fundedOffers.map((offer) => (
+                      <article className="funded-offer-row" key={offer.id}>
+                        <div>
+                          <b>
+                            Offer #{offer.id} · NFT #{offer.tokenId}
+                          </b>
+                          <small>
+                            {offer.expired
+                              ? "Expired · funds recoverable"
+                              : "Awaiting seller acceptance"}
+                          </small>
+                        </div>
+                        <div>
+                          <b>{money(offer.fundedMicros, 6)} USDC</b>
+                          <small>
+                            {formatClaims(offer.claims)} of{" "}
+                            {formatClaims(offer.originalSupply)} claims
+                          </small>
+                          <small>Ends block {integer(offer.endBlock)}</small>
+                        </div>
+                        <button
+                          disabled={wrongNetwork}
+                          onClick={() =>
+                            begin({
+                              title: "Cancel funded offer",
+                              action: {
+                                type: "cancelOffer",
+                                offerId: offer.id,
+                              },
+                              lines: [
+                                ["Offer", "#" + offer.id],
+                                ["Original NFT", "#" + offer.tokenId],
+                                [
+                                  "USDC returned to your wallet",
+                                  money(offer.fundedMicros, 6) + " USDC",
+                                ],
+                                ["Seller", offer.seller],
+                              ],
+                              warning:
+                                "The refund is confirmed only when cancellation succeeds onchain. If the seller accepts first, cancellation reverts. Cancelling this unaccepted offer does not redeem claims or take money from another series.",
+                              button: fixture
+                                ? "Cancel fixture offer"
+                                : "Cancel offer and recover USDC",
+                            })
+                          }
+                        >
+                          Review cancellation
+                        </button>
+                      </article>
+                    ))
+                  )}
+                </section>
                 <section className="position-list">
                   <div className="section-top">
                     <h2>Original positions</h2>
@@ -1981,7 +2059,8 @@ function AnalysisPanel({
             <div>
               <dt>Source lag</dt>
               <dd>
-                {available.lagBlocks} blocks{available.stale ? " · stale" : ""}
+                {available.lagBlocks} blocks
+                {available.stale ? " · stale" : ""}
               </dd>
             </div>
           </dl>

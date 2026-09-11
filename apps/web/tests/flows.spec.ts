@@ -94,6 +94,58 @@ test("NFT approval does not activate; exact funded acceptance preserves retained
   );
   await expect(page.locator(".holding-row").first()).toContainText("2,000");
 });
+test("multiple funded offers remain individually recoverable and rejected cancellation preserves funds", async ({
+  page,
+}) => {
+  await page.goto("/#positions");
+  await wallet(page);
+  await page
+    .getByRole("button", { name: "Fund an offer", exact: true })
+    .click();
+  for (const amount of ["101", "102"]) {
+    await page.getByLabel("Upfront USDC for 8,000 claims").fill(amount);
+    await page
+      .getByRole("button", { name: "Review funding", exact: true })
+      .click();
+    await confirm(page, "Fund offer");
+  }
+  await expect(page.locator(".funded-offer-row")).toHaveCount(2);
+  await expect(
+    page.getByRole("region", { name: "Your funded offers" }),
+  ).toContainText("$203.000000 USDC in unaccepted offers");
+  await condition(page, "rejected-signature");
+  await page
+    .getByRole("button", { name: "Review cancellation" })
+    .first()
+    .click();
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: "Cancel fixture offer" })
+    .click();
+  await expect(page.getByRole("alert")).toContainText("Signature rejected");
+  await page.getByRole("button", { name: "Close transaction review" }).click();
+  await expect(page.locator(".funded-offer-row")).toHaveCount(2);
+  await page.getByLabel("Fixture condition").selectOption("normal");
+  await page
+    .getByRole("button", { name: "Review cancellation" })
+    .last()
+    .click();
+  await expect(page.getByRole("dialog")).toContainText("$102.000000 USDC");
+  await confirm(page, "Cancel fixture offer");
+  await expect(page.locator(".funded-offer-row")).toHaveCount(1);
+  await expect(page.locator(".funded-offer-row")).toContainText(
+    "$101.000000 USDC",
+  );
+  await expect(
+    page.locator(".position-entry").first().locator(".funded-offer"),
+  ).toContainText("$101.00");
+  await page.getByRole("button", { name: "Review cancellation" }).click();
+  await confirm(page, "Cancel fixture offer");
+  await expect(page.locator(".funded-offer-row")).toHaveCount(0);
+  await expect(
+    page.getByRole("region", { name: "Your funded offers" }),
+  ).toContainText("$0.000000 USDC in unaccepted offers");
+});
 test("late capture releases original NFT before allocation; claims redeem afterward independently", async ({
   page,
 }) => {

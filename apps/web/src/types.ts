@@ -90,6 +90,18 @@ export interface WalletState {
   usdcBalanceMicros: string;
   claims: Record<string, string>;
 }
+export interface FundedOffer {
+  id: string;
+  tokenId: string;
+  seller: string;
+  buyer: string;
+  fundedMicros: string;
+  claims: string;
+  originalSupply: string;
+  endBlock: string;
+  deadlineTimestamp: string;
+  expired: boolean;
+}
 export interface Snapshot {
   mode: DataMode;
   network: string;
@@ -99,11 +111,13 @@ export interface Snapshot {
   sourceBlock: string;
   markets: Market[];
   positions: Position[];
+  fundedOffers: FundedOffer[];
   wallet: WalletState;
   quote: Quote;
   scenario: Scenario;
 }
 export type Action =
+  | { type: "cancelOffer"; offerId: string }
   | {
       type: "fundOffer";
       tokenId: string;

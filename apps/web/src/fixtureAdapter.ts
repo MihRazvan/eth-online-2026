@@ -47,6 +47,7 @@ export function initialFixture(): Snapshot {
     timestamp: "1789200000",
     sourceBlock: "11842994",
     scenario: "normal",
+    fundedOffers: [],
     wallet: {
       connected: false,
       usdcBalanceMicros: "2500000000",
@@ -125,6 +126,7 @@ export function initialFixture(): Snapshot {
 }
 /** Isolated deterministic design/test state. It never signs, broadcasts, or invents a hash. */
 export class FixtureAdapter implements FeeStripAdapter {
+  private nextOffer = 1;
   readonly mode = "fixture" as const;
   private state: Snapshot = initialFixture();
   async load() {
@@ -160,6 +162,7 @@ export class FixtureAdapter implements FeeStripAdapter {
   }
   reset() {
     this.state = initialFixture();
+    this.nextOffer = 1;
   }
   /** Explicit fixture controls exercise post-N state; there is no wall-clock authority. */
   advance(seriesId: string) {
@@ -241,6 +244,24 @@ export class FixtureAdapter implements FeeStripAdapter {
       s.wallet.claims[p.seriesId] = (
         BigInt(p.offer.originalSupply) - BigInt(p.offer.claims)
       ).toString();
+      s.fundedOffers = s.fundedOffers.filter((o) => o.id !== action.offerId);
+    } else if (action.type === "cancelOffer") {
+      const offer = s.fundedOffers.find((o) => o.id === action.offerId);
+      if (!offer || offer.buyer !== s.wallet.address)
+        throw new Error("Only your unaccepted funded offer can be cancelled.");
+      s.wallet.usdcBalanceMicros = (
+        BigInt(s.wallet.usdcBalanceMicros) + BigInt(offer.fundedMicros)
+      ).toString();
+      s.fundedOffers = s.fundedOffers.filter((o) => o.id !== action.offerId);
+      const position = s.positions.find((p) => p.offer?.id === action.offerId);
+      if (position) {
+        const remaining = [...s.fundedOffers]
+          .reverse()
+          .find((o) => o.tokenId === position.tokenId);
+        position.offer = remaining
+          ? { ...remaining, maker: remaining.buyer }
+          : undefined;
+      }
     } else if (action.type === "fundOffer") {
       const p = s.positions.find((p) => p.tokenId === action.tokenId);
       const amount = BigInt(action.paymentMicros);
@@ -255,7 +276,7 @@ export class FixtureAdapter implements FeeStripAdapter {
         BigInt(s.wallet.usdcBalanceMicros) - amount
       ).toString();
       p.offer = {
-        id: "fixture-funded-" + p.tokenId,
+        id: "fixture-funded-" + p.tokenId + "-" + this.nextOffer++,
         fundedMicros: action.paymentMicros,
         claims: action.claims,
         originalSupply: "10000000000000000000000",
@@ -263,6 +284,13 @@ export class FixtureAdapter implements FeeStripAdapter {
         deadlineTimestamp: action.deadlineTimestamp,
         maker: "Fixture wallet",
       };
+      s.fundedOffers.push({
+        ...p.offer,
+        buyer: s.wallet.address!,
+        seller: p.owner ?? "Fixture seller",
+        tokenId: p.tokenId,
+        expired: false,
+      });
     } else if (market) {
       if (action.type === "capture") {
         if (

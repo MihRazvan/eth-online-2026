@@ -1,6 +1,7 @@
 import { defineConfig } from "@playwright/test";
 export default defineConfig({
   testDir: "./chain-tests",
+  outputDir: "./test-results/chain",
   fullyParallel: false,
   workers: 1,
   forbidOnly: !!process.env.CI,
