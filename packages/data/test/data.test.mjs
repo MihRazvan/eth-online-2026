@@ -1,0 +1,10 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';import {HistoryStore} from '../src/store.mjs';import {composeAnalysis,querySubgraph} from '../src/compose.mjs';
+const hash=n=>'0x'+n.toString(16).padStart(64,'0');
+test('atomic cursor, idempotence and explicit reorg rollback',()=>{const store=new HistoryStore();
+const block={number:1,hash:hash(1),parentHash:hash(0),cursor:'cursor1',swaps:[{chainId:1,manager:'A',pool:'B',logIndex:0,tick:0}]};store.apply(block);store.apply(block);
+assert.throws(()=>store.apply({...block,number:2,hash:hash(2),parentHash:hash(9)}));
+assert.throws(()=>store.apply({...block,number:2,hash:hash(2),parentHash:hash(1),swaps:[{...block.swaps[0],tick:999999}]}));assert.equal(store.head().number,1);
+store.apply({...block,number:2,hash:hash(2),parentHash:hash(1),cursor:'cursor2'});store.undo(1,hash(1));assert.equal(store.head().cursor,'cursor1');assert.throws(()=>store.undo(0,hash(0)));store.close();});
+const input=()=>({series:{id:'1',chainId:1,poolManager:'0xA',poolId:'0xB',activationBlock:1,endBlock:10,tickLower:-10,tickUpper:10,originalSupply:'100'},stream:{chainId:1,poolManager:'0xa',poolId:'0xb',fromBlock:1,toBlock:5,blockHash:hash(5),package:'pinned package',cursor:'cursor',samples:[{block:1,logIndex:0,tick:0}]},subgraph:{block:5,hash:hash(5),deployment:'pinned deployment',hasIndexingErrors:false},chainHead:40,price:10n,quantity:20n});
+test('joined analysis binds source identity, freshness and gross whole-period break-even',()=>{const i=input();const r=composeAnalysis(i);assert.equal(r.grossBreakEvenUSDC,'50');assert.equal(r.occupancyBps,10000);assert.equal(r.stale,true);assert.equal(r.allocationAuthority,'contract-only');i.stream.blockHash=hash(4);assert.throws(()=>composeAnalysis(i));i.stream.blockHash=hash(5);i.stream.chainId=2;assert.throws(()=>composeAnalysis(i));});
+test('Graph errors and deployment substitutions fail closed',async()=>{const fetchImpl=async()=>({ok:true,json:async()=>({data:{_meta:{block:{number:5,hash:hash(5)},deployment:'wrong'}}})});await assert.rejects(querySubgraph({url:'https://example.invalid',deployment:'expected',block:5,fetchImpl}));});

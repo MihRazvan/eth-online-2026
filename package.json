@@ -1,0 +1,31 @@
+{
+  "name": "feestrip",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "packageManager": "pnpm@12.3.4",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @feestrip/web dev",
+    "build": "pnpm --filter @feestrip/web build",
+    "test": "node --test packages/core/test/*.test.mjs packages/data/test/*.test.mjs",
+    "test:contracts": "forge test",
+    "test:browser": "pnpm --filter @feestrip/web test:e2e",
+    "check:handoff": "node scripts/check-handoff.mjs"
+  },
+  "dependencies": {
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "viem": "2.56.3"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "5.1.4",
+    "typescript": "5.9.3",
+    "vite": "7.3.1"
+  }
+}
