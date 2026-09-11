@@ -21,3 +21,5 @@ The local suite now exercises funded sale → actual Aqua claim trade → late c
 Powered by SwapVM — © Degensoft Ltd 2025. FeeStrip's market integration uses the official Aqua/SwapVM sources and their retained licenses; [runtime decision](docs/decisions/002-aqua-runtime.md). Other upstream notices remain under contracts/lib and apps/web/public/fonts. No upstream audit extends to FeeStrip.
 
 Sponsor evidence, outstanding gates and the human-narrated demo script are in [the submission packet](docs/submission.md). Uniswap developer feedback is in [FEEDBACK.md](FEEDBACK.md).
+
+First-party FeeStrip implementation is MIT licensed. Vendored contracts, imported Substreams sources, fonts and reference images retain their own licenses and notices; the root license does not relicense third-party material.
