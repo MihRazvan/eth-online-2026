@@ -1,4 +1,6 @@
 import {
+  BaseError,
+  ContractFunctionRevertedError,
   createPublicClient,
   createWalletClient,
   custom,
@@ -250,7 +252,32 @@ const pairId = (key: PoolKey) =>
   );
 function message(error: unknown): string {
   const e = error as { shortMessage?: string; message?: string };
-  return e.shortMessage ?? e.message ?? String(error);
+  // Public UI errors must not echo transport URLs, including credential-bearing paths.
+  // Viem's shortMessage omits request bodies/headers and nested transport diagnostics.
+  const diagnostic =
+    typeof e?.shortMessage === "string"
+      ? e.shortMessage
+      : typeof e?.message === "string"
+        ? e.message
+        : String(error);
+  return diagnostic.replace(
+    /(?:https?|wss?):\/\/[^\s"'<>]+/gi,
+    "[provider URL redacted]",
+  );
+}
+function isMissingCanonicalNFT(error: unknown): boolean {
+  if (!(error instanceof BaseError)) return false;
+  const reverted = error.walk(
+    (cause) => cause instanceof ContractFunctionRevertedError,
+  );
+  // The pinned canonical PosM inherits Solmate ERC721: ownerOf reverts with
+  // Error("NOT_MINTED") for burned/never-minted IDs. Do not infer absence from
+  // a transport message, empty revert, timeout, or another contract error.
+  return (
+    reverted instanceof ContractFunctionRevertedError &&
+    reverted.data?.errorName === "Error" &&
+    reverted.data.args?.[0] === "NOT_MINTED"
+  );
 }
 function formatPrice(n: number) {
   if (!Number.isFinite(n) || n <= 0) return "Unavailable";
@@ -373,6 +400,13 @@ export class ChainAdapter implements FeeStripAdapter {
     }) as Promise<T>;
   }
   async validate() {
+    try {
+      await this.validateDeployment();
+    } catch (error) {
+      throw new Error(message(error));
+    }
+  }
+  private async validateDeployment() {
     if (this.validated) return;
     const d = this.deployment;
     assertChainScope(d);
@@ -453,6 +487,13 @@ export class ChainAdapter implements FeeStripAdapter {
     this.validated = true;
   }
   async connect(): Promise<WalletState> {
+    try {
+      return await this.connectWallet();
+    } catch (error) {
+      throw new Error(message(error));
+    }
+  }
+  private async connectWallet(): Promise<WalletState> {
     await this.validate();
     if (this.testActor) {
       const account = this.deployment.actors?.[this.testActor];
@@ -486,7 +527,11 @@ export class ChainAdapter implements FeeStripAdapter {
   }
   async switchNetwork() {
     if (!this.wallet) throw new Error("Connect a wallet first.");
-    await this.wallet.switchChain({ id: this.deployment.chainId });
+    try {
+      await this.wallet.switchChain({ id: this.deployment.chainId });
+    } catch (error) {
+      throw new Error(message(error));
+    }
   }
   private async walletState(blockNumber: bigint): Promise<WalletState> {
     if (!this.account)
@@ -591,6 +636,13 @@ export class ChainAdapter implements FeeStripAdapter {
     };
   }
   async load(): Promise<Snapshot> {
+    try {
+      return await this.loadSnapshot();
+    } catch (error) {
+      throw new Error(message(error));
+    }
+  }
+  private async loadSnapshot(): Promise<Snapshot> {
     await this.validate();
     const d = this.deployment,
       block = await this.client.getBlock();
@@ -736,14 +788,20 @@ export class ChainAdapter implements FeeStripAdapter {
     ];
     const positions = await Promise.all(
       nftIds.map(async (tokenId): Promise<Position | undefined> => {
-        const [owner, info, liquidity] = await Promise.all([
-          this.read<Address>(
+        let owner: Address;
+        try {
+          owner = await this.read<Address>(
             d.positionManager,
             NFT_ABI,
             "ownerOf",
             [BigInt(tokenId)],
             bn,
-          ),
+          );
+        } catch (error) {
+          if (isMissingCanonicalNFT(error)) return undefined;
+          throw error;
+        }
+        const [info, liquidity] = await Promise.all([
           this.read<readonly [PoolKey, bigint]>(
             d.positionManager,
             positionManagerAbi,
@@ -1240,6 +1298,15 @@ export class ChainAdapter implements FeeStripAdapter {
     };
   }
   async downloadRecoveryArtifact(seriesId: string): Promise<RecoveryDownload> {
+    try {
+      return await this.downloadRetainedArtifact(seriesId);
+    } catch (error) {
+      throw new Error(message(error));
+    }
+  }
+  private async downloadRetainedArtifact(
+    seriesId: string,
+  ): Promise<RecoveryDownload> {
     const status = await this.readRecovery(seriesId);
     if (status.status === "unavailable") throw new Error(status.reason);
     return this.retainedArtifact(seriesId, status.observation);
@@ -1315,6 +1382,13 @@ export class ChainAdapter implements FeeStripAdapter {
     }
   }
   async execute(action: Action): Promise<ActionResult> {
+    try {
+      return await this.executeAction(action);
+    } catch (error) {
+      throw new Error(message(error));
+    }
+  }
+  private async executeAction(action: Action): Promise<ActionResult> {
     await this.validate();
     const { account } = await this.signer(
         action.reviewedAccount as Address | undefined,
