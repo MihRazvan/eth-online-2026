@@ -1,4 +1,4 @@
-/** Isolated real-chain quote regression. Requires a fresh seed on OWN loopback8550 and local app4186. */
+/** Isolated real-chain quote regression. Requires a fresh seed on its own loopback chain and local app. */
 import { chromium } from "@playwright/test";
 import {
   createPublicClient,
@@ -16,13 +16,14 @@ mkdirSync(resolve(repo, "docs/design/evidence"), { recursive: true });
 const d = JSON.parse(
   readFileSync(resolve(repo, "apps/web/public/deployment.json"), "utf8"),
 );
+const rpcPort = process.env.QUOTE_RPC_PORT ?? "8550";
 if (
   new URL(d.rpcUrl).hostname !== "127.0.0.1" ||
-  new URL(d.rpcUrl).port !== "8550" ||
+  new URL(d.rpcUrl).port !== rpcPort ||
   d.chainId !== 31337
 )
   throw new Error(
-    "Quote regression may mutate only own127.0.0.1:8550 chain31337",
+    `Quote regression requires its dedicated 127.0.0.1:${rpcPort} chain31337`,
   );
 const app = process.env.QUOTE_APP_URL ?? "http://127.0.0.1:4186";
 if (!["localhost", "127.0.0.1"].includes(new URL(app).hostname))
@@ -76,7 +77,9 @@ async function login(actor, route = "positions") {
     .getByRole("button", { name: "Connect wallet", exact: true })
     .first()
     .click();
-  await page.getByRole("region", { name: "Your maker quotes" }).waitFor();
+  await page.locator(".wallet-button").filter({
+    hasText: getAddress(d.actors[actor]).slice(0, 6),
+  }).waitFor();
 }
 async function confirm(label) {
   await page
@@ -131,7 +134,7 @@ async function dock(hash) {
   await confirm("Cancel this maker quote");
 }
 try {
-  await login("seller");
+  await login("seller", "pin");
   await page
     .getByRole("button", { name: "1. Approve this NFT", exact: true })
     .click();
@@ -313,7 +316,7 @@ try {
     JSON.stringify(
       {
         scope:
-          "Actual isolated local8550 transactions; no public signing or live liquidity claim",
+          `Actual isolated local${rpcPort} transactions; no public signing or live liquidity claim`,
         chainId: 31337,
         ask,
         bid,

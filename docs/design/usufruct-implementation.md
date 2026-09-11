@@ -38,3 +38,5 @@ The lead inspected the combined application, with actual self-hosted fonts and p
 
 
 Both retained-witness and verified-cache-only browser lifecycle variants pass after integration. The testnet production build also passes. The existing public-data preview was rebuilt with the Sepolia manifest; its disconnected desktop/mobile check preserves the truthful empty orchard and contains no fixture data. [Public preview evidence](evidence/usufruct/public-review.json). No wallet was connected or public transaction sent for this design check.
+
+The separate actual-chain maker regression also passes against the integrated interface: ask fill, exact bid proceeds, revoked/expired/depleted/stale strategies, quote cancellation and unchanged captured reserves. Its seller entry now uses Pin a tree, while maker management remains in My cabinet. `QUOTE_RPC_PORT` and `QUOTE_APP_URL` permit isolated local verification without resetting another preview. [Maker evidence](quotes-chain-evidence.json).
