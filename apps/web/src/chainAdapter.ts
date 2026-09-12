@@ -1,5 +1,5 @@
 import { serializePublicTransaction, transactionIdentity } from "./transactionIdentity";
-import { readReceipts } from "./receipts";
+import { guardsSubmission, MAX_RECEIPT_GUARDS, readReceipts, saveReceipt } from "./receipts";
 import { readOperations } from "./operations";
 import {
   BaseError,
@@ -350,15 +350,52 @@ export class ChainAdapter implements FeeStripAdapter {
     if (next.nonce !== identity.nonce) throw new Error("This transaction uses a different nonce. It did not replace the original submission.");
     const block = await this.client.getBlock({ blockNumber: receipt.blockNumber });
     if (!same(receipt.transactionHash, hash) || !same(block.hash, receipt.blockHash)) throw new Error("The replacement receipt is not confirmed in the current canonical chain.");
-    const sameAction = identity.to === next.to && identity.value === next.value && identity.data === next.data;
+    let replacementFinalizedBlockNumber: string | undefined, replacementFinalizedBlockHash: Hex | undefined;
+    if (this.mode === "testnet") {
+      const finalized = await this.client.getBlock({ blockTag: "finalized" });
+      if (finalized.number === null || finalized.hash === null || finalized.number < receipt.blockNumber) throw new Error("The replacement is confirmed but not finalized. Wait for Ethereum finality, then check its receipt again. The original submission remains guarded against duplicate payment.");
+      const stillCanonical = await this.client.getBlock({ blockNumber: receipt.blockNumber });
+      if (!same(stillCanonical.hash, receipt.blockHash)) throw new Error("The replacement block changed while finality was checked. The original submission remains guarded.");
+      replacementFinalizedBlockNumber = finalized.number.toString();
+      replacementFinalizedBlockHash = finalized.hash!;
+    }
+    // EIP-7702 authorizations can change execution despite identical call fields.
+    // Only ordinary EIP-1559 replacements can inherit the original action label.
+    const sameAction = identity.type === "eip1559" && next.type === "eip1559" && identity.to === next.to && identity.value === next.value && identity.data === next.data;
     await this.signer(original.account as Address);
     return [
-      { ...original, signedTransaction: signed, stage: "replaced", replacementHash: hash },
-      { chainId: d.chainId, feeStrip: d.feeStrip, account: original.account, hash, signedTransaction: replacementBytes, stage: receipt.status === "success" ? "confirmed" : "failed", label: sameAction ? original.label : "Replacement transaction (different action)", action: sameAction ? original.action : undefined },
+      { ...original, signedTransaction: signed, stage: "replaced", replacementHash: hash, replacementBlockNumber: receipt.blockNumber.toString(), replacementBlockHash: receipt.blockHash, replacementFinalizedBlockNumber, replacementFinalizedBlockHash },
+      { chainId: d.chainId, feeStrip: d.feeStrip, account: original.account, hash, signedTransaction: replacementBytes, stage: receipt.status === "success" ? "confirmed" : "failed", receiptBlockNumber: receipt.blockNumber.toString(), receiptBlockHash: receipt.blockHash, label: sameAction ? original.label : "Replacement transaction (different action)", action: sameAction ? original.action : undefined },
     ];
   }
   private progress(progress: Omit<TransactionProgress, "chainId" | "feeStrip" | "action">) {
     for (const listener of this.progressListeners) listener({ ...progress, chainId: this.deployment.chainId, feeStrip: this.deployment.feeStrip, action: this.activeAction });
+  }
+  private recordReceipt(receipt: TransactionProgress) {
+    saveReceipt(receipt);
+    // Preserve the recorded action: activeAction is the NEW attempted submission.
+    for (const listener of this.progressListeners) listener(receipt);
+  }
+  private async checkReceiptGuards(account: Address) {
+    const d = this.deployment, saved = readReceipts();
+    if (saved.filter(guardsSubmission).length >= MAX_RECEIPT_GUARDS) throw new Error("This browser has reached its receipt tracking limit. Resolve pending submissions before another wallet action; no unresolved receipt has been discarded.");
+    const scoped = saved.filter((row) => (row.stage === "pending" || row.stage === "replaced") && row.chainId === d.chainId && same(row.feeStrip, d.feeStrip) && same(row.account, account));
+    for (const row of scoped) {
+      if (row.stage === "replaced") {
+        try {
+          if (!row.replacementHash) throw new Error("Replacement hash is unavailable.");
+          // Reauthenticate current chain evidence on EVERY action, including after
+          // reload. An old successful check cannot establish present canonicality.
+          const verified = await this.reconcileReplacementAction({ ...row, stage: "pending" }, row.replacementHash);
+          for (const next of verified) this.recordReceipt(next);
+        } catch (error) {
+          const replacement = saved.find((candidate) => candidate.hash === row.replacementHash && candidate.chainId === row.chainId);
+          if (replacement) this.recordReceipt({ ...replacement, stage: "pending" });
+          this.recordReceipt({ ...row, stage: "pending" });
+          throw new Error("The saved replacement can no longer clear the original submission. No new transaction was requested. Check the replacement receipt again. " + message(error));
+        }
+      } else if (await this.readTransaction(row.hash!) === "pending") throw new Error("A broadcast transaction for this wallet is still unresolved. Check its saved receipt or cancel it in your wallet, then refresh. Do not repeat the payment.");
+    }
   }
 
   async findPosition(input: string): Promise<string> {
@@ -1291,6 +1328,8 @@ export class ChainAdapter implements FeeStripAdapter {
     const maximumFeeWei = gasLimit * (fees.maxFeePerGas ?? 0n);
     if (balance < maximumFeeWei) throw new Error("Insufficient ETH for the estimated gas limit. Add Sepolia ETH and review again; any earlier token allowance remains in place.");
     await this.signer(expectedAccount);
+    await this.checkReceiptGuards(account);
+    await this.signer(account);
     this.progress({ stage: "signature", label, account, gasEstimate: gasLimit.toString(), maximumFeeWei: maximumFeeWei.toString() });
     const hash = await wallet.sendTransaction({ account, chain: this.chain, to: address, data, gas: gasLimit, ...fees });
     this.progress({ stage: "pending", label, account, hash, gasEstimate: gasLimit.toString(), maximumFeeWei: maximumFeeWei.toString() });
@@ -1306,7 +1345,7 @@ export class ChainAdapter implements FeeStripAdapter {
       hash, confirmations: 1,
       onReplaced: ({ reason, replacedTransaction, transactionReceipt }) => {
         replacementReason = reason;
-        this.progress({ stage: "replaced", label, account, hash: replacedTransaction.hash, replacementHash: transactionReceipt.transactionHash });
+        this.progress({ stage: "replaced", label, account, hash: replacedTransaction.hash, replacementHash: transactionReceipt.transactionHash, replacementBlockNumber: transactionReceipt.blockNumber.toString(), replacementBlockHash: transactionReceipt.blockHash });
       },
     });
     if (replacementReason === "cancelled" || replacementReason === "replaced") {
@@ -1317,7 +1356,7 @@ export class ChainAdapter implements FeeStripAdapter {
       if (!same(log.address, this.deployment.feeStrip)) continue;
       try { const event = decodeEventLog({ abi: feeStripAbi, data: log.data, topics: log.topics }); if (event.eventName === "OfferFunded") offerId = String((event.args as { offerId?: bigint; id?: bigint }).offerId ?? (event.args as { id?: bigint }).id); } catch {}
     }
-    this.progress({ stage: receipt.status === "success" ? "confirmed" : "failed", label, account, hash: receipt.transactionHash, offerId });
+    this.progress({ stage: receipt.status === "success" ? "confirmed" : "failed", label, account, hash: receipt.transactionHash, offerId, receiptBlockNumber: receipt.blockNumber.toString(), receiptBlockHash: receipt.blockHash });
     if (receipt.status !== "success") throw new Error(`Transaction reverted: ${hash}. Confirmed earlier approvals, if any, remain in place.`);
     return receipt.transactionHash;
   }
@@ -1553,8 +1592,7 @@ export class ChainAdapter implements FeeStripAdapter {
       d = this.deployment,
       hashes: Hex[] = [];
     try {
-      const unresolved = readReceipts().filter((row) => row.stage === "pending" && row.chainId === d.chainId && same(row.feeStrip, d.feeStrip) && same(row.account, account));
-      for (const row of unresolved) if (await this.readTransaction(row.hash!) === "pending") throw new Error("A broadcast transaction for this wallet is still unresolved. Check its saved receipt or cancel it in your wallet, then refresh. Do not repeat the payment.");
+      await this.checkReceiptGuards(account);
       if (this.mode === "testnet" && (action.type === "fundOffer" || action.type === "acceptOffer")) { const readiness = await readOperations(d); if (!readiness.ready) throw new Error(readiness.reason); }
       if (action.type === "approvePosition") {
         if (

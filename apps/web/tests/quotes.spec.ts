@@ -283,7 +283,7 @@ test("injected wallet changes cannot replace the reviewed signer during refresh,
     };
     adapter.client.waitForTransactionReceipt = async () => {
       if (stage === "approval") selected = [B];
-      return { status: "success", transactionHash: hash };
+      return { status: "success", transactionHash: hash, blockNumber: 100n, blockHash: hash };
     };
     if (stage === "review") {
       selected = [B];

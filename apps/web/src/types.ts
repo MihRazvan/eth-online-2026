@@ -226,6 +226,12 @@ export interface TransactionProgress {
   hash?: `0x${string}`;
   offerId?: string;
   replacementHash?: `0x${string}`;
+  replacementBlockNumber?: string;
+  replacementBlockHash?: `0x${string}`;
+  replacementFinalizedBlockNumber?: string;
+  replacementFinalizedBlockHash?: `0x${string}`;
+  receiptBlockNumber?: string;
+  receiptBlockHash?: `0x${string}`;
   signedTransaction?: `0x${string}`;
   gasEstimate?: string;
   maximumFeeWei?: string;

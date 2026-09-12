@@ -71,8 +71,8 @@ test("repricing resolves the original receipt and preserves the replacement hash
   adapter.client.estimateFeesPerGas = async () => ({ maxFeePerGas: 100n, maxPriorityFeePerGas: 1n });
   adapter.client.getBalance = async () => 10n ** 18n;
   adapter.client.waitForTransactionReceipt = async ({ onReplaced }: any) => {
-    onReplaced({ reason: "repriced", replacedTransaction: { hash: originalHash }, transactionReceipt: { transactionHash: replacementHash } });
-    return { status: "success", transactionHash: replacementHash };
+    onReplaced({ reason: "repriced", replacedTransaction: { hash: originalHash }, transactionReceipt: { transactionHash: replacementHash, blockNumber: 100n, blockHash: `0x${"3".repeat(64)}` } });
+    return { status: "success", transactionHash: replacementHash, blockNumber: 100n, blockHash: `0x${"3".repeat(64)}` };
   };
   const progress: any[] = []; adapter.subscribeProgress((event: any) => progress.push(event));
   const { parseAbi } = await import("viem");

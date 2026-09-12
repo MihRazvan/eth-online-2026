@@ -328,7 +328,7 @@ test("settlement prefers scoped API bytes, rejects mismatches and only falls bac
       };
       adapter.client.waitForTransactionReceipt = async () => ({
         status: "success",
-        transactionHash: H,
+        transactionHash: H, blockNumber: 125n, blockHash: H,
       });
       const file =
         scenario === "metadata"
@@ -447,7 +447,7 @@ test("only a direct verified cache for the exact series endpoint can settle with
       };
       adapter.client.waitForTransactionReceipt = async () => ({
         status: "success",
-        transactionHash: H,
+        transactionHash: H, blockNumber: 125n, blockHash: H,
       });
       globalThis.fetch = async (input) => {
         fetches++;

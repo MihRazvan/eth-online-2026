@@ -8,7 +8,7 @@ export function ReplacementReceipt({ original, adapter, onResolved }: {
   if (!adapter.reconcileReplacement || original.stage !== "pending") return null;
   return <details className="replacement-receipt">
     <summary>Replaced or cancelled in your wallet?</summary>
-    <p className="fine">Paste the confirmed replacement hash from your wallet or block explorer. We verify the signed sender, chain and nonce before clearing the original submission. A cancellation does not complete the original action.</p>
+    <p className="fine">Paste the replacement hash from your wallet or block explorer. We verify the signed sender, chain, nonce and canonical receipt. On Sepolia, the replacement must also be finalized before another submission. A cancellation does not complete the original action.</p>
     <form onSubmit={async (event) => {
       event.preventDefault(); if (busy) return;
       setBusy(true); setError("");

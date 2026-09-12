@@ -512,6 +512,7 @@ test("a closed browser can authenticate a wallet cancellation and safely clear i
     await expect.poll(async () => page.evaluate(() => JSON.parse(localStorage.getItem("usufruct:transaction-receipts:v1") ?? "[]").find((row: any) => row.stage === "pending")?.signedTransaction)).toBeTruthy();
     const saved = await page.evaluate(() => JSON.parse(localStorage.getItem("usufruct:transaction-receipts:v1") ?? "[]").find((row: any) => row.stage === "pending"));
     const original = await client.getTransaction({ hash: saved.hash });
+    const beforeCancellation = await client.request({ method: "evm_snapshot", params: [] });
     const context = page.context();
     await page.close();
     const wallet = createWalletClient({ account: buyer, transport: http(rpcURL) });
@@ -535,8 +536,22 @@ test("a closed browser can authenticate a wallet cancellation and safely clear i
     await fresh.getByLabel("Maker total USDC ask").fill("0.01");
     await fresh.getByRole("button", { name: "Review maker quote", exact: true }).click();
     await expect(fresh.getByRole("dialog")).toBeVisible();
-    await fresh.getByRole("button", { name: "Close transaction review" }).click();
     await fresh.screenshot({ path: testInfo.outputPath("verified-wallet-cancellation.png"), fullPage: true });
-    writeFileSync(testInfo.outputPath("replacement-receipt.json"), JSON.stringify({ scope: "local-chain-only", originalHash: saved.hash, replacementHash, originalNonce: original.nonce, sender: buyer, sameSignedNonce: true, originalActionWasNotCompleted: true, browserClosedBeforeReplacement: true }, null, 2) + "\n");
+    // Discard the replacement only AFTER the browser successfully reconciled it.
+    // Opening a new review must not bypass canonical checks on the saved guard.
+    expect(await client.request({ method: "evm_revert", params: [beforeCancellation] })).toBe(true);
+    await expect(client.getTransactionReceipt({ hash: replacementHash })).rejects.toThrow();
+    let duplicateSignatures = 0;
+    fresh.on("request", (request) => {
+      try { const payload = request.postDataJSON(); for (const rpc of Array.isArray(payload) ? payload : [payload]) if (rpc?.method === "eth_sendTransaction" || rpc?.method === "eth_sendRawTransaction") duplicateSignatures++; } catch {}
+    });
+    await fresh.getByRole("dialog").getByRole("button", { name: "Approve and publish quote", exact: true }).click();
+    await expect(fresh.getByRole("alert")).toContainText("No new transaction was requested");
+    expect(duplicateSignatures).toBe(0);
+    expect(await fresh.evaluate((hash) => JSON.parse(localStorage.getItem("usufruct:transaction-receipts:v1") ?? "[]").find((row: any) => row.hash === hash)?.stage, saved.hash)).toBe("pending");
+    expect(await fresh.evaluate((hash) => JSON.parse(localStorage.getItem("usufruct:transaction-receipts:v1") ?? "[]").find((row: any) => row.hash === hash)?.stage, replacementHash)).toBe("pending");
+    await fresh.getByRole("button", { name: "Close transaction review" }).click();
+    await fresh.screenshot({ path: testInfo.outputPath("later-reorg-blocked-submission.png"), fullPage: true });
+    writeFileSync(testInfo.outputPath("replacement-receipt.json"), JSON.stringify({ scope: "local-chain-only", originalHash: saved.hash, replacementHash, originalNonce: original.nonce, sender: buyer, sameSignedNonce: true, originalActionWasNotCompleted: true, browserClosedBeforeReplacement: true, reorgAfterSuccessfulReconciliation: true, duplicateSignatures, originalPendingGuardRestored: true, publicFinalityTestedSeparately: true }, null, 2) + "\n");
   } finally { await client.request({ method: "anvil_setAutomine", params: [true] }); }
 });

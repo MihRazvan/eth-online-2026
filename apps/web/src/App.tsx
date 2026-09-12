@@ -1243,7 +1243,7 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
           {receipts.filter((row) => row.chainId === s.chainId && row.feeStrip.toLowerCase() === s.feeStrip?.toLowerCase() && row.account.toLowerCase() === s.wallet.address?.toLowerCase()).map((row) => <article key={row.hash} className="receipt-row">
             <b>{row.label} · {row.stage}</b>
             {s.chainId === 11155111 ? <a href={"https://sepolia.etherscan.io/tx/" + row.hash} target="_blank" rel="noreferrer">View transaction</a> : <code>{row.hash}</code>}
-            {row.replacementHash && <small>Replaced by {s.chainId === 11155111 ? <a href={"https://sepolia.etherscan.io/tx/" + row.replacementHash} target="_blank" rel="noreferrer">the replacement transaction</a> : <code>{row.replacementHash}</code>}. This original hash is no longer pending.</small>}
+            {row.replacementHash && <small>Replacement: {s.chainId === 11155111 ? <a href={"https://sepolia.etherscan.io/tx/" + row.replacementHash} target="_blank" rel="noreferrer">view transaction</a> : <code>{row.replacementHash}</code>}. {row.stage === "replaced" ? "Its chain confirmation is checked again before another signature. Public replacements must be finalized." : "The original submission remains guarded. Check the replacement receipt again before another action."}</small>}
             {row.offerId && row.action?.type === "fundOffer" && <a href={positionRoute(row.action.tokenId, row.offerId)}>Share offer #{row.offerId} with the seller</a>}
             <ReplacementReceipt original={row} adapter={adapter} onResolved={async (rows) => {
               for (const next of rows) setReceipts(saveReceipt(next));

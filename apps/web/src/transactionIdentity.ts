@@ -12,5 +12,5 @@ export async function transactionIdentity(serialized: unknown, expected: { hash:
   const transaction = parseTransaction(serialized as TransactionSerialized);
   const sender = await recoverTransactionAddress({ serializedTransaction: serialized as TransactionSerialized });
   if (sender.toLowerCase() !== expected.account.toLowerCase() || transaction.chainId !== expected.chainId || !Number.isSafeInteger(transaction.nonce) || transaction.nonce! < 0) throw new Error("Signed transaction sender, nonce or chain does not match this receipt.");
-  return { sender, nonce: transaction.nonce!, to: transaction.to?.toLowerCase() ?? null, value: transaction.value ?? 0n, data: (transaction.data ?? "0x").toLowerCase(), serialized };
+  return { sender, nonce: transaction.nonce!, type: transaction.type, to: transaction.to?.toLowerCase() ?? null, value: transaction.value ?? 0n, data: (transaction.data ?? "0x").toLowerCase(), serialized };
 }
