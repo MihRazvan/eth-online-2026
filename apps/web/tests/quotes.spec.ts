@@ -246,6 +246,9 @@ test("injected wallet changes cannot replace the reviewed signer during refresh,
     }) as any;
     adapter.account = A;
     adapter.validate = async () => {};
+    adapter.client.getBalance = async () => 10n ** 18n;
+    adapter.client.estimateGas = async () => 21000n;
+    adapter.client.estimateFeesPerGas = async () => ({ maxFeePerGas: 1000000000n, maxPriorityFeePerGas: 100000000n });
     adapter.read = async (_address: string, _abi: unknown, fn: string) => {
       if (fn === "balanceOf") return 1000n;
       if (fn === "allowance") return 0n;

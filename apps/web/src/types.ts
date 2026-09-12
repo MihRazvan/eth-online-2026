@@ -94,6 +94,8 @@ export interface Market {
   sourceToBlock: string;
 }
 export interface Position {
+  commitment?: string;
+  unavailableOffersCount?: number;
   feeTier?: string;
   owner?: string;
   ownedByWallet?: boolean;
@@ -104,6 +106,7 @@ export interface Position {
   liquidity: string;
   approved: boolean;
   seriesId?: string;
+  offers?: NonNullable<Position["offer"]>[];
   offer?: {
     id: string;
     fundedMicros: string;
@@ -118,6 +121,7 @@ export interface WalletState {
   connected: boolean;
   address?: string;
   chainId?: number;
+  ethBalanceWei?: string;
   usdcBalanceMicros: string;
   claims: Record<string, string>;
 }
@@ -134,6 +138,7 @@ export interface FundedOffer {
   expired: boolean;
 }
 export interface Snapshot {
+  saleReadiness?: { ready: boolean; reason: string };
   positionDiscoveryNotice?: string;
   mode: DataMode;
   network: string;
@@ -171,6 +176,8 @@ export type Action = { reviewedAccount?: string } & (
       type: "fundOffer";
       tokenId: string;
       paymentMicros: string;
+      seller?: string;
+      positionCommitment?: string;
       claims: string;
       endBlock: string;
       deadlineTimestamp: string;
@@ -181,6 +188,7 @@ export type Action = { reviewedAccount?: string } & (
       tokenId: string;
       offerId: string;
       minimumProceedsMicros: string;
+      expectedTerms?: { buyer: string; claims: string; originalSupply: string; endBlock: string; deadlineTimestamp: string };
     }
   | {
       type: "buyClaims";
@@ -209,6 +217,19 @@ export type Action = { reviewedAccount?: string } & (
       seriesId: string;
     }
 );
+export interface TransactionProgress {
+  stage: "estimating" | "signature" | "pending" | "confirmed" | "failed" | "replaced";
+  label: string;
+  account: string;
+  chainId: number;
+  feeStrip: string;
+  hash?: `0x${string}`;
+  offerId?: string;
+  replacementHash?: `0x${string}`;
+  gasEstimate?: string;
+  maximumFeeWei?: string;
+  action?: Action;
+}
 export interface ActionResult {
   mode: DataMode;
   description: string;
@@ -221,6 +242,9 @@ export interface FeeStripAdapter {
   connect(): Promise<WalletState>;
   findPosition?(input: string): Promise<string>;
   execute(action: Action): Promise<ActionResult>;
+  readTransaction?(hash: `0x${string}`): Promise<"pending" | "confirmed" | "failed">;
+  subscribeProgress?(listener: (progress: TransactionProgress) => void): () => void;
+  subscribeWallet?(listener: () => void): () => void;
   switchNetwork?(): Promise<void>;
   readRecovery?(seriesId: string): Promise<RecoveryResult>;
   downloadRecoveryArtifact?(seriesId: string): Promise<RecoveryDownload>;

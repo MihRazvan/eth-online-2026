@@ -1,3 +1,5 @@
+import { readReceipts } from "./receipts";
+import { readOperations } from "./operations";
 import {
   BaseError,
   ContractFunctionRevertedError,
@@ -9,6 +11,7 @@ import {
   erc20Abi,
   encodeAbiParameters,
   decodeAbiParameters,
+  decodeEventLog,
   encodeFunctionData,
   keccak256,
   parseAbi,
@@ -34,6 +37,7 @@ import {
 import type {
   Action,
   ActionResult,
+  TransactionProgress,
   AnalysisResult,
   BuyerAnalysis,
   FeeStripAdapter,
@@ -241,6 +245,10 @@ const minimum = (...n: bigint[]) => n.reduce((a, b) => (a < b ? a : b));
 const ceilRatio = (q: bigint, cash: bigint, claims: bigint) =>
   (q * cash + claims - 1n) / claims;
 const tick24 = (n: bigint) => Number(BigInt.asIntN(24, n));
+const positionCommitment = (key: PoolKey, packed: bigint, liquidity: bigint) => keccak256(encodeAbiParameters(
+  parseAbiParameters("(address currency0,address currency1,uint24 fee,int24 tickSpacing,address hooks),int24,int24,uint128"),
+  [key, tick24(packed >> 8n), tick24(packed >> 32n), liquidity],
+));
 const pairId = (key: PoolKey) =>
   keccak256(
     encodeAbiParameters(KEY_PARAMETERS, [
@@ -293,6 +301,7 @@ export class ChainAdapter implements FeeStripAdapter {
   readonly chain;
   readonly client;
   private wallet?: WalletClient;
+  private provider?: EIP1193Provider;
   private account?: Address;
   private validated = false;
   private quotes = new Map<string, DiscoveredQuote>();
@@ -301,16 +310,31 @@ export class ChainAdapter implements FeeStripAdapter {
   private knownSeries = new Map<string, Series>();
   private testActor?: "seller" | "buyer" | "holder";
   private discoveredPositions = new Map<string, { at: number; head: bigint; ids: string[]; incomplete: boolean }>();
-  private importedPositions = new Map<string, Set<string>>();
+  private importedPositions = new Set<string>();
+  private progressListeners = new Set<(progress: TransactionProgress) => void>();
+  private activeAction?: Action;
+  subscribeProgress(listener: (progress: TransactionProgress) => void) {
+    this.progressListeners.add(listener);
+    return () => { this.progressListeners.delete(listener); };
+  }
+  subscribeWallet(listener: () => void) {
+    const provider = this.provider as unknown as { on?: (event: string, fn: () => void) => void; removeListener?: (event: string, fn: () => void) => void };
+    provider?.on?.("accountsChanged", listener); provider?.on?.("chainChanged", listener);
+    return () => { provider?.removeListener?.("accountsChanged", listener); provider?.removeListener?.("chainChanged", listener); };
+  }
+  async readTransaction(hash: Hex): Promise<"pending" | "confirmed" | "failed"> {
+    try { const receipt = await this.client.getTransactionReceipt({ hash }); return receipt.status === "success" ? "confirmed" : "failed"; }
+    catch { return "pending"; }
+  }
+  private progress(progress: Omit<TransactionProgress, "chainId" | "feeStrip" | "action">) {
+    for (const listener of this.progressListeners) listener({ ...progress, chainId: this.deployment.chainId, feeStrip: this.deployment.feeStrip, action: this.activeAction });
+  }
 
   async findPosition(input: string): Promise<string> {
     try {
       const id = positionId(input);
       await this.validate();
       const block = await this.client.getBlock();
-      const wallet = await this.walletState(block.number);
-      if (!wallet.connected || !wallet.address || wallet.chainId !== this.deployment.chainId)
-        throw new Error("Connect your wallet on the correct network first.");
       const d = this.deployment;
       let owner: Address;
       try {
@@ -319,18 +343,15 @@ export class ChainAdapter implements FeeStripAdapter {
         if (isMissingCanonicalNFT(error)) throw new Error("This NFT does not exist on the configured PositionManager.");
         throw error;
       }
-      if (!same(owner, wallet.address)) throw new Error("This position is not owned by your connected wallet.");
+
       const [[key, info], liquidity] = await Promise.all([
         this.read<readonly [PoolKey, bigint]>(d.positionManager, positionManagerAbi, "getPoolAndPositionInfo", [BigInt(id)], block.number),
         this.read<bigint>(d.positionManager, positionManagerAbi, "getPositionLiquidity", [BigInt(id)], block.number),
       ]);
       const reason = positionIneligibility(key, info, liquidity, d.usdc);
       if (reason) throw new Error(reason);
-      const accountKey = wallet.address.toLowerCase();
-      const ids = this.importedPositions.get(accountKey) ?? new Set<string>();
-      if (ids.size >= POSITION_LIMIT && !ids.has(id)) throw new Error("The session position limit is reached.");
-      ids.add(id);
-      this.importedPositions.set(accountKey, ids);
+      if (this.importedPositions.size >= POSITION_LIMIT && !this.importedPositions.has(id)) throw new Error("The session position limit is reached.");
+      this.importedPositions.add(id);
       return id;
     } catch (error) { throw new Error(message(error)); }
   }
@@ -355,7 +376,7 @@ export class ChainAdapter implements FeeStripAdapter {
       // Bound cached account metadata across repeated wallet switching.
       if (this.discoveredPositions.size > 10) this.discoveredPositions.delete(this.discoveredPositions.keys().next().value!);
     }
-    return { ids: [...new Set([...result.ids, ...(this.importedPositions.get(accountKey) ?? [])])], incomplete: result.incomplete };
+    return { ids: [...new Set([...result.ids, ...this.importedPositions])], incomplete: result.incomplete };
   }
   constructor(
     readonly deployment: Deployment,
@@ -366,6 +387,7 @@ export class ChainAdapter implements FeeStripAdapter {
     } = {},
   ) {
     this.mode = deployment.mode;
+    this.provider = options.provider;
     this.chain = defineChain({
       id: deployment.chainId,
       name:
@@ -592,6 +614,7 @@ export class ChainAdapter implements FeeStripAdapter {
     }
   }
   private async walletState(blockNumber: bigint): Promise<WalletState> {
+    if (!this.account && this.wallet && !this.testActor) this.account = (await this.wallet.getAddresses())[0];
     if (!this.account)
       return { connected: false, usdcBalanceMicros: "0", claims: {} };
     if (!this.testActor) {
@@ -602,13 +625,14 @@ export class ChainAdapter implements FeeStripAdapter {
       }
       this.account = accounts[0];
     }
-    const [chainId, cash, balances] = await Promise.all([
+    const currentAccount = this.account;
+    const [chainId, cash, balances, ethBalance] = await Promise.all([
       this.wallet!.getChainId(),
       this.read<bigint>(
         this.deployment.usdc,
         erc20Abi,
         "balanceOf",
-        [this.account],
+        [currentAccount],
         blockNumber,
       ),
       Promise.all(
@@ -621,19 +645,22 @@ export class ChainAdapter implements FeeStripAdapter {
                   s.claim,
                   erc20Abi,
                   "balanceOf",
-                  [this.account!],
+                  [currentAccount],
                   blockNumber,
                 )
               ).toString(),
             ] as const,
         ),
       ),
+      this.client.getBalance({ address: currentAccount, blockNumber }),
     ]);
+    if (this.account !== currentAccount) throw new Error("Wallet changed while loading. Refresh the current account.");
     return {
       connected: true,
-      address: this.account,
+      address: currentAccount,
       chainId,
       usdcBalanceMicros: cash.toString(),
+      ethBalanceWei: ethBalance.toString(),
       claims: Object.fromEntries(balances),
     };
   }
@@ -848,6 +875,7 @@ export class ChainAdapter implements FeeStripAdapter {
       ...new Set([
         ...d.nftIds,
         ...discovered.ids,
+        ...this.importedPositions,
         ...offers.map((o) => o.tokenId.toString()),
         ...series.map(([, s]) => s.tokenId.toString()),
       ]),
@@ -897,7 +925,7 @@ export class ChainAdapter implements FeeStripAdapter {
         const residual =
           wallet.connected && s && same(s.residualOwner, wallet.address!);
         if (market && !own && !residual) return undefined;
-        if (!market && !own && !d.nftIds.includes(tokenId) && !offers.some((o) => o.tokenId === BigInt(tokenId)))
+        if (!market && !own && !this.importedPositions.has(tokenId) && !d.nftIds.includes(tokenId) && !offers.some((o) => o.tokenId === BigInt(tokenId)))
           return undefined;
         const [approved, approvedAll, display] = await Promise.all([
           this.read<Address>(
@@ -916,17 +944,22 @@ export class ChainAdapter implements FeeStripAdapter {
           ),
           this.poolDisplay(key, lowerTick, upperTick, bn),
         ]);
-        const funded = offers
+        const availableOffers = offers
           .filter(
             (o) =>
               o.tokenId === BigInt(tokenId) &&
+              same(o.seller, owner) &&
+              o.positionCommitment === positionCommitment(key, packed, liquidity) &&
               !o.consumed &&
               o.deadline >= block.timestamp &&
               o.endBlock > bn,
           )
-          .sort((a, b) => (a.proceeds > b.proceeds ? -1 : 1))[0];
+          .sort((a, b) => (a.id < b.id ? -1 : 1));
+        const funded = availableOffers[0];
         return {
           tokenId,
+          commitment: positionCommitment(key, packed, liquidity),
+          unavailableOffersCount: offers.filter((o) => o.tokenId === BigInt(tokenId) && !o.consumed).length - availableOffers.length,
           pair: display.pair,
           feeTier: display.feeTier,
           lowerPrice: display.lowerPrice,
@@ -936,6 +969,7 @@ export class ChainAdapter implements FeeStripAdapter {
           seriesId: market?.id,
           owner,
           ownedByWallet: own,
+          offers: availableOffers.map((o) => ({ id: o.id.toString(), fundedMicros: o.proceeds.toString(), claims: o.buyerQuantity.toString(), originalSupply: o.quantity.toString(), endBlock: o.endBlock.toString(), deadlineTimestamp: o.deadline.toString(), maker: o.buyer })),
           offer: funded
             ? {
                 id: funded.id.toString(),
@@ -968,6 +1002,7 @@ export class ChainAdapter implements FeeStripAdapter {
       feeStrip: d.feeStrip,
       markets,
       positions: positions.filter((p): p is Position => !!p),
+      saleReadiness: this.mode === "testnet" ? await readOperations(d) : undefined,
       positionDiscoveryNotice: discovered.incomplete || discoveryDetailsFailed
         ? "The recent-position search could not finish. Find a missing position by its NFT ID or Uniswap link."
         : "Recent wallet transfers are searched automatically (last 50,000 blocks). For older positions, use the NFT ID or Uniswap link.",
@@ -1214,30 +1249,38 @@ export class ChainAdapter implements FeeStripAdapter {
   ): Promise<Hex> {
     const { wallet, account } = await this.signer(expectedAccount);
     const data = encodeFunctionData({ abi, functionName, args });
+    const label = functionName === "approve" ? (same(address, this.deployment.positionManager) ? "NFT transfer approval" : "Token allowance") : functionName === "fundOffer" ? "Fund offer" : functionName === "acceptOffer" ? "Accept funded sale" : functionName.replace(/[A-Z]/g, (letter) => " " + letter.toLowerCase()).replace(/^./, (letter) => letter.toUpperCase());
+    this.progress({ stage: "estimating", label, account });
     await this.client.call({ account, to: address, data });
+    const [gas, fees, balance] = await Promise.all([
+      this.client.estimateGas({ account, to: address, data }),
+      this.client.estimateFeesPerGas(), this.client.getBalance({ address: account }),
+    ]);
+    const gasLimit = gas * 120n / 100n;
+    const maximumFeeWei = gasLimit * (fees.maxFeePerGas ?? 0n);
+    if (balance < maximumFeeWei) throw new Error("Insufficient ETH for the estimated gas limit. Add Sepolia ETH and review again; any earlier token allowance remains in place.");
     await this.signer(expectedAccount);
-    const hash = await wallet.sendTransaction({
-      account,
-      chain: this.chain,
-      to: address,
-      data,
-    });
+    this.progress({ stage: "signature", label, account, gasEstimate: gasLimit.toString(), maximumFeeWei: maximumFeeWei.toString() });
+    const hash = await wallet.sendTransaction({ account, chain: this.chain, to: address, data, gas: gasLimit, ...fees });
+    this.progress({ stage: "pending", label, account, hash, gasEstimate: gasLimit.toString(), maximumFeeWei: maximumFeeWei.toString() });
     let replacementReason: string | undefined;
     const receipt = await this.client.waitForTransactionReceipt({
-      hash,
-      confirmations: 1,
-      onReplaced: ({ reason }) => {
+      hash, confirmations: 1,
+      onReplaced: ({ reason, replacedTransaction, transactionReceipt }) => {
         replacementReason = reason;
+        this.progress({ stage: "replaced", label, account, hash: replacedTransaction.hash, replacementHash: transactionReceipt.transactionHash });
       },
     });
-    if (replacementReason === "cancelled" || replacementReason === "replaced")
-      throw new Error(
-        "Wallet transaction was cancelled or replaced by a different action. Refresh the confirmed chain state before trying again.",
-      );
-    if (receipt.status !== "success")
-      throw new Error(
-        `Transaction reverted: ${hash}. Confirmed earlier approvals, if any, remain in place.`,
-      );
+    if (replacementReason === "cancelled" || replacementReason === "replaced") {
+      throw new Error("Wallet transaction was cancelled or replaced by a different action. Refresh the confirmed chain state before trying again.");
+    }
+    let offerId: string | undefined;
+    if (functionName === "fundOffer" && receipt.status === "success") for (const log of receipt.logs) {
+      if (!same(log.address, this.deployment.feeStrip)) continue;
+      try { const event = decodeEventLog({ abi: feeStripAbi, data: log.data, topics: log.topics }); if (event.eventName === "OfferFunded") offerId = String((event.args as { offerId?: bigint; id?: bigint }).offerId ?? (event.args as { id?: bigint }).id); } catch {}
+    }
+    this.progress({ stage: receipt.status === "success" ? "confirmed" : "failed", label, account, hash: receipt.transactionHash, offerId });
+    if (receipt.status !== "success") throw new Error(`Transaction reverted: ${hash}. Confirmed earlier approvals, if any, remain in place.`);
     return receipt.transactionHash;
   }
   private async approve(
@@ -1456,11 +1499,13 @@ export class ChainAdapter implements FeeStripAdapter {
     }
   }
   async execute(action: Action): Promise<ActionResult> {
+    if (this.activeAction) throw new Error("Another wallet action is still pending.");
+    this.activeAction = action;
     try {
       return await this.executeAction(action);
     } catch (error) {
       throw new Error(message(error));
-    }
+    } finally { this.activeAction = undefined; }
   }
   private async executeAction(action: Action): Promise<ActionResult> {
     await this.validate();
@@ -1470,6 +1515,9 @@ export class ChainAdapter implements FeeStripAdapter {
       d = this.deployment,
       hashes: Hex[] = [];
     try {
+      const unresolved = readReceipts().filter((row) => row.stage === "pending" && row.chainId === d.chainId && same(row.feeStrip, d.feeStrip) && same(row.account, account));
+      for (const row of unresolved) if (await this.readTransaction(row.hash!) === "pending") throw new Error("A broadcast transaction for this wallet is still unresolved. Check its saved receipt or cancel it in your wallet, then refresh. Do not repeat the payment.");
+      if (this.mode === "testnet" && (action.type === "fundOffer" || action.type === "acceptOffer")) { const readiness = await readOperations(d); if (!readiness.ready) throw new Error(readiness.reason); }
       if (action.type === "approvePosition") {
         if (
           !same(
@@ -1505,7 +1553,31 @@ export class ChainAdapter implements FeeStripAdapter {
           throw new Error(
             "Funded terms require positive payment and claims within original Q.",
           );
+        if (same(seller, account)) throw new Error("This wallet owns the NFT. Share its position link with a separate buyer; funding your own position does not create external proceeds.");
+        if (!action.positionCommitment || !/^0x[0-9a-fA-F]{64}$/.test(action.positionCommitment)) throw new Error("Review the canonical position details before funding; its exact commitment is required.");
+        if (action.seller && !same(seller, action.seller)) throw new Error("NFT ownership changed since review. Review its current seller before funding.");
+        const checkReviewedPosition = async () => {
+          if (!action.positionCommitment) return;
+          const [[key, packed], liquidity] = await Promise.all([
+            this.read<readonly [PoolKey, bigint]>(d.positionManager, positionManagerAbi, "getPoolAndPositionInfo", [BigInt(action.tokenId)]),
+            this.read<bigint>(d.positionManager, positionManagerAbi, "getPositionLiquidity", [BigInt(action.tokenId)]),
+          ]);
+          if (positionCommitment(key, packed, liquidity) !== action.positionCommitment) throw new Error("The position range, pool or liquidity changed since review. Review its current details before funding.");
+        };
+        await checkReviewedPosition();
+        const block = await this.client.getBlock();
+        const checkRemainingTime = (head: bigint, time: bigint) => {
+          if (BigInt(action.endBlock) <= head + 32n || BigInt(action.deadlineTimestamp) <= time + 60n) throw new Error("Not enough time remains for this offer: allow more than 32 blocks and one minute before acceptance expires. Review fresh terms; any confirmed allowance remains.");
+        };
+        checkRemainingTime(block.number, block.timestamp);
+        const cash = await this.read<bigint>(d.usdc, erc20Abi, "balanceOf", [account]);
+        if (cash < proceeds) throw new Error("Insufficient USDC for this funded offer.");
         await this.approve(account, d.usdc, d.feeStrip, proceeds, hashes);
+        await checkReviewedPosition();
+        const afterApproval = await this.client.getBlock();
+        checkRemainingTime(afterApproval.number, afterApproval.timestamp);
+        if (this.mode === "testnet") { const readiness = await readOperations(d); if (!readiness.ready) throw new Error(readiness.reason + " Any confirmed USDC allowance remains in place."); }
+        if (!same(seller, await this.read<Address>(d.positionManager, NFT_ABI, "ownerOf", [BigInt(action.tokenId)]))) throw new Error("NFT ownership changed after approval. Review the current seller; the USDC allowance remains in place.");
         hashes.push(
           await this.write(account, d.feeStrip, feeStripAbi, "fundOffer", [
             seller,
@@ -1515,6 +1587,7 @@ export class ChainAdapter implements FeeStripAdapter {
             proceeds,
             BigInt(action.endBlock),
             BigInt(action.deadlineTimestamp),
+            action.positionCommitment,
           ]),
         );
       } else if (action.type === "cancelOffer") {
@@ -1546,6 +1619,10 @@ export class ChainAdapter implements FeeStripAdapter {
           ]),
         );
       } else if (action.type === "acceptOffer") {
+        const offer = await this.read<readonly [Address, Address, bigint, bigint, bigint, bigint, bigint, bigint, Hex, boolean]>(d.feeStrip, feeStripAbi, "offers", [BigInt(action.offerId)]);
+        if (!same(offer[1], account) || offer[2] !== BigInt(action.tokenId) || offer[5] !== BigInt(action.minimumProceedsMicros) || offer[9]) throw new Error("The funded offer is unavailable or differs from the reviewed seller, NFT or payment.");
+        const terms = action.expectedTerms;
+        if (terms && (!same(offer[0], terms.buyer) || offer[3] !== BigInt(terms.originalSupply) || offer[4] !== BigInt(terms.claims) || offer[6] !== BigInt(terms.endBlock) || offer[7] !== BigInt(terms.deadlineTimestamp))) throw new Error("Funded terms differ from the exact offer you reviewed.");
         hashes.push(
           await this.write(account, d.feeStrip, feeStripAbi, "acceptOffer", [
             BigInt(action.offerId),

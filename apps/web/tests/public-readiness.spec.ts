@@ -60,6 +60,7 @@ function setup(error: unknown) {
     timestamp: 1800000000n,
   });
   adapter.client.getLogs = async () => [];
+  adapter.client.getBalance = async () => 1000000000000000000n;
   const key = {
     currency0: zeroAddress,
     currency1: owner,
@@ -252,7 +253,7 @@ test('incoming wallet NFTs appear without manifest edits and transferred or unsu
   expect(snapshot.positions.find((p: any) => p.tokenId === '3').ownedByWallet).toBe(true);
 });
 
-test('manual lookup is read-only, checks ownership and eligibility, and survives a search outage', async () => {
+test('manual lookup is read-only, accepts external owners and preserves eligibility during a search outage', async () => {
   const { adapter } = setup(revert('NOT_MINTED'));
   adapter.client.getLogs = async (query: any) => { if (query.event?.name !== 'Transfer') return []; throw new Error('RPC unavailable'); };
   expect(await adapter.findPosition('https://app.uniswap.org/positions/v4/ethereum_sepolia/39220')).toBe('39220');
@@ -264,7 +265,9 @@ test('manual lookup is read-only, checks ownership and eligibility, and survives
     if (fn === 'ownerOf') return claim;
     return read(address, abi, fn, args, bn);
   };
-  await expect(adapter.findPosition('39221')).rejects.toThrow('not owned');
+  await expect(adapter.findPosition('39221')).resolves.toBe('39221');
+  const imported = await adapter.load();
+  expect(imported.positions.find((p: any) => p.tokenId === '39221').ownedByWallet).toBe(false);
   adapter.read = async (address: string, abi: unknown, fn: string, args: any[], bn: bigint) => {
     const value = await read(address, abi, fn, args, bn);
     if (fn === 'getPoolAndPositionInfo') return [{ ...value[0], currency1: claim }, value[1]];
@@ -272,7 +275,10 @@ test('manual lookup is read-only, checks ownership and eligibility, and survives
   };
   await expect(adapter.findPosition('39222')).rejects.toThrow('USDC');
   adapter.wallet.getChainId = async () => 1;
-  await expect(adapter.findPosition('39220')).rejects.toThrow('correct network');
+  adapter.read = read;
+  await expect(adapter.findPosition('39220')).resolves.toBe('39220');
+  adapter.account = undefined; adapter.wallet = undefined;
+  await expect(adapter.findPosition('39223')).resolves.toBe('39223');
 });
 
 test('a discovered NFT with broken token metadata cannot hide existing claims or good NFTs', async () => {

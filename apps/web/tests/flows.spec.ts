@@ -105,7 +105,7 @@ test("multiple funded offers remain individually recoverable and rejected cancel
     .getByRole("button", { name: "Fund an offer", exact: true })
     .click();
   for (const amount of ["101", "102"]) {
-    await page.getByLabel("Upfront USDC for 8,000 claims").fill(amount);
+    await page.getByLabel("Upfront USDC").fill(amount);
     await page
       .getByRole("button", { name: "Review funding", exact: true })
       .click();

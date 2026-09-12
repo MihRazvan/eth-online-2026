@@ -1,3 +1,7 @@
+import { OfferForm } from "./components/OfferForm";
+import { parsePositionRoute, positionRoute } from "./offerTerms";
+import { readReceipts, saveReceipt } from "./receipts";
+import type { TransactionProgress } from "./types";
 import { Fruit, FruitBand, CabinetPreview, Ticket } from "./components/Orchard";
 import { RecoveryPanel } from "./components/RecoveryPanel";
 import { useEffect, useRef, useState } from "react";
@@ -264,20 +268,56 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
     [pinToken, setPinToken] = useState<string | null>(null),
     [positionLookup, setPositionLookup] = useState(""),
     [findingPosition, setFindingPosition] = useState(false),
-    [fundAmount, setFundAmount] = useState("672"),
+    [offerSelection, setOfferSelection] = useState<string | null>(null),
+    [progress, setProgress] = useState<TransactionProgress | null>(null),
+    [receipts, setReceipts] = useState(readReceipts),
     [scenarioIncome, setScenarioIncome] = useState("840"),
     [makerQuoteSeries, setMakerQuoteSeries] = useState<string | null>(null);
   const dialog = useRef<HTMLDialogElement>(null),
     lastFocus = useRef<HTMLElement | null>(null);
-  const refresh = async () => setSnapshot(await adapter.load());
+  const refreshVersion = useRef(0), paused = useRef(false);
+  paused.current = busy || !!review;
+  const refresh = async () => {
+    const version = ++refreshVersion.current;
+    const next = await adapter.load();
+    if (version === refreshVersion.current) setSnapshot(next);
+    return next;
+  };
+  useEffect(() => adapter.subscribeProgress?.((next) => { setProgress(next); if (next.hash) setReceipts(saveReceipt(next)); }), [adapter]);
+  useEffect(() => {
+    let active = true, running = false;
+    const tick = async () => {
+      if (!active || running || document.visibilityState !== "visible" || paused.current) return;
+      running = true;
+      try { await refresh(); } catch { /* Preserve the last snapshot; action preflight always re-reads chain state. */ }
+      finally { running = false; }
+    };
+    const walletChanged = () => { ++refreshVersion.current; setError("Wallet or network changed. Close any open review and review again for the current account."); void refresh().catch(() => {}); };
+    const unsubscribe = adapter.subscribeWallet?.(walletChanged);
+    const interval = window.setInterval(tick, 15000);
+    document.addEventListener("visibilitychange", tick);
+    window.addEventListener("focus", tick);
+    return () => { active = false; clearInterval(interval); unsubscribe?.(); document.removeEventListener("visibilitychange", tick); window.removeEventListener("focus", tick); };
+  }, [adapter]);
+  useEffect(() => {
+    const target = parsePositionRoute(route);
+    if (!target || !adapter.findPosition) return;
+    let active = true;
+    setPinToken(target.tokenId); setOfferSelection(target.offerId ?? null);
+    setFindingPosition(true);
+    adapter.findPosition(target.tokenId).then(() => active ? refresh() : undefined).catch((error) => { if (active) setError((error as Error).message); }).finally(() => { if (active) setFindingPosition(false); });
+    return () => { active = false; };
+  }, [adapter, route]);
+  useEffect(() => {
+    if (!adapter.readTransaction || !snapshot?.wallet.address) return;
+    let active = true;
+    const pending = receipts.filter((row) => row.stage === "pending" && row.chainId === snapshot.chainId && row.feeStrip.toLowerCase() === snapshot.feeStrip?.toLowerCase() && row.account.toLowerCase() === snapshot.wallet.address?.toLowerCase());
+    Promise.all(pending.map(async (row) => { const stage = await adapter.readTransaction!(row.hash!); if (active && stage !== "pending") setReceipts(saveReceipt({ ...row, stage })); })).catch(() => {});
+    return () => { active = false; };
+  }, [adapter, snapshot]);
   useEffect(() => {
     let active = true;
-    adapter
-      .load()
-      .then((s) => {
-        if (active) setSnapshot(s);
-      })
-      .catch((e) => setError(String(e)));
+    refresh().catch((e) => { if (active) setError(String(e)); });
     const change = () => {
       setRoute(location.hash.slice(1) || "market");
       setError("");
@@ -287,6 +327,7 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
     window.addEventListener("hashchange", change);
     return () => {
       active = false;
+      ++refreshVersion.current;
       window.removeEventListener("hashchange", change);
     };
   }, [adapter]);
@@ -308,21 +349,30 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
       setError((e as Error).message);
     }
   };
+  const copyLink = async (hash: string) => {
+    const url = location.origin + location.pathname + hash;
+    try { await navigator.clipboard.writeText(url); setMessage("Link copied. The other wallet can open the exact position or funded offer."); }
+    catch { setMessage("Copy this link: " + url); }
+  };
   const begin = (r: Review) => {
     setError("");
     setMessage("");
+    if (receipts.some((row) => row.stage === "pending" && row.chainId === snapshot?.chainId && row.feeStrip.toLowerCase() === snapshot?.feeStrip?.toLowerCase() && row.account.toLowerCase() === snapshot?.wallet.address?.toLowerCase())) {
+      setError("A broadcast transaction is still unresolved. Check Saved transaction receipts and your wallet, then refresh before starting another action. Do not repeat the payment.");
+      return;
+    }
+    setProgress(null);
     setReview({
       ...r,
       action: { ...r.action, reviewedAccount: snapshot?.wallet.address },
     });
   };
   const submit = async () => {
-    if (!review) return;
+    if (!review || busy) return;
     setBusy(true);
     setError("");
     try {
       const result = await adapter.execute(review.action);
-      await refresh();
       setReview(null);
       if (review.action.type === "acceptOffer") {
         // Keep the confirmed receipt visible when opening the new holding.
@@ -336,6 +386,7 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
           ? `${result.description} Transaction: ${result.transactionHash}`
           : result.description,
       );
+      try { await refresh(); } catch { setError(`${result.transactionHash ? "Transaction confirmed" : "Action completed"}, but the latest state could not be loaded. Refresh chain state before starting another action; do not repeat the completed action.`); }
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -359,11 +410,15 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
       s.markets[0],
     detail = route.startsWith("market/"),
     positions = route === "positions",
-    pin = route === "pin",
+    pin = route === "pin" || route.startsWith("pin/"),
     held = s.wallet.claims[selected?.id ?? ""] ?? "0";
   const pinCandidates = s.positions.filter((p) => !p.seriesId);
-  const pinPosition =
-    pinCandidates.find((p) => p.tokenId === pinToken) ?? pinCandidates[0];
+  const rawPinPosition = pinCandidates.find((p) => p.tokenId === pinToken) ?? (parsePositionRoute(route) ? undefined : pinCandidates[0]);
+  const pinPosition = rawPinPosition && offerSelection ? { ...rawPinPosition, offer: rawPinPosition.offers?.find((offer) => offer.id === offerSelection) } : rawPinPosition;
+  const linkedMarket = parsePositionRoute(route) ? s.markets.find((market) => market.tokenId === parsePositionRoute(route)!.tokenId) : undefined;
+  const accountChanged = !!review?.action.reviewedAccount && review.action.reviewedAccount.toLowerCase() !== s.wallet.address?.toLowerCase();
+  const salesPaused = s.mode === "testnet" && !s.saleReadiness?.ready;
+  const noGas = !fixture && connected && s.wallet.ethBalanceWei === "0";
   const visiblePositions = pin
     ? pinPosition
       ? [pinPosition]
@@ -1175,7 +1230,24 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                   : "one window. separate rights."}
               </span>
             </section>
-            {!connected ? (
+        {connected && !fixture && (positions || pin) && <section className="wallet-prerequisites" aria-label="Wallet prerequisites">
+          <p>{money(s.wallet.usdcBalanceMicros, 6)} test USDC · {s.wallet.ethBalanceWei === undefined ? "ETH balance unavailable" : (Number(s.wallet.ethBalanceWei) / 1e18).toPrecision(5) + " ETH for gas"}.</p>
+          {noGas && <p className="inline-warning">Add Sepolia ETH before signing. USDC cannot pay Ethereum transaction fees.</p>}
+          <p className="fine">Use {s.mode === "local" ? "the local development chain and its test tokens" : "Ethereum Sepolia and its authentic test USDC"}. Check your wallet’s network and receive both test assets before funding. Every transaction estimates gas before requesting a signature; proof allocation may cost substantially more than approval or funding.</p>
+        </section>}
+        {connected && !fixture && (positions || pin) && receipts.some((row) => row.chainId === s.chainId && row.feeStrip.toLowerCase() === s.feeStrip?.toLowerCase() && row.account.toLowerCase() === s.wallet.address?.toLowerCase()) && <details className="transaction-receipts">
+          <summary>Saved transaction receipts</summary>
+          <p className="fine">Stored on this browser for this account and deployment. Chain state controls available actions. Confirmed allowances remain if a later signature was rejected.</p>
+          {receipts.filter((row) => row.chainId === s.chainId && row.feeStrip.toLowerCase() === s.feeStrip?.toLowerCase() && row.account.toLowerCase() === s.wallet.address?.toLowerCase()).map((row) => <article key={row.hash} className="receipt-row">
+            <b>{row.label} · {row.stage}</b>
+            {s.chainId === 11155111 ? <a href={"https://sepolia.etherscan.io/tx/" + row.hash} target="_blank" rel="noreferrer">View transaction</a> : <code>{row.hash}</code>}
+            {row.replacementHash && <small>Replaced by {s.chainId === 11155111 ? <a href={"https://sepolia.etherscan.io/tx/" + row.replacementHash} target="_blank" rel="noreferrer">the replacement transaction</a> : <code>{row.replacementHash}</code>}. This original hash is no longer pending.</small>}
+            {row.offerId && row.action?.type === "fundOffer" && <a href={positionRoute(row.action.tokenId, row.offerId)}>Share offer #{row.offerId} with the seller</a>}
+            {row.label === "Token allowance" && <small>Allowance only permits spending. It does not fund or activate a sale, and can remain after cancellation.</small>}
+            {row.action?.type === "fundOffer" && row.offerId && row.stage === "confirmed" && <small>This receipt confirms escrow funding, not issued claims. Check the offer’s current state. After acceptance, open My cabinet to find your claims and publish a sell quote.</small>}
+          </article>)}
+        </details>}
+            {!connected && !pin ? (
               <div className="connect-state">
                 <Icon name="wallet" size={36} />
                 <h2>Your wallet holds the starting point.</h2>
@@ -1304,6 +1376,7 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                             <b>
                               Offer #{offer.id} · NFT #{offer.tokenId}
                             </b>
+                            {!fixture && <><a href={positionRoute(offer.tokenId, offer.id)}>Open seller review link</a><button className="text-button" onClick={() => copyLink(positionRoute(offer.tokenId, offer.id))}>Copy offer link</button></>}
                             <small>
                               {offer.expired
                                 ? "Expired · funds recoverable"
@@ -1385,15 +1458,16 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                           const id = await adapter.findPosition!(positionLookup);
                           const next = await adapter.load();
                           setSnapshot(next);
-                          if (!next.positions.some((position) => position.tokenId === id && position.ownedByWallet))
-                            throw new Error("Position details could not be loaded for this wallet. Check the connection and try again.");
+                          if (!next.positions.some((position) => position.tokenId === id) && !next.markets.some((market) => market.tokenId === id))
+                            throw new Error("Position details could not be loaded. Check the NFT ID and try again.");
                           setPinToken(id);
+                          location.hash = positionRoute(id);
                           setMessage(`Found position #${id}. Finding a position does not approve or transfer it.`);
                         } catch (error) {
                           setError((error as Error).message);
                         } finally { setFindingPosition(false); }
                       }}>
-                        <label htmlFor="position-lookup">Missing a tree? NFT ID or Uniswap link</label>
+                        <label htmlFor="position-lookup">NFT ID or Uniswap link</label>
                         <div className="position-lookup-fields">
                           <input id="position-lookup" value={positionLookup} onChange={(event) => setPositionLookup(event.target.value)}
                             placeholder="39220 or a Sepolia v4 position link" maxLength={300} required disabled={findingPosition || wrongNetwork} />
@@ -1404,6 +1478,9 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                         <p>{s.positionDiscoveryNotice}</p>
                       </form>
                     )}
+                    {s.mode === "testnet" && <p className={salesPaused ? "inline-warning" : "fine"}>{s.saleReadiness?.reason ?? "New sales are paused until endpoint checkpointing and recoverable proof storage are verified."}</p>}
+                    {linkedMarket && <p className="inline-warning">This position has an activated sale. <a href={"#market/" + linkedMarket.id}>View its issued fee claims</a>. Buyers can publish a sell quote from My cabinet.</p>}
+                    {findingPosition && <p className="fine">Loading the linked canonical position…</p>}
                     <fieldset className="tree-options">
                       <legend className="sr-only">
                         Choose a position to pin
@@ -1423,6 +1500,8 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                             checked={pinPosition?.tokenId === p.tokenId}
                             onChange={() => {
                               setPinToken(p.tokenId);
+                              setOfferSelection(null);
+                              if (!fixture) location.hash = positionRoute(p.tokenId);
                               setFunding(false);
                             }}
                           />
@@ -1469,7 +1548,7 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                   )}
                   <div className="section-top">
                     <h2>{pin ? "Selected position" : "Your pinned trees"}</h2>
-                    <span className="source-tag">
+                    <span className="source-tag address">
                       {fixture ? "Fixture wallet" : s.wallet.address}
                     </span>
                   </div>
@@ -1524,6 +1603,7 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                                 changes, fee collection, or withdrawal during
                                 the active term.
                               </p>
+                              {!connected && <button className="primary" onClick={connect}>Connect wallet to fund or manage this position</button>}
                               <div className="position-buttons">
                                 <a
                                   className="button"
@@ -1622,7 +1702,16 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                                     <span>Fixed during term</span>
                                   </div>
                                 </div>
-                                <FundedOffer position={p} fixture={fixture} />
+                                <div>
+                                  {!fixture && <p className="fine"><a href={positionRoute(p.tokenId)}>Position link</a> · <button className="text-button" onClick={() => copyLink(positionRoute(p.tokenId))}>Copy position link</button>. Owner: <span className="address">{p.owner}</span></p>}
+                                  {(p.offers?.length ?? 0) > 0 && <label>Funded offer to review<select aria-label="Funded offer to review" value={p.offer?.id ?? ""} onChange={(event) => { setOfferSelection(event.target.value); location.hash = positionRoute(p.tokenId, event.target.value); }}>
+                                    {!p.offer && <option value="">Choose an available offer</option>}
+                                    {p.offers!.map((offer) => <option key={offer.id} value={offer.id}>#{offer.id} · {money(offer.fundedMicros, 6)} USDC · {formatClaims(offer.claims)} claims</option>)}
+                                  </select></label>}
+                                  <FundedOffer position={p} fixture={fixture} />
+                                  {!!p.unavailableOffersCount && <p className="fine">{p.unavailableOffersCount} unaccepted offer(s) have expired or no longer match this position’s current owner, pool, range or liquidity. Buyers can cancel them from My cabinet to recover their exact funding.</p>}
+                                  {!p.offer && <p className="fine">Approval alone cannot start a sale. Share this position with a buyer. They fund an offer, then you review and accept its exact terms here. Expired or consumed offers cannot be accepted.</p>}
+                                </div>
                               </div>
                               {pin && (
                                 <div className="pin-step-heading pin-sign">
@@ -1659,7 +1748,7 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                                     })
                                   }
                                   disabled={
-                                    p.approved ||
+                                    !connected || noGas || salesPaused || p.approved ||
                                     p.ownedByWallet === false ||
                                     wrongNetwork
                                   }
@@ -1675,7 +1764,7 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                                 <button
                                   className={p.approved ? "primary" : ""}
                                   disabled={
-                                    !p.approved ||
+                                    !connected || noGas || salesPaused || !p.approved ||
                                     !p.offer ||
                                     wrongNetwork ||
                                     p.ownedByWallet === false
@@ -1690,9 +1779,12 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                                           offerId: p.offer.id,
                                           minimumProceedsMicros:
                                             p.offer.fundedMicros,
+                                          expectedTerms: { buyer: p.offer.maker, claims: p.offer.claims, originalSupply: p.offer.originalSupply, endBlock: p.offer.endBlock, deadlineTimestamp: p.offer.deadlineTimestamp },
                                         },
                                         lines: [
                                           ["Original NFT", "#" + p.tokenId],
+                                          ["Offer", "#" + p.offer.id],
+                                          ["Buyer", p.offer.maker],
                                           [
                                             "Minimum proceeds",
                                             money(p.offer.fundedMicros, 6) +
@@ -1735,84 +1827,15 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                                 </button>
                                 <button
                                   className="text-button"
+                                  disabled={p.ownedByWallet === true}
                                   onClick={() => setFunding(!funding)}
                                 >
                                   Fund an offer
                                 </button>
                               </div>
+                              {p.ownedByWallet === true && <p className="fine">You own this NFT. Share its position link with a separate buyer so their USDC funds the offer. Return here to approve and accept.</p>}
                               {funding && (
-                                <form
-                                  className="fund-form"
-                                  onSubmit={(e) => {
-                                    e.preventDefault();
-                                    try {
-                                      const payment = parseUsdc(fundAmount);
-                                      if (payment <= 0n)
-                                        throw new Error(
-                                          "Offer must be positive.",
-                                        );
-                                      begin({
-                                        title: "Fund an exact offer",
-                                        action: {
-                                          type: "fundOffer",
-                                          tokenId: p.tokenId,
-                                          paymentMicros: payment.toString(),
-                                          claims: "8000000000000000000000",
-                                          endBlock:
-                                            p.offer?.endBlock ??
-                                            (
-                                              BigInt(s.blockNumber) + 129000n
-                                            ).toString(),
-                                          deadlineTimestamp: (
-                                            BigInt(s.timestamp) + 3600n
-                                          ).toString(),
-                                        },
-                                        lines: [
-                                          ["Escrow USDC", money(payment, 6)],
-                                          ["Claims to buy", "8,000 of 10,000"],
-                                          ["NFT", "#" + p.tokenId],
-                                          [
-                                            "Earning endpoint",
-                                            "End of block " +
-                                              integer(
-                                                p.offer?.endBlock ??
-                                                  (
-                                                    BigInt(s.blockNumber) +
-                                                    129000n
-                                                  ).toString(),
-                                              ),
-                                          ],
-                                          [
-                                            "Offer deadline",
-                                            deadlineDate(
-                                              (
-                                                BigInt(s.timestamp) + 3600n
-                                              ).toString(),
-                                            ),
-                                          ],
-                                        ],
-                                        warning:
-                                          "Funding escrows the buyer’s payment. Only the NFT owner can accept the exact offer; funding alone does not lock their NFT.",
-                                        button: "Fund offer",
-                                      });
-                                    } catch (e) {
-                                      setError((e as Error).message);
-                                    }
-                                  }}
-                                >
-                                  <label htmlFor="fund-amount">
-                                    Upfront USDC for 8,000 claims
-                                  </label>
-                                  <input
-                                    id="fund-amount"
-                                    inputMode="decimal"
-                                    value={fundAmount}
-                                    onChange={(e) =>
-                                      setFundAmount(e.target.value)
-                                    }
-                                  />
-                                  <button type="submit">Review funding</button>
-                                </form>
+                                <OfferForm key={p.tokenId} position={p} snapshot={s} disabled={!connected || wrongNetwork || noGas || salesPaused} onReview={begin} onError={setError} />
                               )}
                             </>
                           )}
@@ -1970,13 +1993,17 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
             ) : (
               <button
                 className="primary wide"
-                disabled={busy || wrongNetwork}
+                disabled={busy || wrongNetwork || accountChanged || noGas || progress?.stage === "pending"}
                 onClick={submit}
               >
                 {busy ? "Awaiting confirmation…" : review.button}
                 <Icon />
               </button>
             )}
+            {accountChanged && <p className="inline-warning">The connected account differs from this review. Close and review again.</p>}
+            {progress && <p className="fine" aria-live="polite">{progress.label}: {progress.stage === "signature" ? "review and sign in your wallet" : progress.stage === "pending" ? "submitted; waiting for chain confirmation" : progress.stage === "estimating" ? "checking execution and gas" : progress.stage}.
+              {progress.maximumFeeWei && <> Estimated gas ceiling: {(Number(progress.maximumFeeWei) / 1e18).toPrecision(4)} ETH. Wallet fees can vary.</>}
+            </p>}
             <p className="fine dialog-note">
               {fixture
                 ? "Fixture only. No wallet signature, token transfer, or transaction hash is produced."

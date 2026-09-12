@@ -114,6 +114,9 @@ async function mount(
       ]);
       const adapter = new ChainAdapter(deployment as any) as any;
       adapter.validate = async () => {};
+    adapter.client.getBalance = async () => 10n ** 18n;
+    adapter.client.estimateGas = async () => 21000n;
+    adapter.client.estimateFeesPerGas = async () => ({ maxFeePerGas: 1000000000n, maxPriorityFeePerGas: 100000000n });
       adapter.read = async () => ({ endBlock: 124n });
       const snapshot = await new FixtureAdapter().load();
       const host = document.createElement("div");
@@ -291,6 +294,9 @@ test("settlement prefers scoped API bytes, rejects mismatches and only falls bac
     ] as const) {
       const adapter = new ChainAdapter(deployment as any) as any;
       adapter.validate = async () => {};
+    adapter.client.getBalance = async () => 10n ** 18n;
+    adapter.client.estimateGas = async () => 21000n;
+    adapter.client.estimateFeesPerGas = async () => ({ maxFeePerGas: 1000000000n, maxPriorityFeePerGas: 100000000n });
       adapter.account = A;
       adapter.wallet = {
         getChainId: async () => 31337,
@@ -386,6 +392,9 @@ test("only a direct verified cache for the exact series endpoint can settle with
     for (const verified of [true, false]) {
       const adapter = new ChainAdapter(deployment as any) as any;
       adapter.validate = async () => {};
+    adapter.client.getBalance = async () => 10n ** 18n;
+    adapter.client.estimateGas = async () => 21000n;
+    adapter.client.estimateFeesPerGas = async () => ({ maxFeePerGas: 1000000000n, maxPriorityFeePerGas: 100000000n });
       adapter.account = A;
       adapter.wallet = {
         getChainId: async () => 31337,

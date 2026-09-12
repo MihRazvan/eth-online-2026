@@ -31,3 +31,22 @@ node_modules/.bin/playwright test -c apps/web/playwright.chain.config.ts
 ```
 
 It starts the local app on 4175, calls root `reset-and-seed.mjs --reset`, funds and accepts an offer in the browser, publishes an Aqua quote, trades claims, invokes the root maturity/witness helper, captures, returns the NFT before proof, submits the retained witness and redeems all holders and residual fees. The fixture suite stays on 4174. Set `FEESTRIP_REPO_ROOT` only when running the browser suite from an isolated worktree against root-owned setup scripts; normal checkout and CI need no path override. Raw receipts and integer balances are written to `docs/evidence/browser-chain-lifecycle.json`; screenshots and traces are Playwright attachments.
+
+## Two-wallet funded sale
+
+`#pin/<canonical-NFT-ID>` imports a canonical position using configured-chain reads, including for disconnected visitors and external buyers. `#pin/<NFT-ID>?offer=<offer-ID>` selects one exact funded offer; it never silently switches to a higher-paying offer. The owner approves and accepts; a separate buyer funds. Self-funding is intentionally disabled in the interface because it does not produce external proceeds.
+
+The editable test offer starts at 1 USDC, 80% of fixed original Q=10,000 claims, and 600 blocks ahead. Payment is limited to 1,000 test USDC; the user reviews exact payment, share, original Q, seller, position range/liquidity, endpoint and UTC deadline. More than 32 blocks and 60 seconds must remain after any allowance transaction. Changing positions resets the draft; background refresh leaves edited values and open reviews untouched. The reviewed position commitment is included in the new `fundOffer(...,bytes32 expectedPositionCommitment)` calldata, with preflights before and after approval. This requires the corresponding reviewed-position FeeStrip deployment and generated ABI.
+
+Public funding and acceptance require a fresh `/api/operations` response bound to the exact deployment, with `protocol`, `keeper`, `retention`, and `replication` checks all ready. Observations older than 60 seconds or more than five seconds in the future fail closed. Local-chain and explicitly labelled fixtures are exempt from this operations gate. The gate controls new commitments, never existing refunds, proof allocation or payouts. Vite proxies the route through `FEESTRIP_OPERATIONS_ORIGIN` (default loopback port 8789).
+
+Connected, visible pages refresh every 15 seconds and on focus/visibility/wallet events. Transaction simulation and ETH gas checks run before each signature. Browser receipts are scoped to account, chain and FeeStrip address, preserve approval versus funding, and link an actual funded offer to seller review. A successful transaction closes its review even when the follow-up RPC read fails. An unresolved broadcast blocks additional app submissions until its receipt resolves; cancellation/replacement in the wallet may require checking the replacement on the explorer. Local browser storage is a convenience, never proof or payout authority.
+
+Verification includes the existing complete local financial lifecycle plus a second, previously unlisted canonical NFT: disconnected view, separate buyer funding exact small terms, receipt reload, exact cancellation refund, seller acceptance from its offer link, and automatic counterparty refresh. These are local-chain tests, not public wallet acceptance. Run them with an isolated Anvil and the pinned witness-validator Python environment:
+
+```sh
+FEESTRIP_PROOF_PYTHON=/tmp/feestrip-proof-venv/bin/python \
+LOCAL_RPC_URL=http://127.0.0.1:8561 \
+FEESTRIP_TEST_WEB_PORT=4292 FEESTRIP_TEST_RECOVERY_PORT=8792 \
+pnpm exec playwright test -c apps/web/playwright.chain.config.ts
+```

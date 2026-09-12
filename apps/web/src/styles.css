@@ -3746,3 +3746,18 @@ h2 {
 @media (max-width: 600px) {
   .position-lookup-fields { flex-direction: column; }
 }
+
+/* Funding remains a paper form, with exact terms readable on narrow screens. */
+.fund-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; align-items: start; }
+.fund-form label { display: grid; gap: .4rem; grid-column: auto; min-width: 0; }
+.fund-form input { width: 100%; min-width: 0; min-height: 44px; }
+.fund-form > p, .fund-form > button { grid-column: 1 / -1; }
+.fund-form > button { justify-self: start; }
+.address, .receipt-row code { overflow-wrap: anywhere; }
+.wallet-prerequisites, .transaction-receipts { border-top: 1px solid var(--ink, #25261f); padding: 1rem 0; }
+.transaction-receipts summary { cursor: pointer; padding: .5rem 0; }
+.receipt-row { display: grid; gap: .5rem; padding: 1rem 0; border-top: 1px solid var(--ink, #25261f); }
+.receipt-row small { max-width: 65ch; }
+@media (max-width: 600px) { .fund-form { grid-template-columns: minmax(0, 1fr); } }
+.cabinet-positions > .section-top { flex-wrap: wrap; gap: .75rem; }
+.cabinet-positions > .section-top .address { min-width: 0; max-width: 100%; }

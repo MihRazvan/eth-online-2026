@@ -16,6 +16,7 @@ import {
   http,
   erc20Abi,
   parseAbi,
+  parseAbiParameters,
   getAddress,
   type Address,
   type Hex,
@@ -135,7 +136,7 @@ test("real browser funding, exact NFT sale, Aqua maker publication, trade, late 
   await page
     .getByRole("button", { name: "Fund an offer", exact: true })
     .click();
-  await page.getByLabel("Upfront USDC for 8,000 claims").fill("101");
+  await page.getByLabel("Upfront USDC").fill("101");
   await page
     .getByRole("button", { name: "Review funding", exact: true })
     .click();
@@ -143,7 +144,7 @@ test("real browser funding, exact NFT sale, Aqua maker publication, trade, late 
   expect(await balance(deployment.usdc, buyer)).toBe(
     buyerCashBefore - 101000000n,
   );
-  await login(page, "seller", "pin");
+  await login(page, "seller", "pin/1?offer=2");
   await expect(page.locator(".funded-offer-row")).toHaveCount(0);
   await page
     .getByRole("button", { name: "1. Approve this NFT", exact: true })
@@ -413,4 +414,86 @@ test("real browser funding, exact NFT sale, Aqua maker publication, trade, late 
     body: JSON.stringify(evidence, null, 2),
     contentType: "application/json",
   });
+});
+
+
+test("an unlisted canonical NFT connects two wallets through exact small terms, cancellation, reload and counterparty refresh", async ({ page, browser }, testInfo) => {
+  const { seller, buyer } = deployment.actors!;
+  const wallet = createWalletClient({ account: seller, transport: http(rpcURL) });
+  const send = async (address: Address, abi: any, functionName: string, args: any[]) => {
+    const hash = await wallet.writeContract({ chain: null, address, abi, functionName, args });
+    expect((await client.waitForTransactionReceipt({ hash })).status).toBe("success");
+  };
+  const [key] = await client.readContract({ address: deployment.positionManager, abi: positionManagerAbi, functionName: "getPoolAndPositionInfo", args: [1n] });
+  for (const currency of [key.currency0, key.currency1]) await send(currency, parseAbi(["function mint(address,uint256)"]), "mint", [deployment.positionManager, 1000000000000n]);
+  const max = (1n << 128n) - 1n;
+  const params = [
+    encodeAbiParameters(parseAbiParameters("(address currency0,address currency1,uint24 fee,int24 tickSpacing,address hooks),int24,int24,uint256,uint128,uint128,address,bytes"), [key, -120, 120, 1000000000000n, max, max, seller, "0x"]),
+    encodeAbiParameters(parseAbiParameters("address,uint256,bool"), [key.currency0, 0n, false]),
+    encodeAbiParameters(parseAbiParameters("address,uint256,bool"), [key.currency1, 0n, false]),
+    encodeAbiParameters(parseAbiParameters("address,address"), [key.currency0, seller]),
+    encodeAbiParameters(parseAbiParameters("address,address"), [key.currency1, seller]),
+  ];
+  const block = await client.getBlock();
+  await send(deployment.positionManager, parseAbi(["function modifyLiquidities(bytes,uint256)"]), "modifyLiquidities", [encodeAbiParameters(parseAbiParameters("bytes,bytes[]"), ["0x020b0b1414", params]), block.timestamp + 3600n]);
+  expect(deployment.nftIds).not.toContain("2");
+  const newSeriesId = await client.readContract({ address: deployment.feeStrip, abi: feeStripAbi, functionName: "nextSeriesId" });
+  const unknownOffer = await client.readContract({ address: deployment.feeStrip, abi: feeStripAbi, functionName: "nextOfferId" });
+  // The buyer has never owned NFT2 and there is no offer or manifest entry for it.
+  await page.goto("/?wallet=buyer#pin/2");
+  await expect(page.locator(".position-entry")).toContainText("NFT #2");
+  await expect(page.getByRole("button", { name: "1. Approve this NFT", exact: true })).toBeDisabled();
+  await login(page, "buyer", "pin/2");
+  const before = await balance(deployment.usdc, buyer);
+  await page.getByRole("button", { name: "Fund an offer", exact: true }).click();
+  await page.getByLabel("Upfront USDC", { exact: true }).fill("0.25");
+  await page.getByLabel("Sold share (%)", { exact: true }).fill("25");
+  const endBlock = await page.getByLabel("Exact end block").inputValue();
+  await page.getByRole("button", { name: "Review funding", exact: true }).click();
+  await expect(page.getByRole("dialog")).toContainText("$0.250000 USDC");
+  await confirm(page, "Fund offer", "fundUnknownPosition");
+  expect(await balance(deployment.usdc, buyer)).toBe(before - 250000n);
+  const funded = await client.readContract({ address: deployment.feeStrip, abi: feeStripAbi, functionName: "offers", args: [unknownOffer] });
+  expect(funded[3]).toBe(10000n * 10n ** 18n); expect(funded[4]).toBe(2500n * 10n ** 18n); expect(funded[6]).toBe(BigInt(endBlock));
+  await page.getByText("Saved transaction receipts", { exact: true }).click();
+  await expect(page.getByRole("link", { name: `Share offer #${unknownOffer} with the seller` })).toHaveAttribute("href", `#pin/2?offer=${unknownOffer}`);
+  await page.reload();
+  await login(page, "buyer", "pin/2");
+  await page.getByText("Saved transaction receipts", { exact: true }).click();
+  await expect(page.getByRole("link", { name: `Share offer #${unknownOffer} with the seller` })).toBeVisible();
+  // Another small offer can be cancelled and returns exactly its escrowed payment.
+  await page.getByRole("button", { name: "Fund an offer", exact: true }).click();
+  await page.getByLabel("Upfront USDC", { exact: true }).fill("0.1");
+  await page.getByRole("button", { name: "Review funding", exact: true }).click();
+  await confirm(page, "Fund offer", "fundCancellableOffer");
+  await page.getByRole("link", { name: "My cabinet", exact: true }).click();
+  const cancellable = page.locator(".funded-offer-row").filter({ hasText: `Offer #${unknownOffer + 1n} · NFT #2` });
+  await cancellable.getByRole("button", { name: "Review cancellation" }).click();
+  await expect(page.getByRole("dialog")).toContainText("$0.100000 USDC");
+  await confirm(page, "Cancel offer and recover USDC", "cancelExactOffer");
+  expect(await balance(deployment.usdc, buyer)).toBe(before - 250000n);
+  await page.goto(`/?wallet=buyer#pin/2?offer=${unknownOffer}`);
+  await login(page, "buyer", `pin/2?offer=${unknownOffer}`);
+  const sellerContext = await browser.newContext(); const sellerPage = await sellerContext.newPage();
+  await login(sellerPage, "seller", `pin/2?offer=${unknownOffer}`);
+  await expect(sellerPage.getByLabel("Funded offer to review")).toHaveValue(unknownOffer.toString());
+  await sellerPage.getByRole("button", { name: "1. Approve this NFT", exact: true }).click();
+  await confirm(sellerPage, "Approve NFT transfer", "approveUnknownPosition");
+  await sellerPage.getByRole("button", { name: "2. Review funded sale" }).click();
+  await expect(sellerPage.getByRole("dialog")).toContainText("2,500 / 10,000");
+  await expect(sellerPage.getByRole("dialog")).toContainText("$0.250000 USDC");
+  await confirm(sellerPage, "Accept exact funded terms", "acceptUnknownPosition");
+  // No refresh button: the counterparty's visible page updates within its bounded interval.
+  await expect(page.getByRole("link", { name: "View its issued fee claims" })).toBeVisible({ timeout: 25000 });
+  const current = await client.readContract({ address: deployment.feeStrip, abi: feeStripAbi, functionName: "series", args: [newSeriesId] });
+  expect(await balance(current.claim, buyer)).toBe(2500n * 10n ** 18n);
+  expect(await balance(current.claim, seller)).toBe(7500n * 10n ** 18n);
+  await page.getByRole("link", { name: "My cabinet", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Publish sell quote", exact: true })).toBeVisible();
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: testInfo.outputPath("two-wallet-cabinet-mobile.png"), fullPage: true });
+  const evidence = { mode: "local-chain-only", chainId: 31337, tokenId: "2", absentFromManifest: !deployment.nftIds.includes("2"), seller, buyer, fundedOfferId: unknownOffer.toString(), seriesId: newSeriesId.toString(), paymentMicros: "250000", buyerClaims: "2500000000000000000000", originalQ: "10000000000000000000000", endBlock, cancelledRefundMicros: "100000", counterpartyRefreshWithoutButton: true, browserReceiptReload: true, receipts: receipts.filter((row) => ["fundUnknownPosition", "fundCancellableOffer", "cancelExactOffer", "approveUnknownPosition", "acceptUnknownPosition"].includes(row.action)) };
+  writeFileSync(testInfo.outputPath("two-wallet-flow.json"), JSON.stringify(evidence, null, 2) + "\n");
+  await sellerContext.close();
 });
