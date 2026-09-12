@@ -6,7 +6,7 @@ import {tmpdir} from 'node:os';
 import {ConnectError,Code} from '@connectrpc/connect';
 import {HistoryStore} from '../../packages/data/src/store.mjs';
 import {SubstreamsHistorySink} from '../../packages/data/src/substreams.mjs';
-import {acquireWriterLock,failureCode,supervise,validateConfig,storageGuard} from './stream-service.mjs';
+import {acquireWriterLock,failureCode,supervise,validateConfig,storageGuard,consumeBoundedResponse} from './stream-service.mjs';
 const h=n=>'0x'+n.toString(16).padStart(64,'0'),a=n=>'0x'+n.toString(16).padStart(40,'0');
 const anchor={block:100,hash:h(100),logIndex:1,tick:0,transactionHash:h(900)};
 const config={chainId:11155111,poolManager:a(1),poolIds:[h(10)],packageHash:h(99),finalBlocksOnly:true,startBlock:100,initialization:{[h(10)]:anchor}};
@@ -61,5 +61,30 @@ test('disk guard reserves 256MiB and stops a running stream before the next guar
  free=BigInt(min);checks=0;const store=new HistoryStore(),sink=new SubstreamsHistorySink(store,config);
  try{await assert.rejects(supervise({sink,checkStorage:guard,signal:new AbortController().signal,consume:r=>sink.applyBlock(r),open:async function*(){for(let n=100;n<300;n++){if(n===101)free=0n;yield envelope(n);}}}),/storage-capacity-low/);
  assert.equal(sink.checkpoint().number,199);assert.equal(checks,3);
+ }finally{store.close();}
+});
+
+test('bounded completion cancels immediately without waiting for provider end-of-stream',{timeout:1000},async()=>{
+ const store=new HistoryStore(),sink=new SubstreamsHistorySink(store,config),reports=[];let nextCalls=0,closed=false,connectionSignal;
+ try{
+ await supervise({sink,stop:101,signal:new AbortController().signal,consume:r=>sink.applyBlock(r),report:r=>reports.push(r),open:(_cursor,signal)=>{
+  connectionSignal=signal;
+  return {[Symbol.asyncIterator](){return this;},next(){nextCalls++;return nextCalls===1?Promise.resolve({value:envelope(100),done:false}):new Promise(()=>{});},return(){assert.equal(signal.aborted,true);closed=true;return Promise.resolve({done:true});}};
+ }});
+ assert.equal(nextCalls,1);assert.equal(closed,true);assert.equal(connectionSignal.aborted,true);assert.equal(sink.checkpoint().number,100);assert.equal(reports.at(-1).status,'bounded-complete');
+ }finally{store.close();}
+});
+test('out-of-range RPC envelope is rejected before decoding or committing to the sink',()=>{
+ let writes=0;const sink={applyBlock(){writes++;}};
+ for(const number of [101,102])assert.throws(()=>consumeBoundedResponse({message:{case:'blockScopedData',value:{clock:{number}}}},undefined,sink,101),/block-outside-bounded-range/);
+ assert.equal(writes,0);
+});
+
+test('bounded completion aborts SDK-style iterators which omit return()',{timeout:1000},async()=>{
+ const store=new HistoryStore(),sink=new SubstreamsHistorySink(store,config);let canceled=false,nextCalls=0;
+ try{await supervise({sink,stop:101,signal:new AbortController().signal,consume:r=>sink.applyBlock(r),open:(_cursor,signal)=>{
+ signal.addEventListener('abort',()=>{canceled=true;},{once:true});
+ return {[Symbol.asyncIterator](){return {next(){nextCalls++;return nextCalls===1?Promise.resolve({value:envelope(100),done:false}):new Promise(()=>{});}};}};
+ }});assert.equal(canceled,true);assert.equal(nextCalls,1);assert.equal(sink.checkpoint().number,100);
  }finally{store.close();}
 });

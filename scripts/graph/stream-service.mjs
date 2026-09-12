@@ -48,6 +48,11 @@ export function storageGuard(db,minFreeBytes=268435456,stat=statfsSync){
  };
 }
 
+export function consumeBoundedResponse(response,registry,sink,stop){
+ if(stop&&response.message?.case==='blockScopedData'&&BigInt(response.message.value.clock.number)>=BigInt(stop))fail('block-outside-bounded-range');
+ return consumeResponse(response,registry,sink);
+}
+
 /** Injected transport in tests exercises retry, cursor replay and fatal boundaries. */
 export async function supervise({sink,open,consume,signal,report=()=>{},wait=(ms,signal)=>delay(ms,undefined,{signal}),assertOwned=()=>{},checkStorage=()=>{},stop,
  retryBaseMs=1000,retryMaxMs=30000,maxConsecutiveFailures=8}){
@@ -56,18 +61,27 @@ export async function supervise({sink,open,consume,signal,report=()=>{},wait=(ms
   assertOwned();checkStorage();untilStorageCheck=0;const before=sink.checkpoint();
   if(stop&&before?.number===stop-1){report({status:'bounded-complete',head:before.number,...sink.historyStatus()});return;}
   if(stop&&before?.number>=stop)fail('checkpoint-outside-bounded-range');
+  const connection=new AbortController(),connectionSignal=AbortSignal.any([signal,connection.signal]);let boundedComplete=false;
   try{
-   for await(const response of open(before?.providerCursor,signal)){
+   for await(const response of open(before?.providerCursor,connectionSignal)){
     if(signal.aborted)return;assertOwned();if(untilStorageCheck--<=0){checkStorage();untilStorageCheck=99;}
     // A validation/undo failure is never classified as a transport retry.
     try{consume(response);}catch{fail('stream-validation-failed');}
     const current=sink.checkpoint();
     if(current&&current.number>highest){highest=current.number;failures=0;}
+    if(stop&&current?.number>=stop)fail('block-outside-bounded-range');
+    if(stop&&current?.number===stop-1){
+     // The provider may keep the stream open after the requested final block.
+     // Cancel before iterator.return(), so cleanup never awaits another envelope.
+     boundedComplete=true;connection.abort();report({status:'bounded-complete',...sink.historyStatus()});return;
+    }
    }
    if(signal.aborted)return;
    if(stop&&sink.checkpoint()?.number===stop-1){report({status:'bounded-complete',...sink.historyStatus()});return;}
    throw new ServiceError('stream-ended-early');
   }catch(error){
+   connection.abort();
+   if(boundedComplete&&error instanceof ConnectError&&error.code===1)return;
    if(signal.aborted)return;
    const retry=error instanceof ConnectError&&RETRY_CODES.has(error.code)||error instanceof ServiceError&&error.safeCode==='stream-ended-early';
    if(!retry)throw error;
@@ -76,7 +90,7 @@ export async function supervise({sink,open,consume,signal,report=()=>{},wait=(ms
    const retryMs=Math.min(retryMaxMs,retryBaseMs*2**Math.min(failures-1,20));
    report({status:'retrying',code:failureCode(error),attempt:failures,retryMs,...sink.historyStatus()});
    try{await wait(retryMs,signal);}catch(error){if(signal.aborted)return;throw error;}
-  }
+  }finally{connection.abort();}
  }
 }
 
@@ -110,7 +124,7 @@ export async function main(){
   const open=(startCursor,signal)=>streamBlocks(transport,createRequest({substreamPackage:pkg,outputModule:'map_pool_context',productionMode:true,startBlockNum:BigInt(config.start),stopBlockNum:BigInt(stop??0),startCursor,finalBlocksOnly:true}),{signal,timeoutMs:config.connectionTimeoutMs});
   report({status:'starting',...sink.historyStatus(),packageHash});
   heartbeat=setInterval(()=>report({status:'retained-history',...sink.historyStatus()}),30000);heartbeat.unref();
-  await supervise({sink,open,consume:response=>{if(stop&&response.message?.case==='blockScopedData'&&BigInt(response.message.value.clock.number)>=BigInt(stop))fail('block-outside-bounded-range');return consumeResponse(response,registry,sink);},checkStorage,signal:controller.signal,report,assertOwned:lock.assertOwned,stop,...config});
+  await supervise({sink,open,consume:response=>consumeBoundedResponse(response,registry,sink,stop),checkStorage,signal:controller.signal,report,assertOwned:lock.assertOwned,stop,...config});
   report({status:controller.signal.aborted?'stopped':'completed',...sink.historyStatus()});
  }finally{
   clearInterval(heartbeat);process.removeListener('SIGINT',shutdown);process.removeListener('SIGTERM',shutdown);store?.close();lock.release();
