@@ -1,6 +1,6 @@
 # usufruct sponsor evidence checklist
 
-Reconciled 12 September 2026 against implementation `54c0465`. Event/track: ETHOnline 2026 Classic, user-confirmed. [Current decision and implementation plan](../research/bounty-readiness.md). No submission or sponsor confirmation is implied.
+Reconciled 12 September 2026; current release gates are maintained in the [judge checklist](../JUDGE_READINESS.md). Event/track: ETHOnline 2026 Classic, user-confirmed. [Current decision and implementation plan](../research/bounty-readiness.md). No submission or sponsor confirmation is implied.
 
 | Integration | Public verified | Fork verified | Local verified | Pending |
 | --- | --- | --- | --- | --- |

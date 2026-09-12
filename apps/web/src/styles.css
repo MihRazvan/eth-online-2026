@@ -3732,6 +3732,13 @@ h2 {
 }
 
 .position-lookup { margin: 1.25rem 0; }
+.orchard-guide { margin: 0 0 2rem; padding: 1rem 0; border-top: 1px solid currentColor; border-bottom: 1px solid currentColor; }
+.orchard-guide summary { cursor: pointer; }
+.orchard-guide > p { max-width: 75ch; margin: 1rem 0; }
+.orchard-guide ol { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2rem; padding-left: 1.25rem; }
+.orchard-guide h3 { margin: 1rem 0 .5rem; }
+.orchard-guide li p { font-size: .85rem; line-height: 1.6; }
+@media (max-width: 700px) { .orchard-guide ol { grid-template-columns: 1fr; gap: 0; } }
 .position-lookup > label { display: block; margin-bottom: .5rem; }
 .position-lookup-fields { display: flex; gap: .65rem; }
 .position-lookup-fields input { flex: 1; min-width: 0; }

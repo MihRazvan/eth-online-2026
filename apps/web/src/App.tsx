@@ -623,6 +623,35 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                 </small>
               </div>
             </section>
+            <details className="orchard-guide">
+              <summary>New to usufruct? Start here.</summary>
+              <p>
+                A liquidity provider can sell a share of one position’s future USDC fees.
+                Buyers pay upfront and receive tradable fee claims. You don’t need an LP
+                position to buy a claim.
+              </p>
+              <ol>
+                <li><h3>Agree on a period</h3><p>
+                  The seller accepts a funded offer. The original NFT stays in escrow,
+                  with its range and liquidity fixed for the agreed earning window.
+                </p></li>
+                <li><h3>Own a share of the fees</h3><p>
+                  A claim carries its fraction of all unpaid USDC income from that window,
+                  including fees earned before you bought it. Income and resale are not guaranteed.
+                </p></li>
+                <li><h3>Collect when ready</h3><p>
+                  After the window, fees are collected and the holder of the NFT return right can recover it.
+                  Claim holders redeem after the exact allocation is verified.
+                </p></li>
+              </ol>
+              <p className="fine">
+                {fixture
+                  ? "This preview uses simulated balances and transactions."
+                  : s.mode === "local"
+                    ? "This application runs on a local development chain with test wallets and assets. Browsing requires no wallet."
+                  : "This application runs on Ethereum Sepolia. Transacting requires a compatible wallet, Sepolia ETH for gas and test USDC for purchases. Browsing requires no wallet."}
+              </p>
+            </details>
             <section className="market">
               <div className="section-top">
                 <h2>
@@ -1798,7 +1827,7 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
         ) : null}
         <section className="data-disclosure">
           <details>
-            <summary>Data sources &amp; demo controls</summary>
+            <summary>{fixture ? "Data sources & demo controls" : "Network & data"}</summary>
             <p className="fine">
               {fixture
                 ? "All positions, prices, balances and history shown here are deterministic fixtures. They are design and browser-test evidence only. No public-chain sale, Aqua execution, historical proof, or live Graph composition is implied."
@@ -1859,17 +1888,17 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
       <footer>
         <span>
           usufruct · Uniswap v4 positions · Trading powered by SwapVM
-          <br /> <span>Integration acceptance: see project evidence</span>
+          <br /> <span>{fixture ? "Interactive preview · simulated assets" : s.mode === "local" ? "Local development chain · test assets only" : "Ethereum Sepolia · test assets only"}</span>
         </span>
         <span>
           Variable income. No guaranteed return.
           <br />{" "}
           <a
-            href="https://github.com/ScopeLift/fixed-fee-swap"
+            href="https://github.com/MihRazvan/eth-online-2026#prior-work-and-attribution"
             target="_blank"
             rel="noreferrer"
           >
-            Prior work: ScopeLift Fixed Fee Swap{" "}
+            Source &amp; credits{" "}
             <Icon name="external" size={10} />
           </a>
         </span>
