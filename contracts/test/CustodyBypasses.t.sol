@@ -145,7 +145,16 @@ contract CustodyBypassesTest is FeeStripBase {
         assertEq(subscriber.subscriptions(), 1);
         vm.prank(buyer);
         vm.expectRevert(FeeStrip.InvalidPosition.selector);
-        strip.fundOffer(seller, nft, Q, Q, 100e6, END, uint64(block.timestamp + 1 days));
+        strip.fundOffer(
+            seller,
+            nft,
+            Q,
+            Q,
+            100e6,
+            END,
+            uint64(block.timestamp + 1 days),
+            keccak256(abi.encode(key, int24(-120), int24(120), L))
+        );
         vm.prank(seller);
         posm.unsubscribe(nft);
         assertEq(subscriber.unsubscriptions(), 1);

@@ -177,8 +177,11 @@ abstract contract FeeStripBase is Test {
     }
 
     function _offer(uint256 tokenId, uint256 quantity, uint256 buyQty) internal returns (uint256 offer) {
+        // All NFTs minted by this base fixture have this independently known pool/range/liquidity.
+        bytes32 reviewed = keccak256(abi.encode(key, int24(-120), int24(120), L));
         vm.prank(buyer);
-        offer = strip.fundOffer(seller, tokenId, quantity, buyQty, 100e6, END, uint64(block.timestamp + 1 days));
+        offer =
+            strip.fundOffer(seller, tokenId, quantity, buyQty, 100e6, END, uint64(block.timestamp + 1 days), reviewed);
     }
 
     function _activate() internal returns (uint256 id) {

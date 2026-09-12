@@ -80,9 +80,17 @@ contract LifecycleHandler is Test {
         if (buyer == seller) buyer = actors[(slot + 2) % 3];
         uint256 amount = 1e6 + (amountSeed % 100e6);
         uint64 end = uint64(vm.getBlockNumber() + 2 + (amountSeed % 12));
+        bytes32 reviewed = strip.positionCommitment(nftIds[slot]);
         vm.prank(buyer);
         uint256 offer = strip.fundOffer(
-            seller, nftIds[slot], QUANTITY, QUANTITY * 3 / 4, amount, end, uint64(vm.getBlockTimestamp() + 1 days)
+            seller,
+            nftIds[slot],
+            QUANTITY,
+            QUANTITY * 3 / 4,
+            amount,
+            end,
+            uint64(vm.getBlockTimestamp() + 1 days),
+            reviewed
         );
         liveOffer[slot] = offer;
         offerCost[offer] = amount;

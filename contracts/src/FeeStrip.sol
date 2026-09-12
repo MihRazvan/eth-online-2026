@@ -147,7 +147,14 @@ contract FeeStrip {
         return keccak256(abi.encode(s.captured, s.allocated, s.closed, s.soldUSDC, s.claim.totalSupply()));
     }
 
-    /// @notice Buyer funds immutable terms. NFT approval is never sale consent.
+    /// @notice Current validated pool, range and liquidity hash for a buyer's review.
+    /// @dev Pass the reviewed value to fundOffer; do not refresh it silently after review.
+    function positionCommitment(uint256 tokenId) external view returns (bytes32) {
+        (PoolKey memory key, PositionInfo info, uint128 liquidity) = _validatedPosition(tokenId);
+        return _commitment(key, info, liquidity);
+    }
+
+    /// @notice Buyer funds immutable terms and the exact reviewed position. NFT approval is never sale consent.
     function fundOffer(
         address seller,
         uint256 tokenId,
@@ -155,7 +162,8 @@ contract FeeStrip {
         uint256 buyerQuantity,
         uint256 proceeds,
         uint64 endBlock,
-        uint64 deadline
+        uint64 deadline,
+        bytes32 expectedPositionCommitment
     ) external nonReentrant returns (uint256 id) {
         if (
             seller == address(0) || quantity == 0 || buyerQuantity == 0 || buyerQuantity > quantity || proceeds == 0
@@ -163,18 +171,13 @@ contract FeeStrip {
         ) revert InvalidTerms();
         (PoolKey memory key, PositionInfo info, uint128 liquidity) = _validatedPosition(tokenId);
         if (positionManager.ownerOf(tokenId) != seller) revert Unauthorized();
+        bytes32 commitment = _commitment(key, info, liquidity);
+        if (expectedPositionCommitment == bytes32(0) || commitment != expectedPositionCommitment) {
+            revert InvalidPosition();
+        }
         id = nextOfferId++;
         offers[id] = Offer(
-            msg.sender,
-            seller,
-            tokenId,
-            quantity,
-            buyerQuantity,
-            proceeds,
-            endBlock,
-            deadline,
-            _commitment(key, info, liquidity),
-            false
+            msg.sender, seller, tokenId, quantity, buyerQuantity, proceeds, endBlock, deadline, commitment, false
         );
         fundedOfferUSDC += proceeds;
         uint256 beforeBalance = usdc.balanceOf(address(this));
