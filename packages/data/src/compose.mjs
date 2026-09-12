@@ -19,12 +19,13 @@ export function composeAnalysis({series,stream,subgraph,chainHead,quantity,price
     caveats:['Historical occupancy is block-weighted end-state context, not within-swap fee attribution.','Pool donations and wash trading can inflate past income. Future income is uncertain.']
   };
 }
-/** Query an immutable block selection; credentials stay in request headers, never results or error text. */
-export async function querySubgraph({url,deployment,block,headers={},fetchImpl=fetch}) {
-  const response=await fetchImpl(url,{method:'POST',headers:{'content-type':'application/json',...headers},body:JSON.stringify({query:`query FeeStrip($block: Int!) { _meta(block: {number: $block}) { block { number hash } deployment hasIndexingErrors } series_collection(first: 100, block: {number: $block}, orderBy: id) { id chainId poolManager poolId activationBlock endBlock tickLower tickUpper originalSupply } }`,variables:{block}}),signal:AbortSignal.timeout(15000)});
+/** Query at the caller's retained source hash; credentials stay in headers, never results or error text. */
+export async function querySubgraph({url,deployment,block,hash,headers={},fetchImpl=fetch}) {
+  if(!Number.isSafeInteger(block)||block<0||!/^0x[0-9a-f]{64}$/i.test(hash??''))throw new Error('Expected source block and hash required');
+  const response=await fetchImpl(url,{method:'POST',headers:{'content-type':'application/json',...headers},body:JSON.stringify({query:`query FeeStrip($hash: Bytes!) { _meta(block: {hash: $hash}) { block { number hash } deployment hasIndexingErrors } series_collection(first: 100, block: {hash: $hash}, orderBy: id) { id chainId poolManager poolId activationBlock endBlock tickLower tickUpper originalSupply } }`,variables:{hash}}),signal:AbortSignal.timeout(15000)});
   if(!response.ok)throw new Error(`Subgraph HTTP ${response.status}`);
   const body=await response.json();if(body.errors?.length)throw new Error('Subgraph query failed');
   const meta=body.data?._meta;
-  if(!meta||meta.deployment!==deployment||meta.block.number!==block||!meta.block.hash)throw new Error('Unexpected subgraph deployment or block');
+  if(!meta||meta.deployment!==deployment||meta.block?.number!==block||meta.block?.hash?.toLowerCase()!==hash.toLowerCase()||meta.hasIndexingErrors!==false)throw new Error('Unexpected subgraph deployment or block');
   return {series:body.data.series_collection,meta:{block:meta.block.number,hash:meta.block.hash,deployment:meta.deployment,hasIndexingErrors:meta.hasIndexingErrors}};
 }

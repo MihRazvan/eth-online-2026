@@ -5,7 +5,7 @@ async function query(url,headers,query,variables,fetchImpl){
  if(!response.ok)throw new Error(`Subgraph HTTP ${response.status}`);
  const body=await response.json();if(body.errors?.length||!body.data)throw new Error('Subgraph query failed');return body.data;
 }
-function meta(data,deployment){const m=data._meta;if(!m||m.deployment!==deployment||m.hasIndexingErrors||!/^0x[0-9a-f]{64}$/i.test(m.block?.hash??''))throw new Error('Subgraph deployment, hash or indexing status invalid');return {block:safeInt(m.block.number),hash:m.block.hash,deployment,hasIndexingErrors:false};}
+function meta(data,deployment){const m=data._meta;if(!m||m.deployment!==deployment||m.hasIndexingErrors!==false||!/^0x[0-9a-f]{64}$/i.test(m.block?.hash??''))throw new Error('Subgraph deployment, hash or indexing status invalid');return {block:safeInt(m.block.number),hash:m.block.hash,deployment,hasIndexingErrors:false};}
 function checkpoint(row,series,expectedPackage){
  let saved;try{saved=JSON.parse(row.cursor);}catch{throw new Error('Persisted Substreams identity unavailable');}
  const id=saved.identity;
@@ -17,8 +17,12 @@ export async function loadBuyerAnalysis({store,url,deployment,headers={},seriesI
  const streamHead=store.head(),first=store.first();if(!streamHead||!first)throw new Error('Substreams history unavailable');
  const latest=meta(await query(url,headers,'query { _meta { block { number hash } deployment hasIndexingErrors } }',{},fetchImpl),deployment);
  const block=Math.min(streamHead.number,latest.block,safeInt(chainHead));
- const data=await query(url,headers,'query BuyerAnalysis($block: Int!, $id: ID!) { _meta(block: {number: $block}) { block { number hash } deployment hasIndexingErrors } series(id: $id, block: {number: $block}) { id chainId poolManager poolId activationBlock endBlock tickLower tickUpper originalSupply closed redeemedQuantity } }',{block,id:String(seriesId)},fetchImpl);
- const source=meta(data,deployment);if(source.block!==block||!data.series)throw new Error('Series unavailable at common source block');
+ // Graph returns a null metadata hash for number-selected historical queries.
+ // Select the retained Substreams hash, then recheck it in the post-query snapshot.
+ const selected=store.block(block);if(!selected)throw new Error('Common source block not retained');
+ const data=await query(url,headers,'query BuyerAnalysis($hash: Bytes!, $id: ID!) { _meta(block: {hash: $hash}) { block { number hash } deployment hasIndexingErrors } series(id: $id, block: {hash: $hash}) { id chainId poolManager poolId activationBlock endBlock tickLower tickUpper originalSupply closed redeemedQuantity } }',{hash:selected.hash,id:String(seriesId)},fetchImpl);
+ const source=meta(data,deployment);if(source.block!==block||source.hash.toLowerCase()!==selected.hash.toLowerCase())throw new Error('Sources must agree on common block and hash');
+ if(!data.series)throw new Error('Series unavailable at common source block');
  const raw=data.series;const series={...raw,chainId:safeInt(raw.chainId),activationBlock:safeInt(raw.activationBlock),endBlock:safeInt(raw.endBlock),tickLower:safeInt(raw.tickLower),tickUpper:safeInt(raw.tickUpper)};
  if(raw.closed!==false||BigInt(raw.redeemedQuantity)>=BigInt(raw.originalSupply))throw new Error('Closed or fully redeemed series has no purchasable fee income');
  if(series.chainId!==safeInt(chainId))throw new Error('Configured chain differs from Subgraph');
