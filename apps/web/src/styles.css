@@ -3730,3 +3730,12 @@ h2 {
 .holding-row > .no-bid-note {
   grid-column: 1 / -1;
 }
+
+.position-lookup { margin: 1.25rem 0; }
+.position-lookup > label { display: block; margin-bottom: .5rem; }
+.position-lookup-fields { display: flex; gap: .65rem; }
+.position-lookup-fields input { flex: 1; min-width: 0; }
+.position-lookup > p { font-size: .8rem; margin-top: .5rem; }
+@media (max-width: 600px) {
+  .position-lookup-fields { flex-direction: column; }
+}

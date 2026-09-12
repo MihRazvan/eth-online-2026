@@ -262,6 +262,8 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
     [error, setError] = useState(""),
     [funding, setFunding] = useState(false),
     [pinToken, setPinToken] = useState<string | null>(null),
+    [positionLookup, setPositionLookup] = useState(""),
+    [findingPosition, setFindingPosition] = useState(false),
     [fundAmount, setFundAmount] = useState("672"),
     [scenarioIncome, setScenarioIncome] = useState("840"),
     [makerQuoteSeries, setMakerQuoteSeries] = useState<string | null>(null);
@@ -1344,6 +1346,35 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                         </p>
                       </div>
                     </div>
+                    {adapter.findPosition && (
+                      <form className="position-lookup" onSubmit={async (event) => {
+                        event.preventDefault();
+                        setFindingPosition(true);
+                        setError("");
+                        setMessage("");
+                        try {
+                          const id = await adapter.findPosition!(positionLookup);
+                          const next = await adapter.load();
+                          setSnapshot(next);
+                          if (!next.positions.some((position) => position.tokenId === id && position.ownedByWallet))
+                            throw new Error("Position details could not be loaded for this wallet. Check the connection and try again.");
+                          setPinToken(id);
+                          setMessage(`Found position #${id}. Finding a position does not approve or transfer it.`);
+                        } catch (error) {
+                          setError((error as Error).message);
+                        } finally { setFindingPosition(false); }
+                      }}>
+                        <label htmlFor="position-lookup">Missing a tree? NFT ID or Uniswap link</label>
+                        <div className="position-lookup-fields">
+                          <input id="position-lookup" value={positionLookup} onChange={(event) => setPositionLookup(event.target.value)}
+                            placeholder="39220 or a Sepolia v4 position link" maxLength={300} required disabled={findingPosition || wrongNetwork} />
+                          <button type="submit" disabled={findingPosition || wrongNetwork || !positionLookup.trim()}>
+                            {findingPosition ? "Finding…" : "Find position"}
+                          </button>
+                        </div>
+                        <p>{s.positionDiscoveryNotice}</p>
+                      </form>
+                    )}
                     <fieldset className="tree-options">
                       <legend className="sr-only">
                         Choose a position to pin

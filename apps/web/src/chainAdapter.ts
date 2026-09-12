@@ -49,6 +49,7 @@ import type {
 } from "./types";
 import { CLAIM_UNIT } from "./amounts";
 import { validateRecovery, verifyArtifactDigest } from "./recovery";
+import { positionId, positionIneligibility, recentPositionIds, POSITION_LIMIT } from "./positionDiscovery";
 
 export interface Deployment {
   mode: "local" | "testnet";
@@ -299,6 +300,63 @@ export class ChainAdapter implements FeeStripAdapter {
   private strategies = new Map<string, DiscoveredQuote>();
   private knownSeries = new Map<string, Series>();
   private testActor?: "seller" | "buyer" | "holder";
+  private discoveredPositions = new Map<string, { at: number; head: bigint; ids: string[]; incomplete: boolean }>();
+  private importedPositions = new Map<string, Set<string>>();
+
+  async findPosition(input: string): Promise<string> {
+    try {
+      const id = positionId(input);
+      await this.validate();
+      const block = await this.client.getBlock();
+      const wallet = await this.walletState(block.number);
+      if (!wallet.connected || !wallet.address || wallet.chainId !== this.deployment.chainId)
+        throw new Error("Connect your wallet on the correct network first.");
+      const d = this.deployment;
+      let owner: Address;
+      try {
+        owner = await this.read<Address>(d.positionManager, NFT_ABI, "ownerOf", [BigInt(id)], block.number);
+      } catch (error) {
+        if (isMissingCanonicalNFT(error)) throw new Error("This NFT does not exist on the configured PositionManager.");
+        throw error;
+      }
+      if (!same(owner, wallet.address)) throw new Error("This position is not owned by your connected wallet.");
+      const [[key, info], liquidity] = await Promise.all([
+        this.read<readonly [PoolKey, bigint]>(d.positionManager, positionManagerAbi, "getPoolAndPositionInfo", [BigInt(id)], block.number),
+        this.read<bigint>(d.positionManager, positionManagerAbi, "getPositionLiquidity", [BigInt(id)], block.number),
+      ]);
+      const reason = positionIneligibility(key, info, liquidity, d.usdc);
+      if (reason) throw new Error(reason);
+      const accountKey = wallet.address.toLowerCase();
+      const ids = this.importedPositions.get(accountKey) ?? new Set<string>();
+      if (ids.size >= POSITION_LIMIT && !ids.has(id)) throw new Error("The session position limit is reached.");
+      ids.add(id);
+      this.importedPositions.set(accountKey, ids);
+      return id;
+    } catch (error) { throw new Error(message(error)); }
+  }
+
+  private async walletPositionIds(wallet: WalletState, head: bigint) {
+    if (!wallet.connected || !wallet.address || wallet.chainId !== this.deployment.chainId)
+      return { ids: [] as string[], incomplete: false };
+    const accountKey = wallet.address.toLowerCase();
+    const ownerAddress = getAddress(wallet.address);
+    let result = this.discoveredPositions.get(accountKey);
+    if (!result || Date.now() - result.at > 30_000 || head < result.head) {
+      const found = await recentPositionIds(head, async (fromBlock, toBlock) => {
+        const logs = await this.client.getLogs({
+          address: this.deployment.positionManager,
+          event: parseAbi(["event Transfer(address indexed from, address indexed to, uint256 indexed tokenId)"])[0],
+          args: { to: ownerAddress }, fromBlock, toBlock, strict: true,
+        });
+        return logs.map((log) => log.args.tokenId);
+      });
+      result = { ...found, at: Date.now(), head };
+      this.discoveredPositions.set(accountKey, result);
+      // Bound cached account metadata across repeated wallet switching.
+      if (this.discoveredPositions.size > 10) this.discoveredPositions.delete(this.discoveredPositions.keys().next().value!);
+    }
+    return { ids: [...new Set([...result.ids, ...(this.importedPositions.get(accountKey) ?? [])])], incomplete: result.incomplete };
+  }
   constructor(
     readonly deployment: Deployment,
     options: {
@@ -779,15 +837,24 @@ export class ChainAdapter implements FeeStripAdapter {
       }),
     );
     const wallet = await this.walletState(bn);
+    const discovered = await this.walletPositionIds(wallet, bn);
+    const knownNftIds = new Set([
+      ...d.nftIds,
+      ...offers.map((o) => o.tokenId.toString()),
+      ...series.map(([, s]) => s.tokenId.toString()),
+    ]);
+    let discoveryDetailsFailed = false;
     const nftIds = [
       ...new Set([
         ...d.nftIds,
+        ...discovered.ids,
         ...offers.map((o) => o.tokenId.toString()),
         ...series.map(([, s]) => s.tokenId.toString()),
       ]),
     ];
     const positions = await Promise.all(
       nftIds.map(async (tokenId): Promise<Position | undefined> => {
+        try {
         let owner: Address;
         try {
           owner = await this.read<Address>(
@@ -821,12 +888,7 @@ export class ChainAdapter implements FeeStripAdapter {
           packed = info[1],
           lowerTick = tick24(packed >> 8n),
           upperTick = tick24(packed >> 32n);
-        if (
-          !same(key.hooks, zeroAddress) ||
-          liquidity === 0n ||
-          (packed & 255n) !== 0n ||
-          (!same(key.currency0, d.usdc) && !same(key.currency1, d.usdc))
-        )
+        if (positionIneligibility(key, packed, liquidity, d.usdc))
           return undefined;
         const market = markets.find((m) => m.tokenId === tokenId),
           s = market && this.knownSeries.get(market.id);
@@ -835,6 +897,8 @@ export class ChainAdapter implements FeeStripAdapter {
         const residual =
           wallet.connected && s && same(s.residualOwner, wallet.address!);
         if (market && !own && !residual) return undefined;
+        if (!market && !own && !d.nftIds.includes(tokenId) && !offers.some((o) => o.tokenId === BigInt(tokenId)))
+          return undefined;
         const [approved, approvedAll, display] = await Promise.all([
           this.read<Address>(
             d.positionManager,
@@ -884,6 +948,13 @@ export class ChainAdapter implements FeeStripAdapter {
               }
             : undefined,
         };
+        } catch (error) {
+          // Unsolicited NFTs may contain broken token metadata. They must not
+          // hide known financial positions, claims or recovery controls.
+          if (knownNftIds.has(tokenId)) throw error;
+          discoveryDetailsFailed = true;
+          return undefined;
+        }
       }),
     );
     return {
@@ -897,6 +968,9 @@ export class ChainAdapter implements FeeStripAdapter {
       feeStrip: d.feeStrip,
       markets,
       positions: positions.filter((p): p is Position => !!p),
+      positionDiscoveryNotice: discovered.incomplete || discoveryDetailsFailed
+        ? "The recent-position search could not finish. Find a missing position by its NFT ID or Uniswap link."
+        : "Recent wallet transfers are searched automatically (last 50,000 blocks). For older positions, use the NFT ID or Uniswap link.",
       fundedOffers: offers
         .filter(
           (o) => !o.consumed && wallet.address && same(o.buyer, wallet.address),

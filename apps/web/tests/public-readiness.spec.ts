@@ -227,3 +227,72 @@ test("public adapter errors omit provider URLs and nested request diagnostics wi
     }
   }
 });
+
+test('incoming wallet NFTs appear without manifest edits and transferred or unsupported NFTs stay out', async () => {
+  const { adapter } = setup(revert('NOT_MINTED'));
+  adapter.client.getLogs = async (query: any) => {
+    if (query.event?.name !== "Transfer") return [];
+    expect(query.address).toBe(d.positionManager);
+    expect(query.args.to.toLowerCase()).toBe(owner);
+    expect(query.fromBlock).toBe(0n);
+    expect(query.toBlock).toBe(130n);
+    return [3n, 4n, 5n].map(tokenId => ({ args: { tokenId } }));
+  };
+  const read = adapter.read;
+  adapter.read = async (address: string, abi: unknown, fn: string, args: any[], bn: bigint) => {
+    expect(bn).toBe(130n);
+    if (fn === 'ownerOf' && args[0] === 4n) return claim;
+    const value = await read(address, abi, fn, args);
+    if (fn === 'getPoolAndPositionInfo' && args[0] === 5n)
+      return [{ ...value[0], currency1: claim }, value[1]];
+    return value;
+  };
+  const snapshot = await adapter.load();
+  expect(snapshot.positions.map((p: any) => p.tokenId)).toEqual(['2', '3']);
+  expect(snapshot.positions.find((p: any) => p.tokenId === '3').ownedByWallet).toBe(true);
+});
+
+test('manual lookup is read-only, checks ownership and eligibility, and survives a search outage', async () => {
+  const { adapter } = setup(revert('NOT_MINTED'));
+  adapter.client.getLogs = async (query: any) => { if (query.event?.name !== 'Transfer') return []; throw new Error('RPC unavailable'); };
+  expect(await adapter.findPosition('https://app.uniswap.org/positions/v4/ethereum_sepolia/39220')).toBe('39220');
+  const snapshot = await adapter.load();
+  expect(snapshot.positions.map((p: any) => p.tokenId)).toContain('39220');
+  expect(snapshot.positionDiscoveryNotice).toContain('could not finish');
+  const read = adapter.read;
+  adapter.read = async (address: string, abi: unknown, fn: string, args: any[], bn: bigint) => {
+    if (fn === 'ownerOf') return claim;
+    return read(address, abi, fn, args, bn);
+  };
+  await expect(adapter.findPosition('39221')).rejects.toThrow('not owned');
+  adapter.read = async (address: string, abi: unknown, fn: string, args: any[], bn: bigint) => {
+    const value = await read(address, abi, fn, args, bn);
+    if (fn === 'getPoolAndPositionInfo') return [{ ...value[0], currency1: claim }, value[1]];
+    return value;
+  };
+  await expect(adapter.findPosition('39222')).rejects.toThrow('USDC');
+  adapter.wallet.getChainId = async () => 1;
+  await expect(adapter.findPosition('39220')).rejects.toThrow('correct network');
+});
+
+test('a discovered NFT with broken token metadata cannot hide existing claims or good NFTs', async () => {
+  const { adapter } = setup(revert('NOT_MINTED'));
+  adapter.client.getLogs = async (query: any) => query.event?.name === 'Transfer' ? [3n, 4n].map(tokenId => ({ args: { tokenId } })) : [];
+  const read = adapter.read;
+  adapter.read = async (address: string, abi: unknown, fn: string, args: any[], bn: bigint) => {
+    const value = await read(address, abi, fn, args, bn);
+    if (fn === 'getPoolAndPositionInfo' && args[0] === 4n)
+      return [{ ...value[0], currency0: claim }, value[1]];
+    return value;
+  };
+  const display = adapter.poolDisplay;
+  adapter.poolDisplay = async (key: any, ...args: any[]) => {
+    if (key.currency0 === claim) throw new Error('Token symbol reverted');
+    return display(key, ...args);
+  };
+  const snapshot = await adapter.load();
+  expect(snapshot.positions.map((p: any) => p.tokenId)).toEqual(['2', '3']);
+  expect(snapshot.markets).toHaveLength(1);
+  expect(snapshot.wallet.claims['1']).toBe('5000000000000000000000');
+  expect(snapshot.positionDiscoveryNotice).toContain('could not finish');
+});

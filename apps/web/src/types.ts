@@ -134,6 +134,7 @@ export interface FundedOffer {
   expired: boolean;
 }
 export interface Snapshot {
+  positionDiscoveryNotice?: string;
   mode: DataMode;
   network: string;
   chainId: number;
@@ -218,6 +219,7 @@ export interface FeeStripAdapter {
   readonly mode: DataMode;
   load(): Promise<Snapshot>;
   connect(): Promise<WalletState>;
+  findPosition?(input: string): Promise<string>;
   execute(action: Action): Promise<ActionResult>;
   switchNetwork?(): Promise<void>;
   readRecovery?(seriesId: string): Promise<RecoveryResult>;
