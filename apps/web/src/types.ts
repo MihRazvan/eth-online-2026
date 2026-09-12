@@ -273,6 +273,8 @@ export interface BuyerAnalysis {
   substreamsPackage: string;
   substreamsCursor?: string;
   lagBlocks: number;
+  indexingLagBlocks?: number;
+  finalityLagBlocks?: number;
   stale: boolean;
   grossBreakEvenUSDC: string;
   netBreakEvenUSDC: string;

@@ -106,6 +106,17 @@ test("analysis distinguishes not-requested, provider failure, stale success and 
   await page.setViewportSize({ width: 390, height: 844 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await panel.screenshot({ path: testInfo.outputPath("analysis-stale-mobile.png") });
+  response = analysis({ stale: false, sourceFinalized: true, substreamsFinalBlock: 11842994, lagBlocks: 96, finalityLagBlocks: 96, indexingLagBlocks: 0 });
+  await panel.getByRole("button", { name: "Refresh sourced analysis" }).click();
+  await expect(panel).toContainText("Source comparison loaded");
+  await expect(panel).toContainText("Fresh against finalized history");
+  await expect(panel).toContainText("96 blocks · expected wait for finality");
+  await expect(panel).toContainText("0 blocks behind finalized head");
+  await expect(panel).not.toContainText("Refresh the comparison before using it");
+  response = analysis({ stale: true, sourceFinalized: true, substreamsFinalBlock: 11842994, lagBlocks: 136, finalityLagBlocks: 96, indexingLagBlocks: 40 });
+  await panel.getByRole("button", { name: "Refresh sourced analysis" }).click();
+  await expect(panel).toContainText("Source comparison is behind the chain");
+  await expect(panel).toContainText("40 blocks behind finalized head");
   await panel.getByLabel("Analysis execution cost").fill("-1");
   await expect(panel).toContainText("Check the comparison inputs");
   await expect(panel.getByRole("button")).toBeDisabled();
@@ -117,6 +128,19 @@ test("analysis distinguishes not-requested, provider failure, stale success and 
   await expect(panel.getByRole("button")).toBeDisabled();
   await expect(panel.getByText("Break-even, before execution cost", { exact: true })).not.toBeVisible();
   expect(await page.evaluate(() => (window as any).guidance.walletRequests)).toBe(0);
+});
+
+test("analysis lag breakdown accepts older responses but rejects malformed optional lag values", async () => {
+  const { ChainAdapter } = await import("../src/chainAdapter");
+  const adapter = new ChainAdapter({ mode: "testnet", chainId: 11155111, rpcUrl: "https://example.invalid", feeStrip: address } as any);
+  const previous = globalThis.fetch;
+  try {
+    for (const patch of [{}, { indexingLagBlocks: 0, finalityLagBlocks: 96 }, { indexingLagBlocks: -1 }, { finalityLagBlocks: "96" }, { indexingLagBlocks: 1.5 }, { finalityLagBlocks: null }, { finalityLagBlocks: Number.MAX_SAFE_INTEGER + 1 }]) {
+      globalThis.fetch = async () => new Response(JSON.stringify(analysis({ seriesId: "1", ...patch }).analysis));
+      const result = await adapter.readAnalysis("1", "1000000000000000000", "1000000");
+      expect(result.status).toBe(Object.keys(patch).length === 0 || ("indexingLagBlocks" in patch && patch.indexingLagBlocks === 0) ? "available" : "unavailable");
+    }
+  } finally { globalThis.fetch = previous; }
 });
 
 test("an older analysis request cannot clear a newer request's loading state or replace its result", async ({ page }) => {

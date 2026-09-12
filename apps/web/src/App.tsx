@@ -2315,6 +2315,7 @@ function AnalysisPanel({
   };
   const available =
     hasQuote && inputsReady && !checking && result?.status === "available" ? result.analysis : undefined;
+  const hasLagBreakdown = available?.indexingLagBlocks !== undefined && available?.finalityLagBlocks !== undefined;
   const stateTitle = !adapter.readAnalysis ? "Analysis is not configured"
     : !hasQuote ? "Waiting for an executable quote"
     : !inputsReady ? "Check the comparison inputs"
@@ -2330,6 +2331,7 @@ function AnalysisPanel({
     : result?.status === "unavailable" ? "The project’s analysis service could not provide a usable comparison. Retry this read-only check or share the details below with the project team."
     : !available ? "Load the sources for the selected quantity and price. A wallet connection is not required."
     : available.stale ? "This is an older source snapshot. Refresh the comparison before using it to assess a purchase."
+    : available.sourceFinalized && hasLagBreakdown ? "Fresh against finalized history. The delay from the chain tip includes Ethereum finality; additional indexing lag is shown separately. This snapshot does not predict future fees."
     : "This snapshot describes the selected purchase and observed history. It does not predict future fees.";
   return (
     <section className="history-section sourced-analysis">
@@ -2412,12 +2414,22 @@ function AnalysisPanel({
               <dd>{available.sourceBlock.toLocaleString("en-US")}</dd>
             </div>
             <div>
-              <dt>Source lag</dt>
+              <dt>{hasLagBreakdown ? "Total lag from chain tip" : "Source lag"}</dt>
               <dd>
                 {available.lagBlocks} blocks
                 {available.stale ? " · stale" : ""}
               </dd>
             </div>
+            {hasLagBreakdown && <>
+              <div>
+                <dt>Finality delay</dt>
+                <dd>{available.finalityLagBlocks} blocks <small>· expected wait for finality</small></dd>
+              </div>
+              <div>
+                <dt>Additional indexing lag</dt>
+                <dd>{available.indexingLagBlocks} blocks behind {available.sourceFinalized ? "finalized" : "chain"} head</dd>
+              </div>
+            </>}
           </dl>
           <p className="fine">
             Block hash <code>{available.sourceHash}</code>

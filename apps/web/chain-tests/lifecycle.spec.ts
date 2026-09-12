@@ -212,12 +212,10 @@ test("real browser funding, exact NFT sale, Aqua maker publication, trade, late 
   await confirm(page, "Approve and publish quote", "shipAquaStrategy");
   await login(page, "holder", "market/1");
   await expect(page.locator(".quote-info")).toContainText(getAddress(buyer));
-  await expect(
-    page.getByText(
-      "Historical activity unavailable · Graph provider not connected",
-      { exact: true },
-    ),
-  ).toBeVisible();
+  const analysisPanel = page.locator(".sourced-analysis");
+  await expect(analysisPanel).toContainText("Source comparison not requested");
+  await analysisPanel.getByRole("button", { name: "Load sourced analysis", exact: true }).click();
+  await expect(analysisPanel).toContainText("Source comparison unavailable", { timeout: 20000 });
   expect(await page.locator(".history-chart").count()).toBe(0);
   const takerBefore = await balance(deployment.usdc, holder),
     makerBefore = await balance(deployment.usdc, buyer);

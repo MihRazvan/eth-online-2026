@@ -1550,6 +1550,7 @@ export class ChainAdapter implements FeeStripAdapter {
         !/^0x[a-fA-F0-9]{64}$/.test(analysis.sourceHash) ||
         !Number.isSafeInteger(analysis.sourceBlock) ||
         !Number.isSafeInteger(analysis.lagBlocks) ||
+        [analysis.indexingLagBlocks, analysis.finalityLagBlocks].some((lag) => lag !== undefined && (!Number.isSafeInteger(lag) || lag < 0)) ||
         !Number.isInteger(analysis.coverageBps) ||
         analysis.coverageBps < 0 ||
         analysis.coverageBps > 10000 ||
