@@ -44,3 +44,13 @@ An exclusive `<db>.stream.lock` file prevents two service writers. SIGTERM/SIGIN
 `seeded:true` means every configured anchor event is retained; `anchorKinds` distinguishes Swap and Initialize anchors. It does **not** mean caught up, hosted, or accepted for a live series. No live series composition is claimed by this service alone.
 
 A bounded live lifetime-history probe retained1000 actual blocks7432532..7433531, including the exact Initialize anchor, in50.252seconds total. The closed SQLite file was1,040,384bytes (WAL excluded after close). Extrapolating to sampled head11689953 gives approximately4.43GB for4257422blocks, with no guarantee of uniform event density or future throughput. No full lifetime catchup was launched. The chosen prior Swap requires only11237blocks through sampled finalized head11690037, approximately11.7MB at that observed footprint. These are planning estimates, not completed catchup or hosted acceptance.
+
+The replacement Swap-anchor qualification completed500 actual finalized blocks11678801..11679300 in40.204seconds; its closed database was528,384bytes and retained the exact Swap tick59600/log98. This is a separate database and immutable stream identity from the lifetime-history benchmark. The observed block11679300 hash was `0xbaae890840b29a4219a8001fcd2a097feafbe9e1772465f810ca130acc7f6ebe`. The first500blocks precede the replacement FeeStrip deployment, so this probe does not itself establish current Studio agreement.
+
+After bounded catchup has reached the current deployment's indexed range, qualify a recent tail explicitly:
+
+```sh
+node scripts/graph/verify-stream.mjs --db /data/analysis.sqlite --tail 20 --config /data/stream.generated.json
+```
+
+Without `--tail`, the verifier retains its original maximum100stored-block qualification. `--tail` accepts1..100, validates the whole retained range has no gaps, checks bounded recent block hashes and every retained anchor hash against public RPC, checks configured stream/package identity and retained anchor samples, and asks Studio for the exact recent common block/hash. It uses committed public RPC/Studio configuration and never reads the stream token or prints raw cursors. Source agreement with zero series is explicitly not a live buyer join.
