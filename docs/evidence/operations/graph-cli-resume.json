@@ -1,0 +1,10 @@
+{
+  "checkedAt": "2026-09-12T16:54:04.622Z",
+  "scope": "Actual authenticated historical Substreams resume after 500 saved blocks, 10 new blocks and bounded CLI cleanup; not current hosted operation",
+  "start": 11679301,
+  "stopExclusive": 11679311,
+  "exitCode": 0,
+  "elapsedMs": 996,
+  "lockReleased": true,
+  "newBlocks": 10
+}

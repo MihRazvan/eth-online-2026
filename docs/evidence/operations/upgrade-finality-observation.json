@@ -1,9 +1,9 @@
 {
   "scope": "Read-only canonical receipt and finality observation; no sale acceptance",
-  "checkedAt": "2026-09-12T14:17:27.171Z",
-  "head": "11689438",
-  "finalizedHead": "11689352",
-  "finalizedHeadHash": "0xdbd957ee890981bdaab468ae4e135e82cf39879c54a654d73a3fe1a7dcf7a16c",
+  "checkedAt": "2026-09-12T16:10:24.220Z",
+  "head": "11689986",
+  "finalizedHead": "11689911",
+  "finalizedHeadHash": "0xfcc66a9488cac4fb673acc57453c1a05deba9022bbca8f4ff5fc6780d9c1757d",
   "deployments": [
     {
       "name": "FeeStrip",
@@ -11,7 +11,7 @@
       "transactionHash": "0xd8a204ca8514db88748646192df3f646ff7c287c7c940fa557121df84d4e886b",
       "block": "11689365",
       "canonical": true,
-      "finalized": false
+      "finalized": true
     },
     {
       "name": "FeeStripMarket",
@@ -19,7 +19,7 @@
       "transactionHash": "0x44bc0392f99dd8ddb155347371d89cc810252cbe8da6f1bc4a7fa3ec01859ec0",
       "block": "11689367",
       "canonical": true,
-      "finalized": false
+      "finalized": true
     }
   ]
 }

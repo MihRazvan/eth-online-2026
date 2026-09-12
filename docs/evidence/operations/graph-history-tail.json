@@ -1,0 +1,146 @@
+{
+  "checkedAt": "2026-09-12T16:50:25.431Z",
+  "scope": "Retained Substreams tail / RPC / Studio block agreement; not joined buyer analysis or settlement acceptance",
+  "retainedExtent": {
+    "count": 11299,
+    "first": 11678801,
+    "last": 11690099
+  },
+  "qualifiedTail": 20,
+  "anchors": {
+    "expectedConfigMatched": true,
+    "records": [
+      {
+        "kind": "swap",
+        "pool": "0x0c5089eb2863310ecab41eb94f2705ce37ce455a0f64a9ee627c7470b43161e8",
+        "block": 11678801,
+        "hash": "0x7236fd4559531e97ac730024a68ce457d9eaeee9a71d6e7682c00f69cf0a079b",
+        "logIndex": 98,
+        "tick": 59600,
+        "transactionHash": "0x6237cd0124382cc1c66f043a3b979854653839610e720504a222f552781137ed"
+      }
+    ],
+    "retained": true,
+    "allBlockHashesMatchRpc": true
+  },
+  "identity": {
+    "chainId": 11155111,
+    "poolManager": "0xe03a1074c86cfedd5c142c4f04f1a1536e203543",
+    "poolIds": [
+      "0x0c5089eb2863310ecab41eb94f2705ce37ce455a0f64a9ee627c7470b43161e8"
+    ],
+    "packageHash": "0xec91c3e699f52f373dd0afe113adfc16c54f9a71052e091f6982b1153307b276",
+    "history": {
+      "startBlock": 11678801,
+      "initialization": [
+        {
+          "kind": "swap",
+          "pool": "0x0c5089eb2863310ecab41eb94f2705ce37ce455a0f64a9ee627c7470b43161e8",
+          "block": 11678801,
+          "hash": "0x7236fd4559531e97ac730024a68ce457d9eaeee9a71d6e7682c00f69cf0a079b",
+          "logIndex": 98,
+          "tick": 59600,
+          "transactionHash": "0x6237cd0124382cc1c66f043a3b979854653839610e720504a222f552781137ed"
+        }
+      ]
+    }
+  },
+  "blocks": [
+    {
+      "number": 11690080,
+      "hash": "0x202d511c0b0226a23ad3b9ba8af6e664bafe1829c7912f968509a6efd9295f75"
+    },
+    {
+      "number": 11690081,
+      "hash": "0x7fe977487a795c9b7f3432a1a7aa436b06261c17fb2c84258180c6f218ff34f3"
+    },
+    {
+      "number": 11690082,
+      "hash": "0x4df5cac480545d35442b3b79ae8052d4bed2c6dea33476798b3689f6f5542da1"
+    },
+    {
+      "number": 11690083,
+      "hash": "0xee8d3a99e243a6d3fc5b27210c06d95cc8e6389c72f130855255c606af2a0ab6"
+    },
+    {
+      "number": 11690084,
+      "hash": "0xf53b960e4ce174c277d61c5733334a433cb7a7ea88458f716abf305191a9335c"
+    },
+    {
+      "number": 11690085,
+      "hash": "0x6fff0afcbccdc1051af38704329e37d93a8c7ccf2acf9a3c4837cd3dacded684"
+    },
+    {
+      "number": 11690086,
+      "hash": "0x2471c3538f6352fc74f286c3efe5c5e273e2bbb4794ff453e991329e82e14d94"
+    },
+    {
+      "number": 11690087,
+      "hash": "0x83a4a300e703e299e61e47150e3b24da44be1c7ce160b5358d3f6b49bed1ae91"
+    },
+    {
+      "number": 11690088,
+      "hash": "0x7aafa89e36aff0a5e0ab46458bb27eb435944874f79e0b4695e7171e94dd46d6"
+    },
+    {
+      "number": 11690089,
+      "hash": "0x050ee5e373bc019e519ab13a58483dddc8dcf3a8972b1834b6849b593a810e1c"
+    },
+    {
+      "number": 11690090,
+      "hash": "0xbb2bbc612b572e8e991b734e5fb59ef41e97990522248fcf91c15b0bb002a827"
+    },
+    {
+      "number": 11690091,
+      "hash": "0xe5f4e1a691d1b5b21614f4a70291a5458271b1c46be4ba66be219c2c2d790853"
+    },
+    {
+      "number": 11690092,
+      "hash": "0x951f0156a2f048527e44a88f147c9cad057961f49fd791b8b381ed2b2c90c722"
+    },
+    {
+      "number": 11690093,
+      "hash": "0xcbb9b939c94cd72f7be7797b762bc572597d590f4b43b31e11b19c701075b07c"
+    },
+    {
+      "number": 11690094,
+      "hash": "0x1d58328457733102c65d0004ac886ff04f42bc3a46345c8a3aafc7c213b2e6c5"
+    },
+    {
+      "number": 11690095,
+      "hash": "0x863559cd4a06b3665625134e844c82b9d552f0b9777a5021fd50fb304924add7"
+    },
+    {
+      "number": 11690096,
+      "hash": "0xe25df4999b3234d18669ddfe6fdc43236bf3622b28e70bb9aaa828cf19ff47d7"
+    },
+    {
+      "number": 11690097,
+      "hash": "0xa2c097cd71f2c6b681f72a9601be6b8e13d7dde740d52cdc4b7bf510b528101b"
+    },
+    {
+      "number": 11690098,
+      "hash": "0x063710ff8592773e568947b6daf5415ed60c2f5ea8deeac891bfcfb8af07c5be"
+    },
+    {
+      "number": 11690099,
+      "hash": "0x167f3e1923054c5dc68d6c4312524de493e3a3d479c91fce29249a1f492c4d03"
+    }
+  ],
+  "allBlockHashesMatchRpc": true,
+  "rpcUrl": "https://ethereum-sepolia-rpc.publicnode.com",
+  "rpcHead": 11690182,
+  "finalBlockHeight": 11690099,
+  "providerCursorSha256": "3959d00374d36f194148cce6b2859ea8da16199a13caefeb81b1ad5c61b1c9c3",
+  "subgraph": {
+    "url": "https://api.studio.thegraph.com/query/1760193/usufruct/v0.2.0",
+    "block": 11690099,
+    "hash": "0x167f3e1923054c5dc68d6c4312524de493e3a3d479c91fce29249a1f492c4d03",
+    "deployment": "QmXEm3WDjvy2q2xSQYoK3HmoBzGKV6oR4JgEe2QRJkWAcw",
+    "hasIndexingErrors": false,
+    "seriesCount": 0
+  },
+  "nextSeriesId": "1",
+  "storedTickObservations": 1,
+  "databaseBytes": 11624448
+}

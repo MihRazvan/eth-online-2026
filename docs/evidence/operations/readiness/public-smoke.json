@@ -1,0 +1,48 @@
+{
+  "checkedAt": "2026-09-12T16:45:12.320Z",
+  "scope": "Unauthenticated public desktop/mobile service-guidance smoke. No wallet connection, signature or financial acceptance.",
+  "base": "https://usufruct-mu.vercel.app",
+  "sourceCommit": "3144776",
+  "checks": [
+    {
+      "width": 1440,
+      "routes": [
+        "#market",
+        "#pin",
+        "#positions"
+      ],
+      "projectOwnedPause": true,
+      "signatureFreeRecheck": true,
+      "noHorizontalOverflow": true,
+      "pageErrors": [],
+      "screenshot": "docs/evidence/operations/readiness/public-1440.png"
+    },
+    {
+      "width": 390,
+      "routes": [
+        "#market",
+        "#pin",
+        "#positions"
+      ],
+      "projectOwnedPause": true,
+      "signatureFreeRecheck": true,
+      "noHorizontalOverflow": true,
+      "pageErrors": [],
+      "screenshot": "docs/evidence/operations/readiness/public-390.png"
+    }
+  ],
+  "responses": [
+    {
+      "path": "/api/operations",
+      "status": 503
+    },
+    {
+      "path": "/fonts/InstrumentSerif-Italic.woff2",
+      "status": 200
+    },
+    {
+      "path": "/fonts/CourierPrime-Regular.woff2",
+      "status": 200
+    }
+  ]
+}
