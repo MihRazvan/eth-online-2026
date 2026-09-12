@@ -14,7 +14,7 @@ async function setup(t,{seed=true}={}){
  function populate(){const db=new HistoryStore(config.database);for(let n=10;n<=13;n++)db.apply({number:n,hash:hash(n),parentHash:hash(n-1),cursor:JSON.stringify({version:1,identity:{chainId:11155111,poolManager:'0xa',poolIds:['0xb'],packageHash:hash(500)},providerCursor:'private-provider-cursor',finalBlockHeight:13}),swaps:n===10?[{chainId:11155111,manager:'0xa',pool:'0xb',logIndex:1,tick:0}]:[]});db.close();}
  if(seed)populate();
  const state={canonical:hash(13),chainId:11155111,requests:0,fail:false};
- const client={getChainId:async()=>state.chainId,getBlockNumber:async()=>13n,getBlock:async()=>{state.onCanonical?.();return {hash:state.canonical};}};
+ const client={getChainId:async()=>state.chainId,getBlockNumber:async()=>13n,getBlock:async options=>{if(options.blockTag)return {number:13n,hash:hash(13)};state.onCanonical?.();return {hash:state.canonical};}};
  const fetchImpl=async(_url,options)=>{state.requests++;assert.equal(options.headers.Authorization,'Bearer private-api-token');if(state.fail)throw new Error('https://graph.invalid/private private-api-token');return Response.json({data:{_meta:{block:{number:13,hash:hash(13)},deployment:'pinned',hasIndexingErrors:false},series:{id:'1',chainId:'11155111',poolManager:'0xa',poolId:'0xb',activationBlock:'10',endBlock:'30',tickLower:-10,tickUpper:10,originalSupply:'100',closed:false,redeemedQuantity:'0'}}});};
  const server=createServer(analysisHandler(config,{client,fetchImpl}));server.listen(0,'127.0.0.1');await once(server,'listening');t.after(()=>new Promise(r=>server.close(r)));
  const url=`http://127.0.0.1:${server.address().port}/api/analysis`;

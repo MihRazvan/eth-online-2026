@@ -104,7 +104,7 @@ async function confirm(page: Page, button: string, action: string) {
     .getByRole("button", { name: button, exact: true })
     .click();
   await expect(page.getByRole("dialog")).not.toBeVisible({ timeout: 30000 });
-  const status = await page.getByRole("status").innerText();
+  const status = await page.getByRole("status").filter({ hasText: "Confirmed on local chain" }).innerText();
   expect(status).toContain("Confirmed on local chain");
   const hash = status.match(/0x[a-fA-F0-9]{64}/)?.[0] as Hex;
   expect(hash).toBeTruthy();

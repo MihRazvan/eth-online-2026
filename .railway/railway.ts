@@ -16,6 +16,7 @@ export default defineRailway(ctx=>{
   volumeMounts:{'/data':data},
   env:{NODE_ENV:'production',OPERATIONS_DATA_DIR:'/data',PORT:'8789',
    SEPOLIA_RPC_URL:preserve(),OPERATIONS_GATEWAY_TOKEN:preserve(),
+   ANALYSIS_ENABLED:preserve(),GRAPH_STREAM_ENABLED:preserve(),SUBSTREAMS_API_TOKEN:preserve(),
    KEEPER_ENABLED:preserve(),KEEPER_EXPECTED_SIGNER:preserve(),KEEPER_PRIVATE_KEY:preserve(),
    PROOF_S3_ENDPOINT:ref(proofs,'ENDPOINT'),PROOF_S3_BUCKET:ref(proofs,'BUCKET'),PROOF_S3_REGION:ref(proofs,'REGION'),
    PROOF_S3_ACCESS_KEY_ID:ref(proofs,'ACCESS_KEY_ID'),PROOF_S3_SECRET_ACCESS_KEY:ref(proofs,'SECRET_ACCESS_KEY')},

@@ -34,3 +34,13 @@ test('analysis bounds retained samples and excludes post-endpoint activity befor
  const snapshot=store.snapshotSamples({...query,number:14,toBlock:11,maxSamples:3});assert.equal(snapshot.block.number,14);assert.deepEqual(snapshot.samples.map(s=>s.block),[10,11]);
  assert(store.db.prepare("SELECT name FROM sqlite_master WHERE type='index' AND name='swaps_pool_block'").get());store.close();
 });
+
+test('fresh finalized history distinguishes finality delay from additional indexing lag',()=>{
+ const series={id:'1',chainId:1,poolManager:'0xa',poolId:'0xb',activationBlock:10,endBlock:30,tickLower:-10,tickUpper:10,originalSupply:'100'};
+ const stream={chainId:1,poolManager:'0xa',poolId:'0xb',fromBlock:10,toBlock:20,blockHash:'0xabc',package:'pinned',cursor:'private',finalBlockHeight:20,samples:[{block:10,logIndex:0,tick:0}]};
+ const args={series,stream,subgraph:{block:20,hash:'0xabc',deployment:'pinned',hasIndexingErrors:false},chainHead:100,chainFinalizedHead:20,quantity:10n,price:1n};
+ const fresh=composeAnalysis(args);assert.equal(fresh.sourceFinalized,true);assert.equal(fresh.stale,false);assert.equal(fresh.lagBlocks,80);assert.equal(fresh.finalityLagBlocks,80);assert.equal(fresh.indexingLagBlocks,0);
+ const behind=composeAnalysis({...args,chainFinalizedHead:60});assert.equal(behind.stale,true);assert.equal(behind.indexingLagBlocks,40);
+ const unfinalized=composeAnalysis({...args,chainFinalizedHead:19});assert.equal(unfinalized.sourceFinalized,false);assert.equal(unfinalized.stale,true);
+ assert.throws(()=>composeAnalysis({...args,chainFinalizedHead:101}),/finalized head/);
+});

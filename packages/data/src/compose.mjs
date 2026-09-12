@@ -1,7 +1,7 @@
 import {breakEven,rangeOccupancy} from '../../core/src/economics.mjs';
 const key=x=>`${x.chainId}:${x.poolManager.toLowerCase()}:${x.poolId.toLowerCase()}`;
 /** Join only data observed at the same authenticated block hash. Analytics never settle claims. */
-export function composeAnalysis({series,stream,subgraph,chainHead,quantity,price,executionCost=0n,maxLag=32}) {
+export function composeAnalysis({series,stream,subgraph,chainHead,chainFinalizedHead,quantity,price,executionCost=0n,maxLag=32}) {
   if(key(series)!==key(stream))throw new Error('Pool or chain mismatch');
   if(subgraph.hasIndexingErrors)throw new Error('Subgraph indexing errors');
   if(subgraph.block!==stream.toBlock||subgraph.hash.toLowerCase()!==stream.blockHash.toLowerCase())throw new Error('Sources must agree on common block and hash');
@@ -9,10 +9,15 @@ export function composeAnalysis({series,stream,subgraph,chainHead,quantity,price
   if(stream.fromBlock>series.activationBlock)throw new Error('Incomplete earning-window history');
   const toBlock=Math.min(subgraph.block+1,series.endBlock+1);
   const occupancy=rangeOccupancy({samples:stream.samples,fromBlock:series.activationBlock,toBlock,tickLower:series.tickLower,tickUpper:series.tickUpper});
+  if(chainFinalizedHead!==undefined&&(!Number.isSafeInteger(chainFinalizedHead)||chainFinalizedHead<0||chainFinalizedHead>chainHead))throw new Error('Invalid finalized head');
+  const providerFinalized=stream.finalBlockHeight!==undefined&&subgraph.block<=stream.finalBlockHeight;
+  const sourceFinalized=providerFinalized&&(chainFinalizedHead===undefined||subgraph.block<=chainFinalizedHead);
+  const finalityLagBlocks=chainFinalizedHead===undefined?0:chainHead-chainFinalizedHead;
+  const indexingLagBlocks=(sourceFinalized&&chainFinalizedHead!==undefined?chainFinalizedHead:chainHead)-subgraph.block;
   return {
     seriesId:series.id,poolKey:key(series),sourceBlock:subgraph.block,sourceHash:subgraph.hash,
-    subgraphDeployment:subgraph.deployment,substreamsPackage:stream.package,substreamsCursor:stream.cursor,substreamsFinalBlock:stream.finalBlockHeight??null,sourceFinalized:stream.finalBlockHeight===undefined?false:subgraph.block<=stream.finalBlockHeight,
-    lagBlocks:chainHead-subgraph.block,stale:chainHead-subgraph.block>maxLag,
+    subgraphDeployment:subgraph.deployment,substreamsPackage:stream.package,substreamsCursor:stream.cursor,substreamsFinalBlock:stream.finalBlockHeight??null,sourceFinalized,
+    lagBlocks:chainHead-subgraph.block,indexingLagBlocks,finalityLagBlocks,stale:indexingLagBlocks>maxLag,
     grossBreakEvenUSDC:breakEven({price,quantity,originalSupply:BigInt(series.originalSupply)}).toString(),
     netBreakEvenUSDC:breakEven({price,quantity,originalSupply:BigInt(series.originalSupply),executionCost}).toString(),
     ...occupancy,allocationAuthority:'contract-only',

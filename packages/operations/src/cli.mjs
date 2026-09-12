@@ -14,18 +14,28 @@ import {hostedConfig,privateDirectory,privateJSON} from './config.mjs';
 import {operationsStatus,retentionStatus} from './readiness.mjs';
 import {operationsServer} from './http.mjs';
 import {recoveryAcquirer} from './acquire.mjs';
-import {hostedAnalysisConfig} from './analysis.mjs';
+import {hostedAnalysisConfig,hostedStreamConfig} from './analysis.mjs';
 import {analysisHandler} from '../../data/src/http.mjs';
 
-let server,store,child,stopping=false,proof={ready:false,observedAt:0};
-const stop=()=>{stopping=true;child?.kill('SIGTERM');};
+let server,store,child,streamChild,stopping=false,proof={ready:false,observedAt:0};
+const stop=()=>{stopping=true;child?.kill('SIGTERM');streamChild?.kill('SIGTERM');};
 for(const signal of ['SIGINT','SIGTERM'])process.once(signal,stop);
 try{
  const config=hostedConfig();privateDirectory(config.directory);
  const analysis=hostedAnalysisConfig({...config});
+ const stream=hostedStreamConfig({analysis});
  // This service never loads .env or uses the deployment wallet.
  const keeperKey=process.env.KEEPER_PRIVATE_KEY;
+ const streamToken=process.env.SUBSTREAMS_API_TOKEN;
  delete process.env.KEEPER_PRIVATE_KEY;delete process.env.PRIVATE_KEY;
+ delete process.env.SUBSTREAMS_API_TOKEN;delete process.env.GRAPH_API_KEY;
+ if(stream){
+  const file=resolve(config.directory,'stream.generated.json');privateJSON(file,stream);
+  streamChild=spawn(process.execPath,['scripts/graph/stream-service.mjs'],{env:{PATH:process.env.PATH,GRAPH_STREAM_CONFIG:file,...(streamToken?{SUBSTREAMS_API_TOKEN:streamToken}:{})},stdio:['ignore','inherit','inherit']});
+  // Analytics availability never stops the settlement worker or enables a sale.
+  streamChild.once('error',()=>console.error('{"error":"GRAPH_STREAM_START_FAILED"}'));
+  streamChild.once('exit',()=>{if(!stopping)console.error('{"error":"GRAPH_STREAM_STOPPED","action":"inspect-retained-history-before-restart"}');});
+ }
  if(config.keeper){
   const file=resolve(config.directory,'keeper.generated.json');privateJSON(file,config.keeper);
   child=spawn(process.execPath,['packages/keeper/src/cli.mjs'],{env:{PATH:process.env.PATH,KEEPER_CONFIG:file,...(keeperKey?{KEEPER_PRIVATE_KEY:keeperKey}:{})},stdio:['ignore','inherit','inherit']});
@@ -59,6 +69,6 @@ try{
 }catch{console.error('{"error":"OPERATIONS_STARTUP_OR_LOOP_FAILED"}');process.exitCode=1;}
 finally{
  stop();if(server)await new Promise(r=>server.close(r));
- if(child&&child.exitCode===null&&child.signalCode===null){const timer=setTimeout(()=>child.kill('SIGKILL'),10000);await once(child,'exit').catch(()=>{});clearTimeout(timer);}
+ for(const processChild of [child,streamChild])if(processChild&&processChild.pid&&processChild.exitCode===null&&processChild.signalCode===null){const timer=setTimeout(()=>processChild.kill('SIGKILL'),10000);await once(processChild,'exit').catch(()=>{});clearTimeout(timer);}
  store?.close();
 }

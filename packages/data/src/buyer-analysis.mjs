@@ -17,10 +17,14 @@ function checkpoint(row,series,expectedPackage){
  let saved;try{saved=JSON.parse(row.cursor);}catch{throw new Error('Persisted Substreams identity unavailable');}
  const id=saved.identity;
  if(saved.version!==1||!id||id.chainId!==series.chainId||id.poolManager?.toLowerCase()!==series.poolManager.toLowerCase()||!id.poolIds?.some(pool=>pool.toLowerCase()===series.poolId.toLowerCase())||!/^0x[0-9a-f]{64}$/i.test(id.packageHash??'')||id.packageHash.toLowerCase()!==expectedPackage.toLowerCase()||typeof saved.providerCursor!=='string'||!saved.providerCursor||(!Number.isSafeInteger(saved.finalBlockHeight)||saved.finalBlockHeight<0))throw new Error('Persisted Substreams identity or pool selection mismatch');
+ if(id.history){
+  const anchor=id.history.initialization?.find(a=>a.pool?.toLowerCase()===series.poolId.toLowerCase());
+  if(!anchor||!Number.isSafeInteger(anchor.block)||anchor.block>series.activationBlock)throw new Error('Pool history anchor must precede the earning window');
+ }
  return saved;
 }
 /** Actual persisted Substreams history + pinned live Subgraph at a shared block. No synthetic fallback. */
-export async function loadBuyerAnalysis({store,url,deployment,headers={},seriesId,chainId,chainHead,packageIdentity,quantity,price,executionCost=0n,fetchImpl=fetch}){
+export async function loadBuyerAnalysis({store,url,deployment,headers={},seriesId,chainId,chainHead,chainFinalizedHead,packageIdentity,quantity,price,executionCost=0n,fetchImpl=fetch}){
  const streamHead=store.head(),first=store.first();if(!streamHead||!first)throw new Error('Substreams history unavailable');
  const latest=meta(await query(url,headers,'query { _meta { block { number hash } deployment hasIndexingErrors } }',{},fetchImpl),deployment);
  const block=Math.min(streamHead.number,latest.block,safeInt(chainHead));
@@ -39,5 +43,5 @@ export async function loadBuyerAnalysis({store,url,deployment,headers={},seriesI
  if(!snapshot.block||!snapshot.first)throw new Error('Common source block not retained');
  const saved=checkpoint(snapshot.block,series,packageIdentity);checkpoint(snapshot.first,series,packageIdentity);
  const stream={chainId:series.chainId,poolManager:series.poolManager,poolId:series.poolId,fromBlock:snapshot.first.number,toBlock:block,blockHash:snapshot.block.hash,package:saved.identity.packageHash,cursor:saved.providerCursor,finalBlockHeight:saved.finalBlockHeight,samples:snapshot.samples};
- return composeAnalysis({series,stream,subgraph:source,chainHead:safeInt(chainHead),quantity,price,executionCost});
+ return composeAnalysis({series,stream,subgraph:source,chainHead:safeInt(chainHead),chainFinalizedHead:chainFinalizedHead===undefined?undefined:safeInt(chainFinalizedHead),quantity,price,executionCost});
 }

@@ -11,6 +11,10 @@ test('buyer query joins persisted samples with Graph BigInt strings at last comm
  const valid=store.block(13).cursor;
  for(const bad of ['invalid JSON',...Object.entries({chainId:2,poolManager:'0xc',poolIds:['0xc']}).map(([key,value])=>{const c=JSON.parse(valid);c.identity[key]=value;return JSON.stringify(c);})]){store.db.prepare('UPDATE blocks SET cursor=? WHERE number=13').run(bad);await assert.rejects(loadBuyerAnalysis(args),/identity/);}
  store.db.prepare('UPDATE blocks SET cursor=? WHERE number=13').run(valid);
+ const anchored=JSON.parse(valid);anchored.identity.history={startBlock:10,initialization:[{pool:'0xb',kind:'swap',block:11}]};
+ store.db.prepare('UPDATE blocks SET cursor=? WHERE number=13').run(JSON.stringify(anchored));
+ await assert.rejects(loadBuyerAnalysis(args),/anchor must precede/);
+ store.db.prepare('UPDATE blocks SET cursor=? WHERE number=13').run(valid);
  substituted=true;await assert.rejects(loadBuyerAnalysis(args),/block and hash/);store.close();
 });
 test('reorg during the Graph request cannot pair replacement ticks with an old block hash',async()=>{

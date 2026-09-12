@@ -25,9 +25,10 @@ export function analysisHandler(config,{client=createPublicClient({transport:htt
    // so a stopped/restarted sink can recover without restarting this API.
    const deadline=AbortSignal.timeout(8000);
    store=new HistoryStore(config.database,{readOnly:true});
-   const [chainId,chainHead]=await Promise.all([client.getChainId(),client.getBlockNumber({cacheTime:0})]);
+   const [chainId,chainHead,finalized]=await Promise.all([client.getChainId(),client.getBlockNumber({cacheTime:0}),client.getBlock({blockTag:'finalized'})]);
+   if(typeof finalized.number!=='bigint'||finalized.number>chainHead)throw new Error('Invalid finalized source head');
    if(config.chainId!==undefined&&chainId!==config.chainId)throw new Error('Unexpected chain');
-   const result=await loadBuyerAnalysis({store,url:config.subgraphUrl,deployment:config.deployment,headers,seriesId:BigInt(values[0]).toString(),chainId,chainHead,packageIdentity:config.packageIdentity,quantity:BigInt(values[1]),price:BigInt(values[2]),executionCost:BigInt(values[3]),fetchImpl:(url,options)=>fetchImpl(url,{...options,signal:AbortSignal.any([options.signal,deadline])})});
+   const result=await loadBuyerAnalysis({store,url:config.subgraphUrl,deployment:config.deployment,headers,seriesId:BigInt(values[0]).toString(),chainId,chainHead,chainFinalizedHead:finalized.number,packageIdentity:config.packageIdentity,quantity:BigInt(values[1]),price:BigInt(values[2]),executionCost:BigInt(values[3]),fetchImpl:(url,options)=>fetchImpl(url,{...options,signal:AbortSignal.any([options.signal,deadline])})});
    // Two Graph products can agree while both retain an orphaned block.
    const canonical=await client.getBlock({blockNumber:BigInt(result.sourceBlock)});
    if(canonical.hash?.toLowerCase()!==result.sourceHash.toLowerCase()||store.block(result.sourceBlock)?.hash.toLowerCase()!==result.sourceHash.toLowerCase())throw new Error('Source changed');

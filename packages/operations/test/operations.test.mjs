@@ -95,3 +95,16 @@ test('hosted analysis pins Graph deployment and package independently of environ
  assert.throws(()=>hostedAnalysisConfig({...base,retention:{...base.retention,feeStrip:address},env:{ANALYSIS_ENABLED:'true'}}),/MISMATCH/);
  assert.throws(()=>hostedAnalysisConfig({...base,env:{ANALYSIS_ENABLED:'yes'}}),/INVALID/);
 });
+
+test('history catch-up requires a separate explicit opt-in and uses the pinned local analysis database',async()=>{
+ const {hostedAnalysisConfig,hostedStreamConfig}=await import('../src/analysis.mjs');
+ const {validateConfig}=await import('../../../scripts/graph/stream-service.mjs');
+ const base=hostedConfig({SEPOLIA_RPC_URL:'https://rpc.example/private',OPERATIONS_GATEWAY_TOKEN:token});
+ const analysis=hostedAnalysisConfig({...base,env:{ANALYSIS_ENABLED:'true'}});
+ assert.equal(hostedStreamConfig({analysis,env:{}}),null);
+ assert.throws(()=>hostedStreamConfig({analysis:null,env:{GRAPH_STREAM_ENABLED:'true'}}),/REQUIRES_ANALYSIS/);
+ const stream=validateConfig(hostedStreamConfig({analysis,env:{GRAPH_STREAM_ENABLED:'true'}}));
+ assert.equal(stream.db,analysis.database);assert.equal(stream.packageHash,analysis.packageIdentity);assert.equal(stream.minFreeBytes,256*1024*1024);
+ assert(!JSON.stringify(stream).includes('private'));assert(stream.initialization[stream.pools[0]].kind==='swap');
+ assert.throws(()=>hostedStreamConfig({analysis,env:{GRAPH_STREAM_ENABLED:'yes'}}),/INVALID/);
+});

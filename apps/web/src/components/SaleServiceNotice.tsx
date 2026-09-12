@@ -11,7 +11,7 @@ export function SaleServiceNotice({ readiness, refresh, disabled }: {
     <div className="service-copy">
       <span className="source-tag">Project service check</span>
       <h2>{ready ? "New-sale service check passed" : "New sales are paused"}</h2>
-      <p>{ready ? "The latest check verified endpoint preservation. Review your wallet and the exact sale terms before signing." : "The project team needs to verify fee-endpoint preservation before new offers can be funded or accepted."}</p>
+      <p>{ready ? "The latest check passed for saving and backing up settlement records. Review your wallet and the exact sale terms before signing." : "The project team needs to check that settlement records can be saved and backed up before new offers can be funded or accepted."}</p>
       {!ready && <p className="fine">You can explore positions and inspect existing claims. Unaccepted-offer refunds and existing claims follow their own contract conditions.</p>}
     </div>
     <div className="service-next-step">
