@@ -1,7 +1,7 @@
 specVersion: v0.1.0
 package:
   name: feestrip-pool-context
-  version: v0.1.0
+  version: v0.1.1
   url: https://github.com/MihRazvan/eth-online-2026/tree/main/packages/substreams
   description: Typed Uniswap v4 pool activity and block continuity for independent range-risk analytics. Never payout authority.
 imports:

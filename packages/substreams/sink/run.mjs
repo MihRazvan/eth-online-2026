@@ -3,7 +3,7 @@ import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {parseArgs} from 'node:util';
 import {fileURLToPath,pathToFileURL} from 'node:url';
-import {createGrpcTransport} from '@connectrpc/connect-node';
+import {createConnectTransport} from '@connectrpc/connect-node';
 import {proto3} from '@bufbuild/protobuf';
 import {applyParams,createAuthInterceptor,createRegistry,createRequest,createSubstream,streamBlocks,unpackMapOutput} from '@substreams/core';
 import {HistoryStore} from '../../data/src/store.mjs';
@@ -38,9 +38,10 @@ export function consumeResponse(response,registry,sink){
 }
 
 async function main(){
- const {values:o}=parseArgs({options:{package:{type:'string',default:fileURLToPath(new URL('../feestrip-pool-context-v0.1.0.spkg',import.meta.url))},network:{type:'string',default:'sepolia'},pools:{type:'string'},start:{type:'string'},stop:{type:'string'},db:{type:'string',default:'feestrip-history.db'},endpoint:{type:'string'},'include-unfinalized':{type:'boolean',default:false},'validate-only':{type:'boolean',default:false}}});
+ const {values:o}=parseArgs({options:{package:{type:'string',default:fileURLToPath(new URL('../feestrip-pool-context-v0.1.1.spkg',import.meta.url))},network:{type:'string',default:'sepolia'},pools:{type:'string'},start:{type:'string'},stop:{type:'string'},db:{type:'string',default:'feestrip-history.db'},endpoint:{type:'string'},'include-unfinalized':{type:'boolean',default:false},'validate-only':{type:'boolean',default:false}}});
  if(!o.pools||!o.start||!/^\d+$/.test(o.start))throw new Error('--pools and an absolute --start are required');
  if(o.stop&&!/^\d+$/.test(o.stop))throw new Error('--stop must be an absolute exclusive block');
+ if(o.stop&&BigInt(o.stop)<=BigInt(o.start))throw new Error('--stop must be greater than --start');
  const poolIds=o.pools.split(',');const bytes=readFileSync(o.package);const packageHash=`0x${createHash('sha256').update(bytes).digest('hex')}`;
  const pkg=createSubstream(bytes);const identity=configurePackage(pkg,o.network,poolIds);const registry=createRegistry(pkg);
  const store=new HistoryStore(o['validate-only']?':memory:':o.db);
@@ -51,11 +52,15 @@ async function main(){
   const token=process.env.SUBSTREAMS_API_TOKEN;if(!token)throw new Error('Live stream blocked: SUBSTREAMS_API_TOKEN is required');
   const endpoint=o.endpoint??({sepolia:'https://sepolia.eth.streamingfast.io',mainnet:'https://mainnet.eth.streamingfast.io'})[o.network];
   if(!endpoint||new URL(endpoint).protocol!=='https:')throw new Error('HTTPS Substreams endpoint required');
-  const transport=createGrpcTransport({baseUrl:endpoint,interceptors:[createAuthInterceptor(token)],jsonOptions:{typeRegistry:registry}});
+  // Binary Connect over HTTP/1.1 preserves RPC v2 envelopes and has a clean
+  // end-of-stream frame on the live provider, unlike its missing gRPC trailers.
+  const transport=createConnectTransport({baseUrl:endpoint,httpVersion:'1.1',useBinaryFormat:true,interceptors:[createAuthInterceptor(token)],jsonOptions:{typeRegistry:registry}});
   for await(const response of streamBlocks(transport,request)){
    const result=consumeResponse(response,registry,sink);if(result)console.log(JSON.stringify({status:'applied',number:result.number,hash:result.hash,finalBlockHeight:result.finalBlockHeight}));
   }
-  console.log(JSON.stringify({status:'stream-ended',head:sink.checkpoint()?.number??null}));
+  const head=sink.checkpoint()?.number??null;
+  if(o.stop&&(head===null||BigInt(head)!==BigInt(o.stop)-1n))throw new Error('Stream ended before the requested exclusive stop; checkpoint retained');
+  console.log(JSON.stringify({status:'stream-ended',head}));
  }finally{store.close();}
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){

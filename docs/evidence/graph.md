@@ -1,6 +1,8 @@
 # Graph integration evidence
 
-Updated 2026-09-12. Scope: live Sepolia Studio deployment/query verified; Substreams authentication and actual composition remain pending.
+Updated 2026-09-12. Scope: live Studio and authenticated Substreams source agreement verified; actual joined buyer analysis remains pending.
+
+Graph Market access is now verified. The corrected v0.1.1 map delivers real Sepolia data, decodes the NFT39216 mint with the correct block-global log index107, and resumes its saved cursor. A separate finalized stream agrees with Studio and RPC at block11688819. [Live stream evidence and limitations](substreams.md#live-provider-qualification--12-september). This supersedes the missing-token access gap below; empty series still prevent an actual joined buyer result.
 
 ## Live Studio verification — 12 September
 
@@ -12,7 +14,7 @@ Updated 2026-09-12. Scope: live Sepolia Studio deployment/query verified; Substr
 - Both data adapters now select the retained Substreams hash, verify returned block/hash/deployment, and preserve the post-request database snapshot check against a concurrent sink reorg. A separate specialist reproduced the behavior and the corrected adapter against live Studio; the lead reviewed and integrated it. All29 core/data/proof-acquisition tests pass, including15 data tests. These tests do not establish a live Substreams join. Graph documents limitations during concurrent reorgs of non-final hash-selected blocks; [query consistency documentation](https://thegraph.com/docs/en/subgraphs/querying/graphql-api/).
 - Queries succeeded without a query API key. The deploy key stayed in local secrets and was excluded from CLI process arguments and redacted from retained output. Studio deployment did not send a wallet transaction or publish onto the decentralized Graph Network.
 
-Next access step: create a key at [The Graph Market](https://thegraph.market/), copy its **API Token (JWT)**, and save `SUBSTREAMS_API_TOKEN` in ignored root `.env`. This is distinct from its `server_...` API Key identifier; [official instructions](https://thegraph.com/docs/en/substreams/providers/the-graph-market/). Then run the real stream/sink and verify common-block composition before exposing analysis. No live joined result or Graph bounty completion is claimed.
+Access setup is complete: the [Graph Market](https://thegraph.market/) **API Token (JWT)** is saved as `SUBSTREAMS_API_TOKEN` in ignored root `.env` and authenticates actual requests. It is distinct from the `server_...` API Key identifier; [official instructions](https://thegraph.com/docs/en/substreams/providers/the-graph-market/). Hosting, initialized history and an actual sale-series join remain before exposing buyer analysis. No Graph bounty completion is claimed.
 
 ## Earlier component evidence — 11 September
 

@@ -3,6 +3,7 @@ node_modules/
 sink/node_modules/
 *.spkg
 !upstream/*.spkg
+!feestrip-pool-context-v0.1.1.spkg
 *.db
 *.db-shm
 *.db-wal
