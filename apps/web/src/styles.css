@@ -1528,7 +1528,7 @@ dialog h2 {
   margin-top: 20px;
 }
 .analysis-controls label {
-  font-size: 10px;
+  font-size: 14px;
   display: grid;
   gap: 7px;
   flex: 1;
@@ -1537,13 +1537,43 @@ dialog h2 {
   width: 100%;
 }
 .analysis-controls button {
-  font-size: 11px;
+  font-size: 14px;
   max-width: 190px;
 }
 .sourced-analysis code {
   overflow-wrap: anywhere;
 }
+.analysis-availability {
+  border-left: 3px solid var(--ink);
+  padding: 5px 0 5px 16px;
+  margin: 18px 0;
+}
+.analysis-availability p { margin: 8px 0 0; max-width: 65ch; }
+.analysis-unavailable-details { margin-top: 18px; }
+.sale-service-notice {
+  border-block: 1px solid var(--line);
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(220px, 1fr);
+  gap: 16px 32px;
+  margin: 20px 0 30px;
+  padding: 22px 0 16px;
+}
+.sale-service-notice h2, .wallet-prerequisites h2 {
+  font: bold 18px/1.3 "Courier Prime", monospace;
+  margin: 10px 0;
+}
+.sale-service-notice p { margin: 8px 0; max-width: 65ch; }
+.service-next-step { border-left: 1px solid var(--line); padding-left: 24px; }
+.service-next-step button { margin: 6px 0 8px; }
+.service-next-step > span { display: block; }
+.service-details, .service-error { grid-column: 1 / -1; }
+.service-details summary { font-size: 14px; }
+.service-details p { overflow-wrap: anywhere; }
+.service-ready .service-copy > .source-tag { color: var(--muted); }
 @media (max-width: 760px) {
+  .sale-service-notice { grid-template-columns: minmax(0, 1fr); gap: 16px; padding-top: 18px; }
+  .service-next-step { border-left: 0; border-top: 1px solid var(--line); padding: 16px 0 0; }
+  .service-next-step button { width: 100%; }
   .analysis-controls {
     align-items: stretch;
     flex-direction: column;

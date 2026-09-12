@@ -271,7 +271,7 @@ export interface BuyerAnalysis {
   sourceHash: string;
   subgraphDeployment: string;
   substreamsPackage: string;
-  substreamsCursor: string;
+  substreamsCursor?: string;
   lagBlocks: number;
   stale: boolean;
   grossBreakEvenUSDC: string;

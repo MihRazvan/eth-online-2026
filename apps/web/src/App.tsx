@@ -1,4 +1,5 @@
 import { ReplacementReceipt } from "./components/ReplacementReceipt";
+import { SaleServiceNotice } from "./components/SaleServiceNotice";
 import { OfferForm } from "./components/OfferForm";
 import { parsePositionRoute, positionRoute } from "./offerTerms";
 import { readReceipts, saveReceipt } from "./receipts";
@@ -659,6 +660,7 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
             </button>
           </div>
         )}
+        {s.mode === "testnet" && <SaleServiceNotice readiness={s.saleReadiness} refresh={refresh} disabled={busy || !!review} />}
         {!detail && !positions && !pin ? (
           <>
             <section className="intro orchard-intro">
@@ -1232,6 +1234,7 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
               </span>
             </section>
         {connected && !fixture && (positions || pin) && <section className="wallet-prerequisites" aria-label="Wallet prerequisites">
+          <h2>Your wallet</h2>
           <p>{money(s.wallet.usdcBalanceMicros, 6)} test USDC · {s.wallet.ethBalanceWei === undefined ? "ETH balance unavailable" : (Number(s.wallet.ethBalanceWei) / 1e18).toPrecision(5) + " ETH for gas"}.</p>
           {s.mode === "testnet" && <p className="fine"><a href="https://faucet.circle.com/" target="_blank" rel="noreferrer">Get test USDC from Circle</a> (choose Ethereum Sepolia) · <a href="https://ethereum.org/en/developers/docs/networks/#sepolia" target="_blank" rel="noreferrer">Find a Sepolia ETH faucet</a>. Faucet availability and limits can vary.</p>}
           {noGas && <p className="inline-warning">Add Sepolia ETH before signing. USDC cannot pay Ethereum transaction fees.</p>}
@@ -1489,7 +1492,6 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                         <p>{s.positionDiscoveryNotice}</p>
                       </form>
                     )}
-                    {s.mode === "testnet" && <p className={salesPaused ? "inline-warning" : "fine"}>{s.saleReadiness?.reason ?? "New sales are paused until endpoint checkpointing and recoverable proof storage are verified."}</p>}
                     {linkedMarket && <p className="inline-warning">This position has an activated sale. <a href={"#market/" + linkedMarket.id}>View its issued fee claims</a>. Buyers can publish a sell quote from My cabinet.</p>}
                     {findingPosition && <p className="fine">Loading the linked canonical position…</p>}
                     <fieldset className="tree-options">
@@ -2275,6 +2277,7 @@ function AnalysisPanel({
     } | null>(null),
     [loading, setLoading] = useState(""),
     [gas, setGas] = useState("0");
+  const requestRevision = useRef(0);
   let executionCost = "0",
     valid = true;
   try {
@@ -2284,8 +2287,11 @@ function AnalysisPanel({
   }
   const key = [market.id, quantity, price, executionCost].join(":"),
     result = saved?.key === key ? saved.result : undefined;
+  const inputsReady = valid && BigInt(quantity) > 0n;
+  const checking = loading === key;
   const load = async () => {
-    if (!adapter.readAnalysis) return;
+    if (!adapter.readAnalysis || !hasQuote || !inputsReady) return;
+    const revision = ++requestRevision.current;
     setLoading(key);
     try {
       const value = await adapter.readAnalysis(
@@ -2294,9 +2300,9 @@ function AnalysisPanel({
         price,
         executionCost,
       );
-      setSaved({ key, result: value });
+      if (revision === requestRevision.current) setSaved({ key, result: value });
     } catch {
-      setSaved({
+      if (revision === requestRevision.current) setSaved({
         key,
         result: {
           status: "unavailable",
@@ -2304,22 +2310,36 @@ function AnalysisPanel({
         },
       });
     } finally {
-      setLoading("");
+      if (revision === requestRevision.current) setLoading("");
     }
   };
   const available =
-    result?.status === "available" ? result.analysis : undefined;
+    hasQuote && inputsReady && !checking && result?.status === "available" ? result.analysis : undefined;
+  const stateTitle = !adapter.readAnalysis ? "Analysis is not configured"
+    : !hasQuote ? "Waiting for an executable quote"
+    : !inputsReady ? "Check the comparison inputs"
+    : checking ? "Checking the analysis sources"
+    : result?.status === "unavailable" ? "Source comparison unavailable"
+    : !available ? "Source comparison not requested"
+    : available.stale ? "Source comparison is behind the chain"
+    : "Source comparison loaded";
+  const stateDescription = !adapter.readAnalysis ? "This page has no analysis connection. Purchase terms and contract recovery information remain separate."
+    : !hasQuote ? "A maker needs to publish an executable ask before its purchase break-even can be compared. You can still inspect this claim’s terms and recovery information."
+    : !inputsReady ? "Enter a positive claim quantity in Claims to buy and a valid, nonnegative USDC execution cost below."
+    : checking ? "Comparing Substreams activity and Subgraph instrument data at a common source block. This check needs no wallet signature."
+    : result?.status === "unavailable" ? "The project’s analysis service could not provide a usable comparison. Retry this read-only check or share the details below with the project team."
+    : !available ? "Load the sources for the selected quantity and price. A wallet connection is not required."
+    : available.stale ? "This is an older source snapshot. Refresh the comparison before using it to assess a purchase."
+    : "This snapshot describes the selected purchase and observed history. It does not predict future fees.";
   return (
     <section className="history-section sourced-analysis">
       <div className="section-top">
         <h2>Activity behind the income</h2>
         <span className="source-tag">Substreams + Subgraph</span>
       </div>
-      {!available && (
-        <p className="fine">
-          Historical activity unavailable · Graph provider not connected
-        </p>
-      )}
+      <div className="analysis-availability" role="status" aria-live="polite">
+        <b>{stateTitle}</b><p>{stateDescription}</p>
+      </div>
       <p className="fine">
         Request a common-block comparison from the configured sources. It
         informs a purchase; only the onchain historical proof can allocate fees.
@@ -2338,26 +2358,21 @@ function AnalysisPanel({
           disabled={
             !adapter.readAnalysis ||
             !hasQuote ||
-            !valid ||
-            BigInt(quantity) === 0n ||
-            loading === key
+            !inputsReady ||
+            checking
           }
           onClick={load}
         >
-          {loading === key
+          {checking
             ? "Loading verified sources…"
-            : "Load sourced analysis"}
+            : result ? "Refresh sourced analysis" : "Load sourced analysis"}
         </button>
       </div>
-      {!hasQuote && (
-        <p className="fine">
-          An executable quote is required to compare purchase break-even.
-        </p>
-      )}
-      {result?.status === "unavailable" && (
-        <p className="inline-warning" role="status">
-          {result.reason}
-        </p>
+      {hasQuote && inputsReady && !checking && result?.status === "unavailable" && (
+        <details className="analysis-unavailable-details">
+          <summary>Why this comparison is unavailable</summary>
+          <p className="fine">{result.reason}</p>
+        </details>
       )}
       {available && (
         <>
@@ -2413,7 +2428,6 @@ function AnalysisPanel({
               Subgraph deployment: <code>{available.subgraphDeployment}</code>
               <br /> Substreams package:{" "}
               <code>{available.substreamsPackage}</code>
-              <br /> Cursor: <code>{available.substreamsCursor}</code>
             </p>
             {available.caveats.map((text, i) => (
               <p className="fine" key={i}>
