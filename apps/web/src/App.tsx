@@ -1468,8 +1468,7 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                         setMessage("");
                         try {
                           const id = await adapter.findPosition!(positionLookup);
-                          const next = await adapter.load();
-                          setSnapshot(next);
+                          const next = await refresh();
                           if (!next.positions.some((position) => position.tokenId === id) && !next.markets.some((market) => market.tokenId === id))
                             throw new Error("Position details could not be loaded. Check the NFT ID and try again.");
                           setPinToken(id);
