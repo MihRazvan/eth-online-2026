@@ -48,6 +48,8 @@ jobs:
         with:
           version: v1.5.1
       - run: RUN_KEEPER_ANVIL=1 node --test packages/keeper/test/anvil.test.mjs
+      - name: Compile complete local lifecycle before browser setup
+        run: forge build
       - name: Start dedicated local chain
         run: |
           anvil --host 127.0.0.1 --port 8545 --chain-id 31337 --hardfork cancun --silent > /tmp/feestrip-anvil.log 2>&1 &

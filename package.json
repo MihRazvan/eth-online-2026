@@ -26,7 +26,7 @@
     "test:substreams": "packages/substreams/verify.sh",
     "dev:data": "node packages/data/src/server.mjs",
     "test:settlement": "node packages/settlement/test/run.mjs",
-    "test:public-setup": "node --test scripts/public/position.test.mjs",
+    "test:public-setup": "node --test scripts/public/*.test.mjs",
     "dev:recovery": "node packages/settlement/src/cli.mjs --serve",
     "local:retention-config": "node scripts/chain/retention-config.mjs",
     "build:vercel": "pnpm --filter @feestrip/web exec tsc --noEmit && node scripts/deploy/build-vercel.mjs",
