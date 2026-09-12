@@ -1,0 +1,30 @@
+{
+  "base": "https://usufruct-mu.vercel.app",
+  "scope": "Public RPC data with read-only account stub; no participant signing or transaction execution",
+  "errors": [],
+  "tokenIds": [
+    "#39216",
+    "Range $2,435,266,000–$2,745,739,000",
+    "#39222",
+    "Range $13,793.13–$55,929.99",
+    "#39221",
+    "Range $15,551.62–$50,607.8",
+    "#39220",
+    "Range $15,551.62–$50,607.8"
+  ],
+  "horizontalOverflow": false,
+  "walletMethods": [
+    "eth_requestAccounts",
+    "eth_accounts",
+    "eth_chainId",
+    "eth_accounts",
+    "eth_chainId",
+    "eth_accounts",
+    "eth_chainId",
+    "eth_accounts",
+    "eth_chainId",
+    "eth_accounts",
+    "eth_chainId"
+  ],
+  "unsupportedPoolRejected": true
+}

@@ -27,3 +27,5 @@ DISCOVERY_BASE_URL=http://127.0.0.1:4198 node scripts/public/verify-position-dis
 ```
 
 The read-only public regression intentionally targets the reported wallet/IDs; later transfers, burns or eligibility changes can invalidate this historical expectation. Output goes to ignored `.scratch/discovery`. The public frontend is published through the existing GitHub/Vercel integration; retain a separate result when verification against the live alias succeeds.
+
+Production verification: Vercel deployment `dpl_EgSdDnXU3ybTJykEHU2m7aVS9iUp` for implementation `5e09a70` is Ready and aliased to https://usufruct-mu.vercel.app. The same read-only browser check against that public alias passed: all three reported NFTs appeared automatically, exact lookup succeeded, unsupported ETH/LINK lookup failed with the expected explanation, and mobile had no overflow or page errors. [Production result](position-discovery/browser-production.json). This remains public-data UI verification with a read-only account stub, not participant signing.
