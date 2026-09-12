@@ -130,4 +130,15 @@ export async function main(){
   clearInterval(heartbeat);process.removeListener('SIGINT',shutdown);process.removeListener('SIGTERM',shutdown);store?.close();lock.release();
  }
 }
-if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){main().catch(error=>{process.stderr.write(`${JSON.stringify({status:'failed',code:failureCode(error),checkpointRetained:true})}\n`);process.exitCode=1;});}
+// Connect1.7 clears its deadline only when the response iterator advances again.
+// Our dedicated CLI exits after main's finally has closed SQLite/released its lock,
+// and after both output streams drain. Library callers retain promise semantics.
+async function finishCli(code){
+ await Promise.all([process.stdout,process.stderr].map(stream=>new Promise(resolve=>{
+  if(stream.destroyed||!stream.writable)return resolve();stream.write('',()=>resolve());
+ })));
+ process.exit(code);
+}
+if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
+ main().then(()=>finishCli(0),error=>{process.stderr.write(`${JSON.stringify({status:'failed',code:failureCode(error),checkpointRetained:true})}\n`);return finishCli(1);});
+}

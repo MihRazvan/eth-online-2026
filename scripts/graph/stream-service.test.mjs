@@ -2,6 +2,8 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtempSync,readFileSync,rmSync,writeFileSync} from 'node:fs';
 import {join} from 'node:path';
+import {fileURLToPath} from 'node:url';
+import {spawnSync} from 'node:child_process';
 import {tmpdir} from 'node:os';
 import {ConnectError,Code} from '@connectrpc/connect';
 import {HistoryStore} from '../../packages/data/src/store.mjs';
@@ -87,4 +89,21 @@ test('bounded completion aborts SDK-style iterators which omit return()',{timeou
  return {[Symbol.asyncIterator](){return {next(){nextCalls++;return nextCalls===1?Promise.resolve({value:envelope(100),done:false}):new Promise(()=>{});}};}};
  }});assert.equal(canceled,true);assert.equal(nextCalls,1);assert.equal(sink.checkpoint().number,100);
  }finally{store.close();}
+});
+
+test('dedicated CLI flushes completion and exits after database cleanup despite retained timers',()=>{
+ const dir=mkdtempSync(join(tmpdir(),'graph-cli-exit-')),path=join(dir,'history.sqlite');
+ try{
+  const committed=JSON.parse(readFileSync(new URL('../../deployments/substreams-sepolia.json',import.meta.url),'utf8'));
+  const cfg={...committed,db:path,packagePath:fileURLToPath(new URL('../../packages/substreams/feestrip-pool-context-v0.1.1.spkg',import.meta.url))};
+  const [pool]=cfg.pools,anchor=cfg.initialization[pool],manager='0xe03a1074c86cfedd5c142c4f04f1a1536e203543';
+  let store=new HistoryStore(path);const sink=new SubstreamsHistorySink(store,{chainId:11155111,poolManager:manager,poolIds:cfg.pools,packageHash:cfg.packageHash,startBlock:cfg.start,initialization:cfg.initialization});
+  sink.applyBlock({clock:{number:anchor.block,id:anchor.hash},providerCursor:'offline-completed-range',finalBlockHeight:anchor.block,output:{chainId:11155111,poolManager:manager,number:anchor.block,hash:anchor.hash,parentHash:h(1),timestamp:1234,allocationAuthority:'contract-only',swaps:[{poolId:pool,transactionHash:anchor.transactionHash,logIndex:anchor.logIndex,tick:anchor.tick,amount0:'1',amount1:'-1',liquidity:'1',sqrtPriceX96:'1',fee:3000}]}});store.close();
+  const configPath=join(dir,'config.json'),preload=join(dir,'retained-timer.mjs');writeFileSync(configPath,JSON.stringify(cfg));writeFileSync(preload,'setInterval(()=>{}, 1800000);');
+  const result=spawnSync(process.execPath,['--import',preload,fileURLToPath(new URL('./stream-service.mjs',import.meta.url)),'--stop',String(anchor.block+1)],{env:{PATH:process.env.PATH,NODE_NO_WARNINGS:'1',GRAPH_STREAM_CONFIG:configPath,SUBSTREAMS_API_TOKEN:'offline-placeholder-not-used'},encoding:'utf8',timeout:3000});
+  assert.equal(result.error,undefined);assert.equal(result.status,0,result.stderr);assert.equal(result.signal,null);
+  const reports=result.stdout.trim().split('\n').map(x=>JSON.parse(x));assert.equal(reports.at(-1).status,'completed');assert.ok(reports.some(x=>x.status==='bounded-complete'));
+  assert.throws(()=>readFileSync(path+'.stream.lock'),{code:'ENOENT'});
+  store=new HistoryStore(path);assert.equal(store.head().number,anchor.block);store.db.exec('BEGIN EXCLUSIVE; COMMIT');store.close();
+ }finally{rmSync(dir,{recursive:true,force:true});}
 });
