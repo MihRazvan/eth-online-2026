@@ -87,7 +87,7 @@ async function confirm(label) {
     .getByRole("button", { name: label, exact: true })
     .click();
   await page.getByRole("dialog").waitFor({ state: "hidden", timeout: 20000 });
-  const message = await page.getByRole("status").innerText();
+  const message = await page.getByRole("status").filter({ hasText: "Confirmed on local chain" }).innerText();
   const hash = message.match(/0x[0-9a-fA-F]{64}/)?.[0];
   check(!!hash, "Missing actual transaction receipt");
   receipts.push({ action: label, hash });
