@@ -1,6 +1,20 @@
 # Graph integration evidence
 
-2026-09-11. Scope: hermetic data tests and Subgraph WASM build; live provider blocked.
+Updated 2026-09-12. Scope: live Sepolia Studio deployment/query verified; Substreams authentication and actual composition remain pending.
+
+## Live Studio verification — 12 September
+
+- Project [usufruct](https://thegraph.com/studio/subgraph/usufruct), version `v0.1.0`, deployment `QmNNaxtj65PaezJXR9RdrNJeQLtsNm5uhkiE1WXX7s4nnU`.
+- [Public configuration](../../deployments/subgraph-sepolia.json): actual FeeStrip `0x97825ae0a3c6b52398ce666dbcd166129d61c61f`, chain11155111, startBlock11684159. Preparation checked chain and contract poolManager/positionManager/USDC bindings against the public manifest. ABI codegen and WASM build passed before deployment.
+- [Initial live query](graph-studio/initial-query.json): block11688842; [subsequent hash-pinned query](graph-studio/verified-query.json): block11688863, no indexing errors, exact block hash matched PublicNode. The sampled RPC head was11688864 (one-block lag). These are point-in-time observations, not a service-availability guarantee.
+- `series_collection` and `lifecycleEvents` both returned empty arrays. RPC `nextSeriesId=1` at the same block confirms no activated series. Actual sale-event mapping remains untested live.
+- Number-selected `_meta` returned `hash:null`. Hash-selected queries returned the exact block hash and worked for both entity collections. Reproduce the live check with `node scripts/graph/verify-studio.mjs`; [deployment runbook](../../packages/subgraph/README.md).
+- Both data adapters now select the retained Substreams hash, verify returned block/hash/deployment, and preserve the post-request database snapshot check against a concurrent sink reorg. A separate specialist reproduced the behavior and the corrected adapter against live Studio; the lead reviewed and integrated it. All29 core/data/proof-acquisition tests pass, including15 data tests. These tests do not establish a live Substreams join. Graph documents limitations during concurrent reorgs of non-final hash-selected blocks; [query consistency documentation](https://thegraph.com/docs/en/subgraphs/querying/graphql-api/).
+- Queries succeeded without a query API key. The deploy key stayed in local secrets and was excluded from CLI process arguments and redacted from retained output. Studio deployment did not send a wallet transaction or publish onto the decentralized Graph Network.
+
+Next access step: create a key at [The Graph Market](https://thegraph.market/), copy its **API Token (JWT)**, and save `SUBSTREAMS_API_TOKEN` in ignored root `.env`. This is distinct from its `server_...` API Key identifier; [official instructions](https://thegraph.com/docs/en/substreams/providers/the-graph-market/). Then run the real stream/sink and verify common-block composition before exposing analysis. No live joined result or Graph bounty completion is claimed.
+
+## Earlier component evidence — 11 September
 
 - Node tests: 17 math/history/composition tests passed. Common block/hash and pool/chain identity checked; atomic cursor+event storage, explicit reorg undo, incomplete-history coverage, block-weighted range occupancy. Tests use identified fixtures.
 - Graph CLI0.98.1 / graph-ts0.38.2: actual FeeStrip ABI codegen and schema/mapping WASM build passed. No indexer execution claimed yet. Source manifest deliberately undeployed zero address.
@@ -12,4 +26,4 @@ A buyer-query adapter now reads persisted Substreams samples and a pinned Subgra
 
 Reusable module/sink verification is recorded in `substreams.md`: compiled upstream/wrapper WASM, real RPC envelopes and persistent cursor/undo tests pass.
 
-Open: deployed FeeStrip Subgraph, live joined result, provider freshness and live reorg exercise. Two agreeing data providers are not a settlement proof or an independent canonical-chain guarantee. The API reports the persisted checkpoint finality separately; the sink defaults to finalized-only, while explicit unfinalized ingestion requires treating unfinalized analysis as provisional. No sponsor eligibility completion claimed.
+Open: actual sale-event mapping, live joined result, sustained provider freshness and live reorg exercise. Two agreeing data providers are not a settlement proof or an independent canonical-chain guarantee. The API reports the persisted checkpoint finality separately; the sink defaults to finalized-only, while explicit unfinalized ingestion requires treating unfinalized analysis as provisional. No sponsor eligibility completion claimed.
