@@ -1,0 +1,9 @@
+{
+  "base": "https://usufruct-mu.vercel.app",
+  "errors": [],
+  "horizontalOverflow": false,
+  "keyboardGuide": true,
+  "creditPreservedInRepository": true,
+  "liveState": "No fee sales yet",
+  "scope": "Disconnected public-RPC presentation check; no wallet or transaction"
+}
