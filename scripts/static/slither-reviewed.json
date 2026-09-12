@@ -26,43 +26,43 @@
     {
       "check": "unused-return",
       "impact": "Medium",
-      "description": "FeeStrip._clearedGrowth(PoolKey,int24,int24,uint256) (contracts/src/FeeStrip.sol#343-351) ignores return value by (None,growth0,growth1) = poolManager.getPositionInfo(key.toId(),address(positionManager),lower,upper,bytes32(tokenId)) (contracts/src/FeeStrip.sol#348-349)\n",
-      "sha256": "a3394c06c7b71ca1b0556ea66874f5a0e120b2a46e930a5ec3e0e73e7d92ea3f",
+      "description": "FeeStrip._clearedGrowth(PoolKey,int24,int24,uint256) (contracts/src/FeeStrip.sol#346-354) ignores return value by (None,growth0,growth1) = poolManager.getPositionInfo(key.toId(),address(positionManager),lower,upper,bytes32(tokenId)) (contracts/src/FeeStrip.sol#351-352)\n",
+      "sha256": "d354cfe1598cbbb329e38cac4cb36a3eebc746f386922725935842034b1bb356",
       "disposition": "Only the native cleared growth baseline is used; PositionManager liquidity is validated separately at activation and custody prevents later mutation."
     },
     {
       "check": "reentrancy-benign",
       "impact": "Low",
-      "description": "Reentrancy in FeeStrip.redeem(uint256,uint256,address) (contracts/src/FeeStrip.sol#279-289):\n\tExternal calls:\n\t- s.claim.consume(msg.sender,amount) (contracts/src/FeeStrip.sol#283)\n\tState variables written after the call(s):\n\t- reservedUSDC -= payout (contracts/src/FeeStrip.sol#286)\n",
-      "sha256": "b3e4377b881b10419a4fcd21f0c2c307cfd486130461699bcdc78a1ccb81016a",
+      "description": "Reentrancy in FeeStrip.redeem(uint256,uint256,address) (contracts/src/FeeStrip.sol#282-292):\n\tExternal calls:\n\t- s.claim.consume(msg.sender,amount) (contracts/src/FeeStrip.sol#286)\n\tState variables written after the call(s):\n\t- reservedUSDC -= payout (contracts/src/FeeStrip.sol#289)\n",
+      "sha256": "2503b33bcc1c641779e37f54c567b412313e916e77c4f5e1cc097cb51825442c",
       "disposition": "All affected external entrypoints are nonReentrant. Dependencies are code-pinned; FeeClaim.consume has no callbacks. State and reserves roll back if an external call fails. Native lifecycle and adversarial recipient tests exercise this boundary."
     },
     {
       "check": "reentrancy-benign",
       "impact": "Low",
-      "description": "Reentrancy in FeeStrip.acceptOffer(uint256,uint256) (contracts/src/FeeStrip.sol#197-225):\n\tExternal calls:\n\t- positionManager.transferFrom(msg.sender,address(this),o.tokenId) (contracts/src/FeeStrip.sol#207)\n\t- (oldUSDC,oldOther) = _collect(o.tokenId,key) (contracts/src/FeeStrip.sol#208)\n\t\t- positionManager.modifyLiquidities(abi.encode(actions,params),block.timestamp) (contracts/src/FeeStrip.sol#369)\n\tState variables written after the call(s):\n\t- s.tokenId = o.tokenId (contracts/src/FeeStrip.sol#211)\n\t- s.residualOwner = msg.sender (contracts/src/FeeStrip.sol#212)\n\t- s.key = key (contracts/src/FeeStrip.sol#213)\n\t- s.tickLower = info.tickLower() (contracts/src/FeeStrip.sol#214)\n\t- s.tickUpper = info.tickUpper() (contracts/src/FeeStrip.sol#215)\n\t- s.liquidity = liquidity (contracts/src/FeeStrip.sol#216)\n\t- s.activationBlock = uint64(block.number) (contracts/src/FeeStrip.sol#217)\n\t- s.endBlock = o.endBlock (contracts/src/FeeStrip.sol#218)\n\t- s.baselineX128 = _clearedGrowth(key,s.tickLower,s.tickUpper,o.tokenId) (contracts/src/FeeStrip.sol#219)\n\t- s.quantity = o.quantity (contracts/src/FeeStrip.sol#220)\n\t- s.claim = new FeeClaim(o.quantity,o.buyer,o.buyerQuantity,msg.sender) (contracts/src/FeeStrip.sol#221)\n\t- id = nextSeriesId ++ (contracts/src/FeeStrip.sol#209)\n",
-      "sha256": "a2224b723a2fcc0becb4d141894a6a0dcd48f43b1e021b832f1f2d0d96af142c",
+      "description": "Reentrancy in FeeStrip.acceptOffer(uint256,uint256) (contracts/src/FeeStrip.sol#200-228):\n\tExternal calls:\n\t- positionManager.transferFrom(msg.sender,address(this),o.tokenId) (contracts/src/FeeStrip.sol#210)\n\t- (oldUSDC,oldOther) = _collect(o.tokenId,key) (contracts/src/FeeStrip.sol#211)\n\t\t- positionManager.modifyLiquidities(abi.encode(actions,params),block.timestamp) (contracts/src/FeeStrip.sol#372)\n\tState variables written after the call(s):\n\t- s.tokenId = o.tokenId (contracts/src/FeeStrip.sol#214)\n\t- s.residualOwner = msg.sender (contracts/src/FeeStrip.sol#215)\n\t- s.key = key (contracts/src/FeeStrip.sol#216)\n\t- s.tickLower = info.tickLower() (contracts/src/FeeStrip.sol#217)\n\t- s.tickUpper = info.tickUpper() (contracts/src/FeeStrip.sol#218)\n\t- s.liquidity = liquidity (contracts/src/FeeStrip.sol#219)\n\t- s.activationBlock = uint64(block.number) (contracts/src/FeeStrip.sol#220)\n\t- s.endBlock = o.endBlock (contracts/src/FeeStrip.sol#221)\n\t- s.baselineX128 = _clearedGrowth(key,s.tickLower,s.tickUpper,o.tokenId) (contracts/src/FeeStrip.sol#222)\n\t- s.quantity = o.quantity (contracts/src/FeeStrip.sol#223)\n\t- s.claim = new FeeClaim(o.quantity,o.buyer,o.buyerQuantity,msg.sender) (contracts/src/FeeStrip.sol#224)\n\t- id = nextSeriesId ++ (contracts/src/FeeStrip.sol#212)\n",
+      "sha256": "1accf615d761ee207f877952d24e6ff3b22085ddf284fbb30dc0d796deb2851f",
       "disposition": "All affected external entrypoints are nonReentrant. Dependencies are code-pinned; FeeClaim.consume has no callbacks. State and reserves roll back if an external call fails. Native lifecycle and adversarial recipient tests exercise this boundary."
     },
     {
       "check": "reentrancy-benign",
       "impact": "Low",
-      "description": "Reentrancy in FeeStrip.capture(uint256) (contracts/src/FeeStrip.sol#228-235):\n\tExternal calls:\n\t- (s.capturedUSDC,s.otherReserve) = _collect(s.tokenId,s.key) (contracts/src/FeeStrip.sol#232)\n\t\t- positionManager.modifyLiquidities(abi.encode(actions,params),block.timestamp) (contracts/src/FeeStrip.sol#369)\n\tState variables written after the call(s):\n\t- reservedUSDC += s.capturedUSDC (contracts/src/FeeStrip.sol#233)\n",
-      "sha256": "23f5d747e6a4ef2f91076a5efed39edb14e2a122cf285f2e965e18638513fe40",
+      "description": "Reentrancy in FeeStrip.capture(uint256) (contracts/src/FeeStrip.sol#231-238):\n\tExternal calls:\n\t- (s.capturedUSDC,s.otherReserve) = _collect(s.tokenId,s.key) (contracts/src/FeeStrip.sol#235)\n\t\t- positionManager.modifyLiquidities(abi.encode(actions,params),block.timestamp) (contracts/src/FeeStrip.sol#372)\n\tState variables written after the call(s):\n\t- reservedUSDC += s.capturedUSDC (contracts/src/FeeStrip.sol#236)\n",
+      "sha256": "06c1964a7ea5a4cc9df95f84f479e81da9822302ab77f7e91fb3429cf1967792",
       "disposition": "All affected external entrypoints are nonReentrant. Dependencies are code-pinned; FeeClaim.consume has no callbacks. State and reserves roll back if an external call fails. Native lifecycle and adversarial recipient tests exercise this boundary."
     },
     {
       "check": "timestamp",
       "impact": "Low",
-      "description": "FeeStrip.acceptOffer(uint256,uint256) (contracts/src/FeeStrip.sol#197-225) uses timestamp for comparisons\n\tDangerous comparisons:\n\t- o.consumed || o.endBlock <= block.number || o.deadline < block.timestamp || o.proceeds < minProceeds (contracts/src/FeeStrip.sol#200)\n",
-      "sha256": "bbe443a88367ae82e5d6186256d98c0d0d88b92698fc373eebee4badd27e6e70",
+      "description": "FeeStrip.acceptOffer(uint256,uint256) (contracts/src/FeeStrip.sol#200-228) uses timestamp for comparisons\n\tDangerous comparisons:\n\t- o.consumed || o.endBlock <= block.number || o.deadline < block.timestamp || o.proceeds < minProceeds (contracts/src/FeeStrip.sol#203)\n",
+      "sha256": "e9aa4f45e9fe47721a83a76932f0cfdd0736894970acaffa530a8a9ffd8e3591",
       "disposition": "Timestamp checks only expire offers and trade orders. Sold fee income uses the frozen end-of-block number and authenticated historical state."
     },
     {
       "check": "timestamp",
       "impact": "Low",
-      "description": "FeeStrip.fundOffer(address,uint256,uint256,uint256,uint256,uint64,uint64) (contracts/src/FeeStrip.sol#151-184) uses timestamp for comparisons\n\tDangerous comparisons:\n\t- seller == address(0) || quantity == 0 || buyerQuantity == 0 || buyerQuantity > quantity || proceeds == 0 || endBlock <= block.number || deadline < block.timestamp (contracts/src/FeeStrip.sol#161-162)\n",
-      "sha256": "be650d1070b4d3ac130d226e95679ed6cf298f28bb5296c71b962e19bc5c9776",
+      "description": "FeeStrip.fundOffer(address,uint256,uint256,uint256,uint256,uint64,uint64,bytes32) (contracts/src/FeeStrip.sol#158-187) uses timestamp for comparisons\n\tDangerous comparisons:\n\t- seller == address(0) || quantity == 0 || buyerQuantity == 0 || buyerQuantity > quantity || proceeds == 0 || endBlock <= block.number || deadline < block.timestamp (contracts/src/FeeStrip.sol#169-170)\n",
+      "sha256": "14cdc558940e6af2c5d802b31926d631febbdb56cddc9bb311743d018b61604d",
       "disposition": "Timestamp checks only expire offers and trade orders. Sold fee income uses the frozen end-of-block number and authenticated historical state."
     },
     {

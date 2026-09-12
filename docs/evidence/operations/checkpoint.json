@@ -1,0 +1,83 @@
+{
+  "scope": "Implementation and isolated tests; no public checkpoint/sale or operated remote bucket claimed",
+  "contractCommit": "bc1fad7",
+  "frontendCommit": "d33c7b4",
+  "checks": {
+    "solidity": 51,
+    "coreDataAcquisition": 29,
+    "settlementNode": 46,
+    "witnessPython": 13,
+    "keeperUnit": 14,
+    "keeperActualAnvil": 1,
+    "operationsUnit": 6,
+    "frontendHermetic": 57,
+    "localBrowserVariants": [
+      "retained witness",
+      "verified onchain growth cache"
+    ],
+    "staticFindings": 13,
+    "staticDelta": "Source line shifts and eight-argument funding signature only; dispositions preserved",
+    "denominatorMutation": "killed",
+    "localBrowserCasesPerVariant": 3
+  },
+  "keeperTest": {
+    "scope": "Production checkpoint contract with fixture discovery/bindings on isolated Anvil",
+    "gasUsed": "45729",
+    "restartPreservedNonce": true,
+    "unfinalizedReceiptReorgRecovered": true
+  },
+  "container": {
+    "built": true,
+    "publicSepoliaProofRead": true,
+    "signerEnabled": false,
+    "remoteBucketConfigured": false,
+    "readyForNewSales": false,
+    "imageDigest": "sha256:6a7d5b30eeadddd2095b3a42c69de4b1d42cfff75b495014959b2b9730930351",
+    "readOnlyRestartVerified": true,
+    "finalStatus": {
+      "schemaVersion": 1,
+      "chainId": "11155111",
+      "feeStrip": "0x97825ae0a3c6b52398ce666dbcd166129d61c61f",
+      "observedAt": 1789220783280,
+      "readyForNewSales": false,
+      "checks": {
+        "protocol": {
+          "ready": false,
+          "code": "CONTRACT_UPGRADE_REQUIRED"
+        },
+        "keeper": {
+          "ready": false,
+          "code": "KEEPER_NOT_READY"
+        },
+        "retention": {
+          "ready": true,
+          "code": "READY"
+        },
+        "replication": {
+          "ready": false,
+          "code": "OFFHOST_REPLICATION_NOT_READY"
+        }
+      },
+      "allocationAuthority": "contract-only"
+    }
+  },
+  "railway": {
+    "project": "usufruct",
+    "projectId": "cb65063e-ebf1-452c-b077-5e3da03041e2",
+    "environmentId": "b60dbcfa-a033-4afb-b7c7-4371610c9a27",
+    "provisionedResources": 0,
+    "plan": [
+      "endpoint-operations service",
+      "endpoint-data volume",
+      "endpoint-proofs bucket"
+    ],
+    "diagnostics": []
+  },
+  "remaining": [
+    "Reviewed contract replacement and pins/Subgraph update",
+    "Hosting spend approval and operator coverage",
+    "Hosted checkpoint, bucket restoration and HTTPS verification",
+    "Public financial lifecycle and live Graph join"
+  ],
+  "publicRefund": "old-offer-refund.json"
+}

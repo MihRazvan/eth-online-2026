@@ -22,7 +22,8 @@ await send(buyer,activityRouter,'LocalActivityRouter','donate',[123_000_000n,45_
 await send(seller,usdc,'LocalToken','mint',[holder,50_000_000_000n]);
 await send(buyer,usdc,'LocalToken','approve',[feeStrip,100_000_000n]);
 const block=await client.getBlock();const endBlock=block.number+100n;
-await send(buyer,feeStrip,'FeeStrip','fundOffer',[seller,1n,10000n*10n**18n,7500n*10n**18n,100_000_000n,endBlock,block.timestamp+86400n]);
+const commitment=await read(feeStrip,'FeeStrip','positionCommitment',[1n]);
+await send(buyer,feeStrip,'FeeStrip','fundOffer',[seller,1n,10000n*10n**18n,7500n*10n**18n,100_000_000n,endBlock,block.timestamp+86400n,commitment]);
 const config={mode:'local',chainId:31337,rpcUrl:rpcURL,feeStrip,usdc,other,positionManager,poolManager,verifier,checkpoints,market,swapRouter,aqua,activityRouter,nftIds:['1'],actors:{seller,buyer,holder},offerId:'1',endBlock:endBlock.toString(),deploymentBlock:broadcast.receipts[0].blockNumber};
 mkdirSync('apps/web/public',{recursive:true});writeFileSync('apps/web/public/deployment.json',JSON.stringify(config,null,2)+'\n');
 mkdirSync('.scratch',{recursive:true});writeFileSync('.scratch/local-deployment.json',JSON.stringify(config,null,2)+'\n');

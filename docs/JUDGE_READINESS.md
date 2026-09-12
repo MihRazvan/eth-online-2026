@@ -12,7 +12,11 @@ Keep the existing three partners. Prioritize the actual Uniswap/Aqua lifecycle a
 
 ## Current checkpoint and next implementation batch
 
-Reconciled against `7bb04bb` on12September at12:54UTC. Git matches origin/main. Both Graph access steps are complete, the corrected v0.1.1 package and standalone consumer are public, and bounded live source/restart checks pass. These are completed parts of J15/J17, not completion of hosted buyer analysis. At Sepolia block11689036, `nextSeriesId=1`: no sale has been activated. The public site returns200; recovery and analysis routes still return404. Railway reports no linked project. Current code still defaults to672USDC and end block+129000. The latest hosted CI run was still in progress at this check; the preceding Studio increment passed.
+Implementation checkpoint,12September: J04–J08/J14 now have editable small terms, shareable canonical targets/offers, explicit transaction stages, refresh and receipt recovery, verified between separate local-chain wallets. J09/J10 have a restricted checkpoint signer, authenticated off-host proof restoration, a tested container and a read-only Vercel gateway. Both actual local-chain settlement variants pass against the new eight-argument funding contract. Public/hosted acceptance remains open; component tests are not public acceptance.
+
+Independent review also found and fixed an existing liquidity-substitution race: funding now requires the buyer's reviewed position commitment onchain. The old immutable public deployment remains gated until replacement. The participant cancelled old offer2 at public block11689226 and recovered672SepoliaUSDC; independent readback confirms zero old liabilities and no activated series. [Public refund evidence](evidence/operations/old-offer-refund.json). The two replacement deployments have been rehearsed on an isolated fork; their public deployment remains pending.
+
+The isolated Railway project `usufruct` is now linked and empty. Its reviewed plan adds one capped service, a1GiB volume and a private proof bucket. [Deployment plan, costs and operator recovery](deployment-operations.md). No billable resource has been created. Both Graph credential steps remain complete; continuous initialized-history hosting and the actual buyer join remain pending.
 
 The next implementation batch is **J09/J10 alongside J04–J08/J14**. Hosting the existing read-only worker alone is insufficient: it does not submit the endpoint checkpoint. No new public sale should be activated before checkpointing and witness recovery pass their operational checks.
 
@@ -63,7 +67,7 @@ The active, proof-pending and allocated examples are **different real series**, 
 | [ ] | J18 / submission | Package sponsor evidence and human review materials | Public source/runtime provenance, transaction links, measured cost, reusable Uniswap recipe, current FEEDBACK, licenses/AI record and concise recording script. Each claim links to the correct public/fork/local evidence |
 | [ ] | J19 / final acceptance | Run the full judge rehearsal and publish verified build | Two unaided participants; both desktop/mobile; wrong network, insufficient gas, rejected signature, reload, stale/depleted quote, counterparty action, unaccepted/expired offer refund and acceptance race, proof outage and post-redemption quote renewal; hosted CI and public build verified |
 
-Security-sensitive changes receive separate review before publication. Existing 47 UI tests and full hosted suites are useful baselines, not replacements for J12/J19. No contract/trust migration is required for the presentation changes completed in this pass.
+Security-sensitive changes receive separate review before publication. The current51contract tests,55browser regressions and both local-chain settlement variants do not replace J12/J19. The funded-position commitment fix requires replacement of the old immutable public FeeStrip and its associated market, plus updated operational pins and Subgraph configuration.
 
 ## Team checklist — access, decisions and hands-on work
 
@@ -71,7 +75,8 @@ Security-sensitive changes receive separate review before publication. Existing 
 | --- | --- | --- | --- |
 | [x] | T00 | Confirm event and entry | ETHOnline2026 Classic confirmed. The local folder name does not determine eligibility |
 | [x] | T01 | Make Graph access available | Studio deployment and Graph Market JWT both verified live. Credentials remain in ignored `.env`; Studio query currently needs no extra credential. Hosted secret configuration is part of T02 |
-| [ ] | T02 | Select an always-on host and operator | Railway CLI is already authenticated; no project linked/deployed. Select the actual project/plan and approve any concrete paid plan after costs are known. Identify primary and fallback operator and how alerts reach them. Vercel frontend hosting alone is insufficient |
+| [ ] | T02 | Select an always-on host and operator | Isolated usufruct project and exact three-resource plan are prepared. Approve the proposed$30/month project budget in the deployment plan before provisioning. Identify primary and fallback operator and how alerts reach them. Vercel frontend hosting alone is insufficient |
+| [x] | T08 | Refund the old unaccepted offer before switching deployments | Buyer0x746b…4C6d cancelled offer2 for672SepoliaUSDC at11689226. Receipt and zero remaining old-contract liabilities verified at11689275; [evidence](evidence/operations/old-offer-refund.json) |
 | [ ] | T03 | Prepare separate participant wallets | Seller controls an eligible NFT; buyer and secondary buyer/holder have Sepolia ETH and authentic test USDC. Name a maker wallet and keeper gas wallet. Share public addresses only; keys remain in wallets/secrets |
 | [ ] | T04 | Agree to the bounded real test | Choose exact NFT, upfront payment, sold fraction, cutoff and maximum test-asset/activity/gas budget from a prepared review. Confirm actual owners will sign; do not move or mint more liquidity blindly |
 | [ ] | T05 | Join an unaided two-wallet rehearsal | At least seller and buyer participants; preferably a fresh secondary buyer. Record misunderstandings and assistance rather than teaching the flow first. A second participant must be able to repeat the redeemable path |

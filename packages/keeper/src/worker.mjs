@@ -51,6 +51,15 @@ export class CheckpointKeeper {
    }
    result.pendingTransactions=s.activeTxs().filter(t=>t.state!=='mined').length;
    result.dailyReservedWei=String(s.reserveCost());
+   // Readiness describes capacity after this tick's signatures and receipts.
+   const [latestNonce,pendingNonce,currentBalance]=await Promise.all([this.client.getTransactionCount({address:c.expectedSigner,blockTag:'latest'}),this.client.getTransactionCount({address:c.expectedSigner,blockTag:'pending'}),this.client.getBalance({address:c.expectedSigner})]);
+   const outstanding=new Map();
+   for(const tx of s.activeTxs().filter(t=>t.state!=='mined'))outstanding.set(tx.nonce,max(outstanding.get(tx.nonce)??0n,BigInt(tx.reserved)));
+   if(pendingNonce>latestNonce&&(!outstanding.has(latestNonce)||pendingNonce>latestNonce+1))fail('SIGNER_NONCE_NOT_EXCLUSIVE');
+   const reservedBalance=[...outstanding.values()].reduce((sum,value)=>sum+value,0n);
+   result.gasReady=gasReady&&s.reserveCost()+feeCost<=BigInt(c.dailyBudgetWei);
+   result.balanceWei=String(currentBalance);result.lowBalance=currentBalance<reservedBalance+feeCost+BigInt(c.minBalanceWei);
+   result.readyToSign=c.enabled&&!result.lowBalance&&result.gasReady&&headFresh&&result.discoveryComplete;
    result.lastSuccess=s.get('lastSuccess');
    s.set('publicStatus',result);return result;
   }catch(error){

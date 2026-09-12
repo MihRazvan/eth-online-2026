@@ -157,7 +157,7 @@ try {
   assert.equal(await read(addresses.verifier,'HistoricalFeeVerifier','chainId'),11155111n);
   const position = await preparePosition({client,account,send,read,addresses});
   journal.position=position;save();
-  const manifest={mode:'testnet',chainId:11155111,rpcUrl:'https://ethereum-sepolia-rpc.publicnode.com',...Object.fromEntries(Object.entries(addresses).filter(([k])=>!['permit2','weth'].includes(k))),other:addresses.weth,nftIds:[String(position.nftId)],deploymentBlock:journal.transactions[0].receipt.blockNumber,blockTimeSeconds:12};
+  const manifest={mode:'testnet',chainId:11155111,fundingCommitmentVersion:1,rpcUrl:'https://ethereum-sepolia-rpc.publicnode.com',...Object.fromEntries(Object.entries(addresses).filter(([k])=>!['permit2','weth'].includes(k))),other:addresses.weth,nftIds:[String(position.nftId)],deploymentBlock:journal.transactions[0].receipt.blockNumber,blockTimeSeconds:12};
   writeFileSync(`${directory}/deployment.json`,json(manifest));
   const evidence={scope:mode==='rehearse'?'Isolated Sepolia fork rehearsal; no public transactions':'Public Sepolia deployment and owned liquidity NFT; no activated sale, settlement, live Graph or human-wallet acceptance claimed',implementationHash,chainId:11155111,account,pins,contracts:journal.contracts,position,transactions:journal.transactions.map(({raw,call,...t})=>({...t,to:call.to,value:call.value,calldataHash:keccak256(call.data)}))};
   writeFileSync(`${directory}/evidence.json`,json(evidence));

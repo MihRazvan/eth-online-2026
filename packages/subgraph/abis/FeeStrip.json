@@ -131,6 +131,11 @@
         "name": "deadline",
         "type": "uint64",
         "internalType": "uint64"
+      },
+      {
+        "name": "expectedPositionCommitment",
+        "type": "bytes32",
+        "internalType": "bytes32"
       }
     ],
     "outputs": [
@@ -281,6 +286,25 @@
     "type": "function",
     "name": "poolManagerCodehash",
     "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "positionCommitment",
+    "inputs": [
+      {
+        "name": "tokenId",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
     "outputs": [
       {
         "name": "",

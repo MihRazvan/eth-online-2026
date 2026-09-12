@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {mkdtempSync,rmSync,readFileSync,writeFileSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
+import {DatabaseSync} from 'node:sqlite';
 import {privateKeyToAccount} from 'viem/accounts';
 import {parseTransaction,decodeFunctionData,keccak256,zeroHash} from 'viem';
 import {keeperConfig} from '../src/config.mjs';
@@ -30,6 +31,32 @@ test('config is immutable, strictly pinned, requires dedicated signer and explic
  assert.throws(()=>keeperConfig({...fixtureConfig,chainId:1}),/UNSUPPORTED_CHAIN/);
  assert.throws(()=>keeperConfig({...fixtureConfig,enabled:undefined}),/EXPLICIT_ENABLED/);
  assert.throws(()=>keeperConfig({...fixtureConfig,gasLimit:'200000'}),/INVALID_BUDGET/);
+});
+test('receipt observation retains daily spend after an old signature confirms or remine changes receipt',t=>{
+ const f=setup(t);let now=1000;f.store.clock=()=>now;
+ f.store.journal({hash:hash(555),nonce:0,endpoint:101,raw:'0x',max_fee:'1',priority_fee:'1',reserved:'200',head:100});
+ now+=86400001;assert.equal(f.store.reserveCost(),200n);
+ f.store.txState(hash(555),'confirmed',{blockHash:hash(600)});assert.equal(f.store.reserveCost(),200n);
+ now+=86400001;assert.equal(f.store.reserveCost(),0n);
+ f.store.txState(hash(555),'confirmed',{blockHash:hash(600)});assert.equal(f.store.reserveCost(),0n,'same receipt does not extend forever');
+ f.store.txState(hash(555),'confirmed',{blockHash:hash(601)});assert.equal(f.store.reserveCost(),200n);
+});
+test('legacy receipt migration conservatively retains spend and does not reset its window on restart',t=>{
+ const dir=mkdtempSync(join(tmpdir(),'usufruct-keeper-migration-')),path=join(dir,'keeper.sqlite');
+ t.after(()=>rmSync(dir,{recursive:true,force:true}));
+ const old=new DatabaseSync(path);
+ old.exec(`CREATE TABLE transactions (hash TEXT PRIMARY KEY,nonce INTEGER NOT NULL,endpoint INTEGER NOT NULL,raw TEXT NOT NULL,max_fee TEXT NOT NULL,priority_fee TEXT NOT NULL,reserved TEXT NOT NULL,created INTEGER NOT NULL,head INTEGER NOT NULL,state TEXT NOT NULL,receipt TEXT)`);
+ old.prepare('INSERT INTO transactions VALUES (?,?,?,?,?,?,?,?,?,?,?)').run(hash(777),0,101,'0x','1','1','200',0,100,'confirmed',JSON.stringify({blockHash:hash(600)}));old.close();
+ let now=86400001;
+ const migrated=new KeeperStore(path,{clock:()=>now});assert.equal(migrated.reserveCost(),200n);migrated.close();
+ now+=86400001;
+ const reopened=new KeeperStore(path,{clock:()=>now});try{assert.equal(reopened.reserveCost(),0n);}finally{reopened.close();}
+});
+test('post-signature readiness fails when budget is exhausted; unknown pending nonce fails before a sale exists',async t=>{
+ const f=setup(t,{maxTxCostWei:'160000000000000',dailyBudgetWei:'160000000000000'});
+ const status=await f.worker.tick();assert.equal(status.status,'observed');assert.equal(f.state.broadcasts.length,1);assert.equal(status.readyToSign,false);assert.equal(status.gasReady,false);
+ const other=setup(t);other.state.next=1n;other.state.pendingNonce=1;
+ const blocked=await other.worker.tick();assert.equal(blocked.readyToSign,false);assert.equal(blocked.lastError,'SIGNER_NONCE_NOT_EXCLUSIVE');assert.equal(other.state.broadcasts.length,0);
 });
 test('fixed call, value, signer and budgets are journaled before broadcast; restart keeps same nonce',async t=>{
  const f=setup(t);let result=await f.worker.tick();assert.equal(result.status,'observed');assert.equal(f.state.broadcasts.length,1);

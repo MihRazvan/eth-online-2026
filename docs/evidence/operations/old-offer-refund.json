@@ -1,0 +1,17 @@
+{
+  "scope": "Read-only verification of buyer-authorized public Sepolia refund; no transaction sent by verification",
+  "chainId": 11155111,
+  "feeStrip": "0x97825ae0a3c6b52398ce666dbcd166129d61c61f",
+  "offerId": "2",
+  "buyer": "0x746bb7befd31d9052bb8eba7d5dd74c9acf54c6d",
+  "refundUSDCMicros": "672000000",
+  "transactionHash": "0x2d41ad3e0f4836ea49b2333e21bd22c50e5c835b9de0e34c7600f60d5373e571",
+  "blockNumber": "11689226",
+  "blockHash": "0x2ecc7228854ac5597c985ffa6cd04fec07d2602b2496a81a6e2757dc85afe029",
+  "status": "success",
+  "readbackBlock": "11689275",
+  "consumed": true,
+  "fundedLiabilityMicros": "0",
+  "oldContractUSDCMicros": "0",
+  "activatedSeries": "0"
+}

@@ -27,7 +27,8 @@ try {
   await send(posm,artifact('PositionManager').abi,'approve',[fs,nftId]);
   const block=await client.getBlock(),end=block.number+12n;
   const offer=await read(fs,'FeeStrip','nextOfferId'),seriesId=await read(fs,'FeeStrip','nextSeriesId');
-  await send(fs,artifact('FeeStrip').abi,'fundOffer',[account,nftId,10000n*10n**18n,7500n*10n**18n,1_000_000n,end,block.timestamp+3600n]);
+  const commitment=await read(fs,'FeeStrip','positionCommitment',[nftId]);
+  await send(fs,artifact('FeeStrip').abi,'fundOffer',[account,nftId,10000n*10n**18n,7500n*10n**18n,1_000_000n,end,block.timestamp+3600n,commitment]);
   await send(fs,artifact('FeeStrip').abi,'acceptOffer',[offer,1_000_000n]);
   assert.equal((await read(posm,'PositionManager','ownerOf',[nftId])).toLowerCase(),fs.toLowerCase());
   const active=await read(fs,'FeeStrip','series',[seriesId]);

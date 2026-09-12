@@ -1,0 +1,57 @@
+{
+  "scope": "Isolated Sepolia fork; participant refunds followed by two replacement deployments; no public transactions or manifests changed",
+  "chainId": 11155111,
+  "baseBlock": "11689200",
+  "baseHash": "0xf0420a63d2c1555dd8425ac6abe23bccfb76152de6e3c4198be0531d44109723",
+  "account": "0x92AAe0857979a139344f5b6F008e71F27A507522",
+  "initialNonce": 6186,
+  "oldFeeStrip": "0x97825ae0a3c6b52398ce666dbcd166129d61c61f",
+  "oldMarket": "0x686813f9ffb835fc4a6b2b7d5e0248137f8a2f5a",
+  "oldDeploymentEmptyOnPublicChain": false,
+  "requiredRefunds": [
+    {
+      "offerId": "2",
+      "buyer": "0x746bb7beFD31D9052BB8EbA7D5dD74C9aCf54C6d",
+      "amountMicros": "672000000",
+      "forkRefundTransaction": "0x6f72d78d64cabda10c6aad12674645281e6cdcb7f89295ad547a14be5448d1c1",
+      "publicConfirmationRequired": true
+    }
+  ],
+  "transactions": [
+    {
+      "name": "FeeStrip",
+      "address": "0xd84ee56b24841c887c73e8b9079a01c28b1b3e8e",
+      "nonce": 6186,
+      "constructorArgs": [
+        "0x429ba70129df741B2Ca2a85BC3A2a3328e5c09b4",
+        "0x1c7d4b196cb0c7b01d743fbc6116a902379c7238",
+        "0xcff7cccf3f09797b6b02d30647daee210fa0aafc"
+      ],
+      "calldataHash": "0xe5c1bf5bd2658704c34fbc015fdc730c09758c61c5183a006bdae3c2f03d7997",
+      "runtimeHash": "0x89e30c9afe9459b1a3426b11dbb7413f46dac1602d8457ea7752e44a5d224936",
+      "gasUsed": "3580330",
+      "transactionHash": "0x7c9de368bec8f607be608d645ec2107e4105b0b8de7322bef530356b163d1405"
+    },
+    {
+      "name": "FeeStripMarket",
+      "address": "0x08b350fb5f2a1eff499f5cecd8c6df427f282882",
+      "nonce": 6187,
+      "constructorArgs": [
+        "0xd84ee56b24841c887c73e8b9079a01c28b1b3e8e",
+        "0x1ef56bd27fa3c0795954b4dace7836696dfc3830"
+      ],
+      "calldataHash": "0x568acf0e1acfb39a40fdbc11d8951abd4ed7ff63a6716fddb269d0c0f67b3568",
+      "runtimeHash": "0x29ba34f6c599c19723397be1f62bb52728358b122a0ec0955337dca4e3e431eb",
+      "gasUsed": "1615721",
+      "transactionHash": "0xfd15ec3b01c169d5909f0dd4c32947709d966bcb946bc12626f542b808aeb889"
+    }
+  ],
+  "totalDeploymentGas": "5196051",
+  "remaining": [
+    "Fresh public nonce/state/balance checks",
+    "Public deployment and independent runtime/binding readback",
+    "Update manifest and operational pins",
+    "Redeploy Subgraph at new FeeStrip address",
+    "Operate endpoint service before new sales"
+  ]
+}

@@ -17,6 +17,11 @@ export class KeeperStore {
     CREATE TABLE IF NOT EXISTS jobs (id INTEGER PRIMARY KEY,end_block INTEGER NOT NULL,state TEXT NOT NULL,endpoint_hash TEXT);
     CREATE TABLE IF NOT EXISTS transactions (hash TEXT PRIMARY KEY,nonce INTEGER NOT NULL,endpoint INTEGER NOT NULL,raw TEXT NOT NULL,max_fee TEXT NOT NULL,priority_fee TEXT NOT NULL,reserved TEXT NOT NULL,created INTEGER NOT NULL,head INTEGER NOT NULL,state TEXT NOT NULL,receipt TEXT);
    `);
+   if(!this.db.prepare('PRAGMA table_info(transactions)').all().some(c=>c.name==='spend_observed_at')){
+    this.db.exec('BEGIN IMMEDIATE; ALTER TABLE transactions ADD COLUMN spend_observed_at INTEGER');
+    this.db.prepare('UPDATE transactions SET spend_observed_at=? WHERE receipt IS NOT NULL').run(this.clock());
+    this.db.exec('COMMIT');
+   }
   }catch(error){this.close();throw error;}
  }
  assertLock(){let owner;try{owner=JSON.parse(readFileSync(this.lock+'/owner.json'));}catch{fail('KEEPER_LOCK_LOST');}if(owner.token!==this.token)fail('KEEPER_LOCK_LOST');}
@@ -28,9 +33,12 @@ export class KeeperStore {
  state(id,state,hash=null){this.assertLock();this.db.prepare('UPDATE jobs SET state=?,endpoint_hash=? WHERE id=?').run(state,hash,id);}
  activeTxs(){return this.db.prepare("SELECT * FROM transactions WHERE state IN ('signed','broadcast','mined') ORDER BY created,hash").all();}
  nonceTxs(nonce){return this.db.prepare('SELECT * FROM transactions WHERE nonce=? ORDER BY created,hash').all(nonce);}
- reserveCost(){return this.db.prepare("SELECT reserved FROM transactions WHERE created>=? OR state IN ('signed','broadcast','mined')").all(this.clock()-86400000).reduce((sum,r)=>sum+BigInt(r.reserved),0n);}
- journal(tx){this.assertLock();this.db.prepare('INSERT INTO transactions VALUES (?,?,?,?,?,?,?,?,?,?,NULL)').run(tx.hash,tx.nonce,tx.endpoint,tx.raw,tx.max_fee,tx.priority_fee,tx.reserved,this.clock(),tx.head,'signed');}
- txState(hash,state,receipt=null){this.assertLock();this.db.prepare('UPDATE transactions SET state=?,receipt=? WHERE hash=?').run(state,receipt?JSON.stringify(receipt):null,hash);}
+ reserveCost(){const cutoff=this.clock()-86400000;return this.db.prepare("SELECT reserved FROM transactions WHERE created>=? OR spend_observed_at>=? OR state IN ('signed','broadcast','mined')").all(cutoff,cutoff).reduce((sum,r)=>sum+BigInt(r.reserved),0n);}
+ journal(tx){this.assertLock();this.db.prepare('INSERT INTO transactions (hash,nonce,endpoint,raw,max_fee,priority_fee,reserved,created,head,state) VALUES (?,?,?,?,?,?,?,?,?,?)').run(tx.hash,tx.nonce,tx.endpoint,tx.raw,tx.max_fee,tx.priority_fee,tx.reserved,this.clock(),tx.head,'signed');}
+ txState(hash,state,receipt=null){
+  this.assertLock();const encoded=receipt?JSON.stringify(receipt):null;
+  this.db.prepare('UPDATE transactions SET state=?,spend_observed_at=CASE WHEN ? IS NOT NULL AND (spend_observed_at IS NULL OR receipt IS NULL OR receipt!=?) THEN ? ELSE spend_observed_at END,receipt=? WHERE hash=?').run(state,encoded,encoded,this.clock(),encoded,hash);
+ }
  close(){this.db?.close();this.db=null;try{if(JSON.parse(readFileSync(this.lock+'/owner.json')).token===this.token)rmSync(this.lock,{recursive:true});}catch{}}
 }
 /** Offline operator recovery only: never evicts a live PID or a lock from another host. */

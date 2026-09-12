@@ -1,0 +1,17 @@
+FROM node:24.12.0-bookworm-slim@sha256:7326fb2dbdce998edd72140946851be64ef4a643e8715e138ca467e8e9d92c99
+RUN apt-get update && apt-get install -y --no-install-recommends python3 python3-venv ca-certificates && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+RUN npm install --global pnpm@12.3.4 && pnpm install --prod --frozen-lockfile --ignore-scripts
+COPY scripts/proof/requirements.txt /app/scripts/proof/requirements.txt
+RUN python3 -m venv /opt/proof && /opt/proof/bin/pip install --no-cache-dir -r scripts/proof/requirements.txt
+COPY packages/operations/src packages/operations/src
+COPY packages/settlement/src packages/settlement/src
+COPY packages/keeper/src packages/keeper/src
+COPY scripts/chain/proof.mjs scripts/chain/proof.mjs
+COPY scripts/proof/validate_witness.py scripts/proof/validate_witness.py
+COPY deployments/sepolia.json deployments/sepolia.json
+COPY docs/evidence/sepolia-deployment.json docs/evidence/sepolia-deployment.json
+ENV NODE_ENV=production FEESTRIP_PROOF_PYTHON=/opt/proof/bin/python OPERATIONS_DATA_DIR=/data PORT=8789
+EXPOSE 8789
+CMD ["node", "packages/operations/src/cli.mjs"]

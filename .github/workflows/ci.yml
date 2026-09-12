@@ -36,6 +36,9 @@ jobs:
       - run: pnpm test
       - run: pnpm test:public-setup
       - run: pnpm test:settlement
+      - run: pnpm test:operations
+      - run: node --test packages/keeper/test/keeper.test.mjs
+      - run: pnpm exec tsc --noEmit --target ES2022 --module NodeNext --moduleResolution NodeNext --skipLibCheck .railway/railway.ts
       - run: pnpm build
       - run: pnpm build:vercel
       - run: pnpm build:subgraph
@@ -44,6 +47,7 @@ jobs:
       - uses: foundry-rs/foundry-toolchain@908c540300062bd5a7e473851cdb4282204cee09
         with:
           version: v1.5.1
+      - run: RUN_KEEPER_ANVIL=1 node --test packages/keeper/test/anvil.test.mjs
       - name: Start dedicated local chain
         run: |
           anvil --host 127.0.0.1 --port 8545 --chain-id 31337 --hardfork cancun --silent > /tmp/feestrip-anvil.log 2>&1 &
