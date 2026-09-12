@@ -13,9 +13,9 @@ dataSources:
         type: BigInt
         data: '11155111'
     source:
-      address: '0x97825ae0a3c6b52398ce666dbcd166129d61c61f'
+      address: '0xd84ee56b24841c887c73e8b9079a01c28b1b3e8e'
       abi: FeeStrip
-      startBlock: 11684159
+      startBlock: 11689365
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.9

@@ -1,6 +1,6 @@
 {
-  "scope": "Public Sepolia deployment and owned liquidity NFT; no activated sale, settlement, live Graph or human-wallet acceptance claimed",
-  "implementationHash": "0x6b76fefeff24165274b9c0d291a6ed3bb6b630f42d58d0e0fd41434bf2c05efb",
+  "scope": "Public Sepolia replacement of FeeStrip and FeeStripMarket only; infrastructure reused; no sale activation or settlement acceptance",
+  "implementationHash": "d90af0a2a71590a359ded74e4c267c29bc8b009b929d8195c5c2e0585c56872e",
   "chainId": 11155111,
   "account": "0x92AAe0857979a139344f5b6F008e71F27A507522",
   "pins": {
@@ -38,7 +38,7 @@
     },
     "feeStrip": {
       "name": "FeeStrip",
-      "address": "0x97825ae0a3c6b52398ce666dbcd166129d61c61f",
+      "address": "0xd84eE56b24841c887c73e8b9079A01c28b1B3E8E",
       "constructorArgs": [
         "0x429ba70129df741B2Ca2a85BC3A2a3328e5c09b4",
         "0x1c7d4b196cb0c7b01d743fbc6116a902379c7238",
@@ -47,9 +47,9 @@
       "compiler": {
         "version": "0.8.26+commit.8a97fa7a"
       },
-      "creationBytecodeHash": "0x222b9dc75a75ffe67714ef270b259d64125963aec9a21829867c5aa27134bda3",
-      "initCodeHash": "0x327f11d505b0f6a1122d0b3d1799e9fe1ea5b3b0963aa75dcd231754bbe2e693",
-      "observedRuntimeHash": "0xc75ea19cb403c97a573431d484d9c1113d97766aa3dda7285ad78ce48c71a7cb"
+      "creationBytecodeHash": "0xd9db188980f2813d5acf2142e65e5afa314af22ce8c6d8c01714786f737d6a65",
+      "initCodeHash": "0xe5c1bf5bd2658704c34fbc015fdc730c09758c61c5183a006bdae3c2f03d7997",
+      "observedRuntimeHash": "0x89e30c9afe9459b1a3426b11dbb7413f46dac1602d8457ea7752e44a5d224936"
     },
     "aqua": {
       "name": "Aqua",
@@ -79,17 +79,17 @@
     },
     "market": {
       "name": "FeeStripMarket",
-      "address": "0x686813f9ffb835fc4a6b2b7d5e0248137f8a2f5a",
+      "address": "0x08B350FB5f2a1efF499F5cECD8C6Df427F282882",
       "constructorArgs": [
-        "0x97825ae0a3c6b52398ce666dbcd166129d61c61f",
+        "0xd84eE56b24841c887c73e8b9079A01c28b1B3E8E",
         "0x1ef56bd27fa3c0795954b4dace7836696dfc3830"
       ],
       "compiler": {
         "version": "0.8.30+commit.73712a01"
       },
       "creationBytecodeHash": "0xd28cbdcc7a0c197a0fd2b4d3b20df88331a447692f8361c9110b6b9101d0d617",
-      "initCodeHash": "0x58e2354234e6d2682c7554dc5b8c435f7c08acc73fb68fd8ecc2627a3c8c5267",
-      "observedRuntimeHash": "0xfaef60b4ceb480720c8ddaaf3d4c749e36bbbcf1f87724bf2d299d8b7a0e842b"
+      "initCodeHash": "0x568acf0e1acfb39a40fdbc11d8951abd4ed7ff63a6716fddb269d0c0f67b3568",
+      "observedRuntimeHash": "0x29ba34f6c599c19723397be1f62bb52728358b122a0ec0955337dca4e3e431eb"
     }
   },
   "position": {
@@ -125,210 +125,63 @@
     "allowanceNotice": "Bounded token and Permit2 approvals may retain unused allowance; PosM authorization expires after 30 minutes.",
     "scope": "Canonical Sepolia NFT setup; public execution or fork rehearsal is determined by the caller. Existing pool price is not a fair-value oracle."
   },
+  "previousDeployment": {
+    "manifest": "deployments/archive/sepolia-pre-commitment.json",
+    "evidence": "docs/evidence/archive/sepolia-pre-commitment-deployment.json",
+    "feeStrip": "0x97825ae0a3c6b52398ce666dbcd166129d61c61f",
+    "market": "0x686813f9ffb835fc4a6b2b7d5e0248137f8a2f5a",
+    "oldDeploymentEmptyAt": "11689368",
+    "oldDeploymentEmptyHash": "0xa57a55294189852bbc0e62af7a8b837146dd9fcbc3c950fb1ace87122521855d"
+  },
   "transactions": [
     {
-      "label": "deploy BlockHashCheckpoints",
-      "nonce": 6174,
-      "maximumCost": "220626137327075",
-      "hash": "0x8a8ff995af5d8d23761c874fd4f9be4d89866497086b389900ebc27d116ef14f",
+      "name": "FeeStrip",
+      "nonce": 6186,
+      "address": "0xd84eE56b24841c887c73e8b9079A01c28b1B3E8E",
+      "initCodeHash": "0xe5c1bf5bd2658704c34fbc015fdc730c09758c61c5183a006bdae3c2f03d7997",
+      "gas": "4331895",
+      "maxFeePerGas": "1226648976",
+      "maxPriorityFeePerGas": "1000000",
+      "maximumCost": "5313714565889520",
+      "hash": "0xd8a204ca8514db88748646192df3f646ff7c287c7c940fa557121df84d4e886b",
       "receipt": {
-        "transactionHash": "0x8a8ff995af5d8d23761c874fd4f9be4d89866497086b389900ebc27d116ef14f",
-        "blockNumber": "11684159",
-        "blockHash": "0x809af807f85ee6ad08bb2d34f411f63e368f3b83f7ff00310dd3f9231ace2d57",
-        "contractAddress": "0x1c8f1a571b229c5ab6b2ab3e0b6db0dcd9bca1cb",
-        "gasUsed": "136287",
-        "effectiveGasPrice": "1019929724"
+        "transactionHash": "0xd8a204ca8514db88748646192df3f646ff7c287c7c940fa557121df84d4e886b",
+        "blockNumber": "11689365",
+        "blockHash": "0x8766cb98e705a3e2d8184b12114ed79c4b9fd2b66f52c19e33adbd526f5f0b4b",
+        "contractAddress": "0xd84ee56b24841c887c73e8b9079a01c28b1b3e8e",
+        "gasUsed": "3580330",
+        "effectiveGasPrice": "1110971701"
       },
       "to": null,
       "value": "0",
-      "calldataHash": "0xe67d6ed26e424da1362a1b12889216e79dd0cc97de2b8d4f5b964cb66a70966a"
+      "calldataHash": "0xe5c1bf5bd2658704c34fbc015fdc730c09758c61c5183a006bdae3c2f03d7997"
     },
     {
-      "label": "deploy HistoricalFeeVerifier",
-      "nonce": 6175,
-      "maximumCost": "2850169274752530",
-      "hash": "0x786c3b102cce37df3b29b342be9285f143a8f75c486184ca85929cf994a6f62a",
+      "name": "FeeStripMarket",
+      "nonce": 6187,
+      "address": "0x08B350FB5f2a1efF499F5cECD8C6Df427F282882",
+      "initCodeHash": "0x568acf0e1acfb39a40fdbc11d8951abd4ed7ff63a6716fddb269d0c0f67b3568",
+      "gas": "1955653",
+      "maxFeePerGas": "1326929737",
+      "maxPriorityFeePerGas": "1000000",
+      "maximumCost": "2595014120953261",
+      "hash": "0x44bc0392f99dd8ddb155347371d89cc810252cbe8da6f1bc4a7fa3ec01859ec0",
       "receipt": {
-        "transactionHash": "0x786c3b102cce37df3b29b342be9285f143a8f75c486184ca85929cf994a6f62a",
-        "blockNumber": "11684161",
-        "blockHash": "0x8de8d295f6ccb9d0658bb809bd73d20d54d3a1f4e9f315a5ba899ad5d03579cf",
-        "contractAddress": "0xcff7cccf3f09797b6b02d30647daee210fa0aafc",
-        "gasUsed": "2052258",
-        "effectiveGasPrice": "1075854582"
-      },
-      "to": null,
-      "value": "0",
-      "calldataHash": "0x95b94ac44066578fa3d1dd3ec4d577c4a3911a6ac05b3e67a2b1c6678d0712aa"
-    },
-    {
-      "label": "deploy FeeStrip",
-      "nonce": 6176,
-      "maximumCost": "5295491924351904",
-      "hash": "0xb55414dc9153a9600e30904a419c4c7a6d8bf29037abb137bc23411b79d1f87f",
-      "receipt": {
-        "transactionHash": "0xb55414dc9153a9600e30904a419c4c7a6d8bf29037abb137bc23411b79d1f87f",
-        "blockNumber": "11684163",
-        "blockHash": "0x199bca2c92bd8e4a2f37d79753c06490cecb85e3e0bdef1f32355218994daaa5",
-        "contractAddress": "0x97825ae0a3c6b52398ce666dbcd166129d61c61f",
-        "gasUsed": "3560644",
-        "effectiveGasPrice": "1001850715"
-      },
-      "to": null,
-      "value": "0",
-      "calldataHash": "0x327f11d505b0f6a1122d0b3d1799e9fe1ea5b3b0963aa75dcd231754bbe2e693"
-    },
-    {
-      "label": "deploy Aqua",
-      "nonce": 6177,
-      "maximumCost": "813212878643358",
-      "hash": "0x0b2e366a167e57657a8dbfbcc1a1881570f37bc2f50cf8d78a2be19f6a05cf6f",
-      "receipt": {
-        "transactionHash": "0x0b2e366a167e57657a8dbfbcc1a1881570f37bc2f50cf8d78a2be19f6a05cf6f",
-        "blockNumber": "11684165",
-        "blockHash": "0x5b43456b82501fef9c93441f0e15740fb158c49857f306e2828315d3c97b1406",
-        "contractAddress": "0x5be8474a6c74a51c35dd3b27cab93774d0fe73ee",
-        "gasUsed": "595728",
-        "effectiveGasPrice": "1056069116"
-      },
-      "to": null,
-      "value": "0",
-      "calldataHash": "0x19b2028663d57d4c2f6f3e7a7f4ef388c2462c622be0b7d2cf38f798c3e70b38"
-    },
-    {
-      "label": "deploy FeeStripRouter",
-      "nonce": 6178,
-      "maximumCost": "6999965410534728",
-      "hash": "0x57822cace5bf62003ab38168f95fa4749bb86a505f1875181aa6bd24b4309ecd",
-      "receipt": {
-        "transactionHash": "0x57822cace5bf62003ab38168f95fa4749bb86a505f1875181aa6bd24b4309ecd",
-        "blockNumber": "11684168",
-        "blockHash": "0xe502fa85cb9e76022b6eea42ca3d8ce6f5771fd5bc7784e5b7765dbad0c23cd3",
-        "contractAddress": "0x1ef56bd27fa3c0795954b4dace7836696dfc3830",
-        "gasUsed": "4632504",
-        "effectiveGasPrice": "1118505815"
-      },
-      "to": null,
-      "value": "0",
-      "calldataHash": "0x32cbdba31f1e8ee2be34b12c1721ab644d5293384a360c0f7936dc14739823e4"
-    },
-    {
-      "label": "deploy FeeStripMarket",
-      "nonce": 6179,
-      "maximumCost": "2610226021139786",
-      "hash": "0xa8c29517d4f699177fe12a8b9d68d4aed9bb0f9bed9563ecec0e8666a9915a8c",
-      "receipt": {
-        "transactionHash": "0xa8c29517d4f699177fe12a8b9d68d4aed9bb0f9bed9563ecec0e8666a9915a8c",
-        "blockNumber": "11684170",
-        "blockHash": "0x430c9497b1e7ec6caf21f59d78ed434841897e05101a765ae73657b3089fe2c6",
-        "contractAddress": "0x686813f9ffb835fc4a6b2b7d5e0248137f8a2f5a",
+        "transactionHash": "0x44bc0392f99dd8ddb155347371d89cc810252cbe8da6f1bc4a7fa3ec01859ec0",
+        "blockNumber": "11689367",
+        "blockHash": "0x536daad03c55d323ebe89602629a15b1c8eaeb5826151eeb214583c71796c451",
+        "contractAddress": "0x08b350fb5f2a1eff499f5cecd8c6df427f282882",
         "gasUsed": "1615721",
-        "effectiveGasPrice": "1041724609"
+        "effectiveGasPrice": "1048893027"
       },
       "to": null,
       "value": "0",
-      "calldataHash": "0x58e2354234e6d2682c7554dc5b8c435f7c08acc73fb68fd8ecc2627a3c8c5267"
-    },
-    {
-      "label": "position-wrap-weth",
-      "nonce": 6180,
-      "maximumCost": "3064028393876859",
-      "hash": "0xe31bc994987c04d41402a073eaab339d99dbae790e831ef30c58ea7053eb0f32",
-      "receipt": {
-        "transactionHash": "0xe31bc994987c04d41402a073eaab339d99dbae790e831ef30c58ea7053eb0f32",
-        "blockNumber": "11684172",
-        "blockHash": "0xae6b5dec152d8fed684d140e232f12547cda59970151dca8285ba66ff167ea2d",
-        "contractAddress": null,
-        "gasUsed": "45038",
-        "effectiveGasPrice": "1101386663"
-      },
-      "to": "0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14",
-      "value": "3000000000000000",
-      "calldataHash": "0xa1548b79599a5ef2fd6de226ea5131c228954c4bf788eb3e4386a2728abe3e8d"
-    },
-    {
-      "label": "position-usdc-approve-permit2",
-      "nonce": 6181,
-      "maximumCost": "84062996070864",
-      "hash": "0x82f97d93d863a1ecf0c1d2fe59b58ea0a20c5f8015d42b08ddbbd17468fdff9e",
-      "receipt": {
-        "transactionHash": "0x82f97d93d863a1ecf0c1d2fe59b58ea0a20c5f8015d42b08ddbbd17468fdff9e",
-        "blockNumber": "11684174",
-        "blockHash": "0x430d6f0abbdc205bce1540f0ce6474851b2f0bf0fcbe92afaf7722148043a031",
-        "contractAddress": null,
-        "gasUsed": "55377",
-        "effectiveGasPrice": "974442256"
-      },
-      "to": "0x1c7d4b196cb0c7b01d743fbc6116a902379c7238",
-      "value": "0",
-      "calldataHash": "0x91bc20987372c179d96ffe534aadb4648aab56802edbffb6f6b04f7f01af5d41"
-    },
-    {
-      "label": "position-usdc-permit2-approve-posm",
-      "nonce": 6182,
-      "maximumCost": "75710167910880",
-      "hash": "0x3781cc3ba26bd91da8394dd5b44e9f6ff3d73bf8c4fee8bd79a6c72f7c449548",
-      "receipt": {
-        "transactionHash": "0x3781cc3ba26bd91da8394dd5b44e9f6ff3d73bf8c4fee8bd79a6c72f7c449548",
-        "blockNumber": "11684176",
-        "blockHash": "0x953d5fb116843286f148084448a0e612c04c0879fa24db11b79feb34759f001d",
-        "contractAddress": null,
-        "gasUsed": "47590",
-        "effectiveGasPrice": "1061874886"
-      },
-      "to": "0x000000000022D473030F116dDEE9F6B43aC78BA3",
-      "value": "0",
-      "calldataHash": "0xd33ce8c52274c28b4f95bf0f4213f6b99e7a357625b3c56915c79fe1981285b7"
-    },
-    {
-      "label": "position-weth-approve-permit2",
-      "nonce": 6183,
-      "maximumCost": "67177612292480",
-      "hash": "0xfe9b90d55f3f328da46ad883843c43f5e31acd9e94bbeb9586e1c909d39d7a45",
-      "receipt": {
-        "transactionHash": "0xfe9b90d55f3f328da46ad883843c43f5e31acd9e94bbeb9586e1c909d39d7a45",
-        "blockNumber": "11684179",
-        "blockHash": "0x0c40c94936674a42fe95251093bbe431bb2db190ebd81af296b6af6cb5a15721",
-        "contractAddress": null,
-        "gasUsed": "45992",
-        "effectiveGasPrice": "1082638006"
-      },
-      "to": "0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14",
-      "value": "0",
-      "calldataHash": "0x8b875e15c868a8f99d0fa27c2a58f7cec1105a9d1a85fd8cd8e71fe095d85eb6"
-    },
-    {
-      "label": "position-weth-permit2-approve-posm",
-      "nonce": 6184,
-      "maximumCost": "70739454372943",
-      "hash": "0x02acc8e07d7d8ac2a1ca915313a7cbf7c71e3dc772e7cfe85bc4da50d99878cb",
-      "receipt": {
-        "transactionHash": "0x02acc8e07d7d8ac2a1ca915313a7cbf7c71e3dc772e7cfe85bc4da50d99878cb",
-        "blockNumber": "11684182",
-        "blockHash": "0x8dac74879e5beb7f4a1db15dbee94213d639086245e4d72697986425636d5c55",
-        "contractAddress": null,
-        "gasUsed": "47626",
-        "effectiveGasPrice": "1073869041"
-      },
-      "to": "0x000000000022D473030F116dDEE9F6B43aC78BA3",
-      "value": "0",
-      "calldataHash": "0xe93d2319859ecabb5ce4b0e5484a4561f9c9bb17e67ad6daa9e2f9ea17f76aa7"
-    },
-    {
-      "label": "position-mint",
-      "nonce": 6185,
-      "maximumCost": "536009526521838",
-      "hash": "0x997b7aaa5d1c94645429f1c9827f3a22fc3f1835a98a9bff977dceb3e01a30de",
-      "receipt": {
-        "transactionHash": "0x997b7aaa5d1c94645429f1c9827f3a22fc3f1835a98a9bff977dceb3e01a30de",
-        "blockNumber": "11684184",
-        "blockHash": "0xd155e80637a8135f1abf1b2e237cc6ca26c2ff1cfe14411603bc716d35d51ac0",
-        "contractAddress": null,
-        "gasUsed": "351242",
-        "effectiveGasPrice": "986337333"
-      },
-      "to": "0x429ba70129df741B2Ca2a85BC3A2a3328e5c09b4",
-      "value": "0",
-      "calldataHash": "0x48df92231ac1147c09633e9c150652674019db739900c83f91d3ff97412e2d21"
+      "calldataHash": "0x568acf0e1acfb39a40fdbc11d8951abd4ed7ff63a6716fddb269d0c0f67b3568"
     }
-  ]
+  ],
+  "commitment": "0x024730b484d9e35e750ec0bc638e108a43bcf8b49b74d5a8c2191678593ca5a3",
+  "verifiedAt": "2026-09-12T14:03:18.100Z",
+  "verificationBlock": "11689368",
+  "verificationHash": "0xa57a55294189852bbc0e62af7a8b837146dd9fcbc3c950fb1ace87122521855d",
+  "independentReadback": "docs/evidence/operations/commitment-upgrade-readback.json"
 }

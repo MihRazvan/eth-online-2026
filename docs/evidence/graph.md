@@ -1,5 +1,7 @@
 # Graph integration evidence
 
+Public replacement checkpoint: Studio **v0.2.0** indexes FeeStrip0xd84eE56b24841c887c73e8b9079A01c28b1B3E8E from11689365, deploymentQmXEm3WDjvy2q2xSQYoK3HmoBzGKV6oR4JgEe2QRJkWAcw. Hash-pinned verification matches RPC at11689393 with zero lag and no indexing errors; series remain empty. [Current evidence](operations/graph-upgrade-verification.json), [archived v0.1.0 configuration](../../deployments/archive/subgraph-sepolia-v0.1.0.json). The v0.1.0 observations below are historical.
+
 Updated 2026-09-12. Scope: live Studio and authenticated Substreams source agreement verified; actual joined buyer analysis remains pending.
 
 Graph Market access is now verified. The corrected v0.1.1 map delivers real Sepolia data, decodes the NFT39216 mint with the correct block-global log index107, and resumes its saved cursor. A separate finalized stream agrees with Studio and RPC at block11688819. [Live stream evidence and limitations](substreams.md#live-provider-qualification--12-september). This supersedes the missing-token access gap below; empty series still prevent an actual joined buyer result.

@@ -7,15 +7,14 @@
   "usdc": "0x1c7d4b196cb0c7b01d743fbc6116a902379c7238",
   "checkpoints": "0x1c8f1a571b229c5ab6b2ab3e0b6db0dcd9bca1cb",
   "verifier": "0xcff7cccf3f09797b6b02d30647daee210fa0aafc",
-  "feeStrip": "0xd84eE56b24841c887c73e8b9079A01c28b1B3E8E",
+  "feeStrip": "0x97825ae0a3c6b52398ce666dbcd166129d61c61f",
   "aqua": "0x5be8474a6c74a51c35dd3b27cab93774d0fe73ee",
   "swapRouter": "0x1ef56bd27fa3c0795954b4dace7836696dfc3830",
-  "market": "0x08B350FB5f2a1efF499F5cECD8C6Df427F282882",
+  "market": "0x686813f9ffb835fc4a6b2b7d5e0248137f8a2f5a",
   "other": "0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14",
   "nftIds": [
     "39216"
   ],
-  "deploymentBlock": "11689365",
-  "blockTimeSeconds": 12,
-  "fundingCommitmentVersion": 1
+  "deploymentBlock": "11684159",
+  "blockTimeSeconds": 12
 }

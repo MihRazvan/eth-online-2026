@@ -1,0 +1,269 @@
+{
+  "scope": "Independent public Sepolia readback through credential-free PublicNode; no wallet, signing or transaction calls",
+  "chainId": 11155111,
+  "provider": "https://ethereum-sepolia-rpc.publicnode.com",
+  "observedAt": "2026-09-12T14:06:01.164Z",
+  "blockNumber": "11689381",
+  "blockHash": "0xcd7ee255c91fa55e42c5f378b22916141f04537a62ebbd65acb25b3a46626737",
+  "finalizedBlockNumber": "11689288",
+  "finalizedBlockHash": "0xda9362c8f420b82b734e938fcb82c839e9108c8097cb7f028b207f5e711d30b0",
+  "reviewedContractCommit": "2e167fc",
+  "compiledSourceHashesChecked": 69,
+  "transactions": [
+    {
+      "name": "FeeStrip",
+      "address": "0xd84eE56b24841c887c73e8b9079A01c28b1B3E8E",
+      "transactionHash": "0xd8a204ca8514db88748646192df3f646ff7c287c7c940fa557121df84d4e886b",
+      "nonce": 6186,
+      "blockNumber": "11689365",
+      "blockHash": "0x8766cb98e705a3e2d8184b12114ed79c4b9fd2b66f52c19e33adbd526f5f0b4b",
+      "confirmations": "17",
+      "finalized": false,
+      "from": "0x92aae0857979a139344f5b6f008e71f27a507522",
+      "to": null,
+      "valueWei": "0",
+      "gasLimit": "4331895",
+      "gasUsed": "3580330",
+      "effectiveGasPriceWei": "1110971701",
+      "gasCostWei": "3977645310241330",
+      "initCodeHash": "0xe5c1bf5bd2658704c34fbc015fdc730c09758c61c5183a006bdae3c2f03d7997",
+      "runtimeHash": "0x89e30c9afe9459b1a3426b11dbb7413f46dac1602d8457ea7752e44a5d224936",
+      "compiledRuntimeMatchesOutsideImmutables": true,
+      "rehearsalRuntimeMatches": true
+    },
+    {
+      "name": "FeeStripMarket",
+      "address": "0x08B350FB5f2a1efF499F5cECD8C6Df427F282882",
+      "transactionHash": "0x44bc0392f99dd8ddb155347371d89cc810252cbe8da6f1bc4a7fa3ec01859ec0",
+      "nonce": 6187,
+      "blockNumber": "11689367",
+      "blockHash": "0x536daad03c55d323ebe89602629a15b1c8eaeb5826151eeb214583c71796c451",
+      "confirmations": "15",
+      "finalized": false,
+      "from": "0x92aae0857979a139344f5b6f008e71f27a507522",
+      "to": null,
+      "valueWei": "0",
+      "gasLimit": "1955653",
+      "gasUsed": "1615721",
+      "effectiveGasPriceWei": "1048893027",
+      "gasCostWei": "1694718490477467",
+      "initCodeHash": "0x568acf0e1acfb39a40fdbc11d8951abd4ed7ff63a6716fddb269d0c0f67b3568",
+      "runtimeHash": "0x29ba34f6c599c19723397be1f62bb52728358b122a0ec0955337dca4e3e431eb",
+      "compiledRuntimeMatchesOutsideImmutables": true,
+      "rehearsalRuntimeMatches": true
+    }
+  ],
+  "runtimePins": {
+    "poolManager": {
+      "address": "0xE03A1074c86CFeDd5C142C4F04F1a1536e203543",
+      "hash": "0x09930125a49f5b95caf8052991cc14d1240dca8b43f42b899115b86867e4bce1"
+    },
+    "positionManager": {
+      "address": "0x429ba70129df741B2Ca2a85BC3A2a3328e5c09b4",
+      "hash": "0xcffd746f78c2b50aafd19076bbe9c48f14446e5248fc5d76b9b4896610e51aab"
+    },
+    "usdc": {
+      "address": "0x1c7d4b196cb0c7b01d743fbc6116a902379c7238",
+      "hash": "0xcd3f29e2ea9c61dadd48bfeaf8b2884b6de9dfee7bf45329452c4c33d0868ceb"
+    },
+    "other": {
+      "address": "0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14",
+      "hash": "0xc864e10689f2da18833652a3b075d43106e87f0f90d95ee64f6f0b33bc026083"
+    },
+    "checkpoints": {
+      "address": "0x1c8f1a571b229c5ab6b2ab3e0b6db0dcd9bca1cb",
+      "hash": "0x924a924bd6e7e27a650e19e75ae8f9cdc15215faabed2135e713d2561c74fdc4"
+    },
+    "verifier": {
+      "address": "0xcff7cccf3f09797b6b02d30647daee210fa0aafc",
+      "hash": "0xa84a3a38fb80704ebc198d35e555b2a30a6c8c6e83c09b90b2344fa186f76ffc"
+    },
+    "aqua": {
+      "address": "0x5be8474a6c74a51c35dd3b27cab93774d0fe73ee",
+      "hash": "0xd461741f8861c8193ad7a290a4fcf372f56fc296ca0c30191eefd9256065f733"
+    },
+    "swapRouter": {
+      "address": "0x1ef56bd27fa3c0795954b4dace7836696dfc3830",
+      "hash": "0xda1f741c39b432a877a063e92ec30994e601dfb61ba9538e4789f966d967abd0"
+    },
+    "oldFeeStrip": {
+      "address": "0x97825ae0a3c6b52398ce666dbcd166129d61c61f",
+      "hash": "0xc75ea19cb403c97a573431d484d9c1113d97766aa3dda7285ad78ce48c71a7cb"
+    },
+    "oldMarket": {
+      "address": "0x686813f9ffb835fc4a6b2b7d5e0248137f8a2f5a",
+      "hash": "0xfaef60b4ceb480720c8ddaaf3d4c749e36bbbcf1f87724bf2d299d8b7a0e842b"
+    }
+  },
+  "bindings": [
+    {
+      "address": "0xd84eE56b24841c887c73e8b9079A01c28b1B3E8E",
+      "function": "positionManager",
+      "value": "0x429ba70129df741B2Ca2a85BC3A2a3328e5c09b4"
+    },
+    {
+      "address": "0xd84eE56b24841c887c73e8b9079A01c28b1B3E8E",
+      "function": "poolManager",
+      "value": "0xE03A1074c86CFeDd5C142C4F04F1a1536e203543"
+    },
+    {
+      "address": "0xd84eE56b24841c887c73e8b9079A01c28b1B3E8E",
+      "function": "usdc",
+      "value": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238"
+    },
+    {
+      "address": "0xd84eE56b24841c887c73e8b9079A01c28b1B3E8E",
+      "function": "verifier",
+      "value": "0xCfF7cCcF3f09797b6B02d30647DaEe210Fa0AAFc"
+    },
+    {
+      "address": "0xd84eE56b24841c887c73e8b9079A01c28b1B3E8E",
+      "function": "positionManagerCodehash",
+      "value": "0xcffd746f78c2b50aafd19076bbe9c48f14446e5248fc5d76b9b4896610e51aab"
+    },
+    {
+      "address": "0xd84eE56b24841c887c73e8b9079A01c28b1B3E8E",
+      "function": "poolManagerCodehash",
+      "value": "0x09930125a49f5b95caf8052991cc14d1240dca8b43f42b899115b86867e4bce1"
+    },
+    {
+      "address": "0x08B350FB5f2a1efF499F5cECD8C6Df427F282882",
+      "function": "feeStrip",
+      "value": "0xd84eE56b24841c887c73e8b9079A01c28b1B3E8E"
+    },
+    {
+      "address": "0x08B350FB5f2a1efF499F5cECD8C6Df427F282882",
+      "function": "router",
+      "value": "0x1EF56bd27fA3c0795954B4dAcE7836696dfc3830"
+    },
+    {
+      "address": "0xcff7cccf3f09797b6b02d30647daee210fa0aafc",
+      "function": "chainId",
+      "value": "11155111"
+    },
+    {
+      "address": "0xcff7cccf3f09797b6b02d30647daee210fa0aafc",
+      "function": "poolManager",
+      "value": "0xE03A1074c86CFeDd5C142C4F04F1a1536e203543"
+    },
+    {
+      "address": "0xcff7cccf3f09797b6b02d30647daee210fa0aafc",
+      "function": "checkpoints",
+      "value": "0x1c8f1a571b229C5Ab6B2AB3E0b6Db0dcd9BCa1cB"
+    },
+    {
+      "address": "0xcff7cccf3f09797b6b02d30647daee210fa0aafc",
+      "function": "managerCodeHash",
+      "value": "0x09930125a49f5b95caf8052991cc14d1240dca8b43f42b899115b86867e4bce1"
+    },
+    {
+      "address": "0x1ef56bd27fa3c0795954b4dace7836696dfc3830",
+      "function": "AQUA",
+      "value": "0x5BE8474A6C74A51C35DD3B27cab93774D0FE73Ee"
+    },
+    {
+      "address": "0x1ef56bd27fa3c0795954b4dace7836696dfc3830",
+      "function": "WETH",
+      "value": "0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14"
+    },
+    {
+      "address": "0x1ef56bd27fa3c0795954b4dace7836696dfc3830",
+      "function": "owner",
+      "value": "0x92AAe0857979a139344f5b6F008e71F27A507522"
+    },
+    {
+      "address": "0x429ba70129df741B2Ca2a85BC3A2a3328e5c09b4",
+      "function": "poolManager",
+      "value": "0xE03A1074c86CFeDd5C142C4F04F1a1536e203543"
+    },
+    {
+      "address": "0x97825ae0a3c6b52398ce666dbcd166129d61c61f",
+      "function": "positionManager",
+      "value": "0x429ba70129df741B2Ca2a85BC3A2a3328e5c09b4"
+    },
+    {
+      "address": "0x97825ae0a3c6b52398ce666dbcd166129d61c61f",
+      "function": "poolManager",
+      "value": "0xE03A1074c86CFeDd5C142C4F04F1a1536e203543"
+    },
+    {
+      "address": "0x97825ae0a3c6b52398ce666dbcd166129d61c61f",
+      "function": "usdc",
+      "value": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238"
+    },
+    {
+      "address": "0x97825ae0a3c6b52398ce666dbcd166129d61c61f",
+      "function": "verifier",
+      "value": "0xCfF7cCcF3f09797b6B02d30647DaEe210Fa0AAFc"
+    },
+    {
+      "address": "0x686813f9ffb835fc4a6b2b7d5e0248137f8a2f5a",
+      "function": "feeStrip",
+      "value": "0x97825aE0A3c6B52398ce666dbcd166129d61c61f"
+    },
+    {
+      "address": "0x686813f9ffb835fc4a6b2b7d5e0248137f8a2f5a",
+      "function": "router",
+      "value": "0x1EF56bd27fA3c0795954B4dAcE7836696dfc3830"
+    }
+  ],
+  "oldDeployment": {
+    "address": "0x97825ae0a3c6b52398ce666dbcd166129d61c61f",
+    "nextSeriesId": "1",
+    "nextOfferId": "3",
+    "fundedOfferUSDC": "0",
+    "reservedUSDC": "0",
+    "usdcBalance": "0",
+    "otherBalance": "0",
+    "positionManagerBalance": "0",
+    "nativeBalanceWei": "0",
+    "offers": [
+      {
+        "id": "1",
+        "buyer": "0x746bb7beFD31D9052BB8EbA7D5dD74C9aCf54C6d",
+        "consumed": true,
+        "paymentMicros": "1000000"
+      },
+      {
+        "id": "2",
+        "buyer": "0x746bb7beFD31D9052BB8EbA7D5dD74C9aCf54C6d",
+        "consumed": true,
+        "paymentMicros": "672000000"
+      }
+    ]
+  },
+  "newDeployment": {
+    "address": "0xd84eE56b24841c887c73e8b9079A01c28b1B3E8E",
+    "nextSeriesId": "1",
+    "nextOfferId": "1",
+    "fundedOfferUSDC": "0",
+    "reservedUSDC": "0",
+    "usdcBalance": "0",
+    "otherBalance": "0",
+    "positionManagerBalance": "0",
+    "nativeBalanceWei": "0",
+    "offers": []
+  },
+  "limitations": [
+    "Deployment receipts are canonical but not yet finalized at the sampled finalized head.",
+    "No public funded sale, capture, settlement, redemption or operated keeper/proof service is established by this deployment readback."
+  ],
+  "position": {
+    "tokenId": "39216",
+    "owner": "0x92AAe0857979a139344f5b6F008e71F27A507522",
+    "key": {
+      "currency0": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+      "currency1": "0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14",
+      "fee": 3000,
+      "tickSpacing": 60,
+      "hooks": "0x0000000000000000000000000000000000000000"
+    },
+    "tickLower": 58980,
+    "tickUpper": 60180,
+    "liquidity": "3411586204",
+    "commitment": "0x024730b484d9e35e750ec0bc638e108a43bcf8b49b74d5a8c2191678593ca5a3",
+    "computedFromCanonicalPositionManager": true
+  },
+  "totalDeploymentGas": "5196051",
+  "totalGasCostWei": "5672363800718797"
+}

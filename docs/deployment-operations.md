@@ -1,6 +1,6 @@
 # Endpoint operations deployment
 
-This release prepares the operated settlement path and makes new public commitments fail closed. It does **not** yet establish a hosted checkpoint, off-host disaster recovery, or a public sale lifecycle. The existing Sepolia FeeStrip also needs the reviewed-position commitment upgrade before new sales are enabled.
+This release prepares the operated settlement path and makes new public commitments fail closed. It does **not** yet establish a hosted checkpoint, off-host disaster recovery, or a public sale lifecycle. The reviewed-position commitment upgrade is now deployed and independently verified on Sepolia. New sales remain disabled until hosted preservation is verified.
 
 ## Prepared infrastructure
 
@@ -62,3 +62,9 @@ Local verification includes51Solidity tests,61hermetic browser regressions and b
 ## Scope still pending
 
 Graph Studio and Substreams credentials already work. The continuous initialized-history sink and joined analysis service remain J15–J17; this operations image does not claim to host them. `/api/analysis` returns an explicit503 until that service is operated. The public financial lifecycle, two fresh unaided judge sessions, native-ETH fee activity, quote renewal and submission/video evidence remain separate checklist gates.
+
+## Completed public replacement
+
+The fixed FeeStrip and its market are deployed; [independent readback](evidence/operations/commitment-upgrade-readback.json) verifies runtime/source,22bindings and the canonical NFT commitment. The participant first recovered672SepoliaUSDC from the old deployment. Old manifests and deployment evidence are preserved under their respective `archive/` directories. Studio v0.2.0 points at the new FeeStrip; its hash-selected query matches RPC. No sale was activated.
+
+The replacement runner defaults to a read-only plan and requires explicit `--broadcast --env .env` to use the existing testnet deployment wallet. Its journal survives interrupted submission and authenticates every signed field before resuming. The original plan is tied to the archived old deployment: do not rerun it against the promoted manifest. If a pre-finality deployment reorg requires recovery, preserve the journal and restore the matching archived configuration for operator-reviewed replay; never reset nonces or discard signed entries. Promotion readback had17/15confirmations and did not claim finality.

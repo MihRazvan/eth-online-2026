@@ -1,0 +1,47 @@
+{
+  "checkedAt": "2026-09-12T14:08:30.660Z",
+  "scope": "Live Studio query and canonical RPC block agreement; no financial acceptance or Substreams composition",
+  "deployment": {
+    "chainId": 11155111,
+    "network": "sepolia",
+    "feeStrip": "0xd84eE56b24841c887c73e8b9079A01c28b1B3E8E",
+    "startBlock": 11689365,
+    "slug": "usufruct",
+    "version": "v0.2.0",
+    "deployment": "QmXEm3WDjvy2q2xSQYoK3HmoBzGKV6oR4JgEe2QRJkWAcw",
+    "queryUrl": "https://api.studio.thegraph.com/query/1760193/usufruct/v0.2.0",
+    "studioUrl": "https://thegraph.com/studio/subgraph/usufruct",
+    "manifest": "packages/subgraph/subgraph.sepolia.yaml"
+  },
+  "request": {
+    "query": "query VerifyStudio($hash: Bytes!) {\n  _meta(block: {hash: $hash}) { deployment hasIndexingErrors block { number hash } }\n  series_collection(first: 5, orderBy: id, block: {hash: $hash}) {\n    id chainId poolManager poolId positionManager tokenId activationBlock endBlock\n  }\n  lifecycleEvents(first: 5, orderBy: blockNumber, block: {hash: $hash}) {\n    id kind blockNumber blockHash transactionHash\n  }\n}",
+    "variables": {
+      "hash": "0xcae7b7d7f4ccf2704d8d44e303041993f5149b359a0f860e3e833fdd629aed75"
+    }
+  },
+  "response": {
+    "data": {
+      "series_collection": [],
+      "lifecycleEvents": [],
+      "_meta": {
+        "deployment": "QmXEm3WDjvy2q2xSQYoK3HmoBzGKV6oR4JgEe2QRJkWAcw",
+        "hasIndexingErrors": false,
+        "block": {
+          "number": 11689393,
+          "hash": "0xcae7b7d7f4ccf2704d8d44e303041993f5149b359a0f860e3e833fdd629aed75"
+        }
+      }
+    }
+  },
+  "rpc": {
+    "url": "https://ethereum-sepolia-rpc.publicnode.com",
+    "chainId": 11155111,
+    "blockNumber": 11689393,
+    "blockHash": "0xcae7b7d7f4ccf2704d8d44e303041993f5149b359a0f860e3e833fdd629aed75",
+    "head": 11689393,
+    "lagBlocks": 0,
+    "nextSeriesId": "1"
+  },
+  "hashMatches": true,
+  "emptySeriesExpected": true
+}

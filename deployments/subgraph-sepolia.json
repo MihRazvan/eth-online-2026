@@ -1,12 +1,12 @@
 {
   "chainId": 11155111,
   "network": "sepolia",
-  "feeStrip": "0x97825ae0a3c6b52398ce666dbcd166129d61c61f",
-  "startBlock": 11684159,
+  "feeStrip": "0xd84eE56b24841c887c73e8b9079A01c28b1B3E8E",
+  "startBlock": 11689365,
   "slug": "usufruct",
-  "version": "v0.1.0",
-  "deployment": "QmNNaxtj65PaezJXR9RdrNJeQLtsNm5uhkiE1WXX7s4nnU",
-  "queryUrl": "https://api.studio.thegraph.com/query/1760193/usufruct/v0.1.0",
+  "version": "v0.2.0",
+  "deployment": "QmXEm3WDjvy2q2xSQYoK3HmoBzGKV6oR4JgEe2QRJkWAcw",
+  "queryUrl": "https://api.studio.thegraph.com/query/1760193/usufruct/v0.2.0",
   "studioUrl": "https://thegraph.com/studio/subgraph/usufruct",
   "manifest": "packages/subgraph/subgraph.sepolia.yaml"
 }
