@@ -10,6 +10,22 @@ This is the execution checklist for the next release. The [bounty research](rese
 
 Keep the existing three partners. Prioritize the actual Uniswap/Aqua lifecycle and run Graph work concurrently. Do not add a hook, second AMM, AI assistant or extra network merely to accumulate integrations. Success depends on the integrations being essential, understandable and demonstrable.
 
+## Current checkpoint and next implementation batch
+
+Reconciled against `7bb04bb` on12September at12:54UTC. Git matches origin/main. Both Graph access steps are complete, the corrected v0.1.1 package and standalone consumer are public, and bounded live source/restart checks pass. These are completed parts of J15/J17, not completion of hosted buyer analysis. At Sepolia block11689036, `nextSeriesId=1`: no sale has been activated. The public site returns200; recovery and analysis routes still return404. Railway reports no linked project. Current code still defaults to672USDC and end block+129000. The latest hosted CI run was still in progress at this check; the preceding Studio increment passed.
+
+The next implementation batch is **J09/J10 alongside J04–J08/J14**. Hosting the existing read-only worker alone is insufficient: it does not submit the endpoint checkpoint. No new public sale should be activated before checkpointing and witness recovery pass their operational checks.
+
+| Order | Lead-owned work | Team contribution / dependency | Completion target |
+| --- | --- | --- | --- |
+| 1A | Implement the restricted checkpoint signer, prepare the Railway service, persistent storage, independent witness copy and HTTPS recovery; J09/J10 | Existing authentication is sufficient for preparation. Select the concrete hosting plan/budget once the deployment is reviewable; name primary/fallback operators and a dedicated testnet keeper wallet | Restart/RPC-failure rehearsal preserves the endpoint anchor and authenticated witness; hosted recovery serves the exact bytes |
+| 1B, parallel | Connect buyer and seller via shareable positions/offers, editable small terms, clear signature stages, refreshed state, receipts and balance/gas guidance; J04–J08/J14 | No new input needed to implement. Participants are needed for the subsequent public test | Separate browser wallets can fund, locate, review and accept the exact offer without developer intervention; cancellation/refund still works |
+| 2 | Operate initialized Substreams history and expose the actual Subgraph + stream buyer view; remaining J15–J17 | No additional Graph credentials; actual sale data follows the safe public rehearsal | A real instrument shows sourced range/activity context and break-even, with explicit coverage/freshness and no payout authority |
+| 3 | Rehearse native-compatible fee activity and one complete nonzero public lifecycle; J11/J12 | Assign seller/buyer/secondary-holder roles to public wallet addresses; participants review the prepared exact terms/budget and sign | Fund → accept → Aqua trade → fees → late capture → NFT return before allocation → proof → independent payouts, with receipts/balance checks |
+| 4 | Maintain executable judge inventory, complete the unaided session and evidence packet; J13/J18/J19 | Human review, narration, Uniswap feedback form and final submission; T05–T07 | A fresh judge can buy/redeem, a second fresh participant can repeat it, and each sponsor claim links to actual evidence |
+
+The next user contribution is participant/operator coordination, not another RPC or Graph key. Implementation preparation can proceed while that is arranged. Price/term approval belongs to a concrete prepared test, not a generic permission request now.
+
 ## The experience a judge should get
 
 | Entry | Expected experience | Completion evidence |
@@ -43,7 +59,7 @@ The active, proof-pending and allocated examples are **different real series**, 
 | [ ] | J14 / critical | Make prerequisites and cost actionable | Explain wallet/network and test-asset acquisition before signatures. Read ETH as well as USDC balances; estimate actual transaction gas; show unavailable estimates honestly. Offer sizes fit prepared wallets and floored claim payouts are nonzero |
 | [ ] | J15 / Graph | Deploy the actual Subgraph and consume live Substreams | Studio v0.1.0 and live Substreams v0.1.1 verified, with real mint decoding, cursor resume and shared block/RPC agreement. Still retain sufficient initialized history and operate the hosted stream; undo has local tests only. T01 complete; T02 pending; [evidence](evidence/substreams.md) |
 | [ ] | J16 / Graph | Show useful live joined buyer analysis | Common chain/pool/block/hash, coverage, range occupancy, source identity and quote break-even visible in app. Separate expected finality delay from stalled indexing; replace hardcoded provider labels with actual request state |
-| [ ] | J17 / Graph | Publish a reusable integration | Versioned SPKG/schema/config example and independent reuse example; recorded live query demonstrates why the two products are composed. No fake chart, forecast or exact-fee claim |
+| [ ] | J17 / Graph | Publish a reusable integration | Versioned v0.1.1 SPKG/schema/config and standalone live consumer are public. Remaining: demonstrate the useful two-product composition on an actual instrument and explain reuse in the demo. No fake chart, forecast or exact-fee claim |
 | [ ] | J18 / submission | Package sponsor evidence and human review materials | Public source/runtime provenance, transaction links, measured cost, reusable Uniswap recipe, current FEEDBACK, licenses/AI record and concise recording script. Each claim links to the correct public/fork/local evidence |
 | [ ] | J19 / final acceptance | Run the full judge rehearsal and publish verified build | Two unaided participants; both desktop/mobile; wrong network, insufficient gas, rejected signature, reload, stale/depleted quote, counterparty action, unaccepted/expired offer refund and acceptance race, proof outage and post-redemption quote renewal; hosted CI and public build verified |
 
