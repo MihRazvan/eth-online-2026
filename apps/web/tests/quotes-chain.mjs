@@ -1,5 +1,5 @@
 /** Isolated real-chain quote regression. Requires a fresh seed on its own loopback chain and local app. */
-import { chromium } from "@playwright/test";
+import { chromium, expect } from "@playwright/test";
 import {
   createPublicClient,
   createWalletClient,
@@ -96,7 +96,6 @@ async function refresh() {
   await page
     .getByRole("button", { name: "Refresh chain state", exact: true })
     .click();
-  await page.waitForTimeout(350);
 }
 async function publish(actor, amount, cash, side = "ask") {
   await login(actor);
@@ -167,10 +166,7 @@ try {
     .click();
   await confirm("Confirm claim purchase");
   await login("buyer");
-  check(
-    (await row(ask).innerText()).includes("Partially filled"),
-    "Partial quote missing",
-  );
+  await expect(row(ask), "Partial quote missing").toContainText("Partially filled", { timeout: 10000 });
   check(
     (await raw(ask, claim))[0] === 1000n * 10n ** 18n,
     "Partial virtual claim inventory",
@@ -203,10 +199,7 @@ try {
     (await read(d.feeStrip, "FeeStrip", "reservedUSDC")) === reserveBeforeDock,
     "Dock changed reserve",
   );
-  check(
-    (await row(ask).innerText()).includes("Cancelled"),
-    "Docked history missing",
-  );
+  await expect(row(ask), "Docked history missing").toContainText("Cancelled", { timeout: 10000 });
   const bid = await publish("holder", "1000", "8", "bid");
   await page
     .getByRole("region", { name: "Your maker quotes" })
@@ -246,10 +239,7 @@ try {
   );
   await send("holder", d.usdc, "LocalToken", "approve", [d.aqua, 0n]);
   await login("holder");
-  check(
-    (await row(bid).innerText()).includes("Allowance revoked"),
-    "Revoked quote hidden",
-  );
+  await expect(row(bid), "Revoked quote hidden").toContainText("Allowance revoked", { timeout: 10000 });
   const latest = await client.getBlock();
   await client.request({
     method: "evm_setNextBlockTimestamp",
@@ -257,7 +247,7 @@ try {
   });
   await client.request({ method: "evm_mine", params: [] });
   await refresh();
-  check((await row(bid).innerText()).includes("Expired"), "Expired bid hidden");
+  await expect(row(bid), "Expired bid hidden").toContainText("Expired", { timeout: 10000 });
   await dock(bid);
   const stale = await publish("buyer", "1000", "10");
   await send("buyer", claim, "LocalToken", "transfer", [
@@ -265,10 +255,7 @@ try {
     await balance(claim, d.actors.buyer),
   ]);
   await refresh();
-  check(
-    (await row(stale).innerText()).includes("Depleted"),
-    "Depleted wallet quote hidden",
-  );
+  await expect(row(stale), "Depleted wallet quote hidden").toContainText("Depleted", { timeout: 10000 });
   await send("buyer", d.activityRouter, "LocalActivityRouter", "donate", [
     300000000n,
     100000000n,
@@ -291,10 +278,7 @@ try {
     "Need positive captured reserve for custody check",
   );
   await login("buyer");
-  check(
-    (await row(stale).innerText()).includes("Series state changed"),
-    "Stale strategy hidden",
-  );
+  await expect(row(stale), "Stale strategy hidden").toContainText("Series state changed", { timeout: 10000 });
   mkdirSync(resolve(repo, "docs/design/evidence"), { recursive: true });
   await page.setViewportSize({ width: 390, height: 844 });
   await page.getByRole("region", { name: "Your maker quotes" }).screenshot({
