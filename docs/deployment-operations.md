@@ -55,9 +55,9 @@ Remote restoration re-discovers series terms from the pinned chain, binds activa
 
 ## Verification and review
 
-The restricted keeper, authenticated remote replica, and funded-position guard received separate bounded specialist reviews. Findings corrected include a liquidity substitution race before funding, receipt-time gas reservation, pending nonce exclusivity, and recovery across multiple series sharing one endpoint. The frontend verifies signed transaction identity before reconciling replacements after a browser restart. Its duplicate-action guard depends on this browser retaining local storage; it does not provide cross-device idempotency. These reviews are not a full protocol audit.
+The restricted keeper, authenticated remote replica, and funded-position guard received separate bounded specialist reviews. Findings corrected include a liquidity substitution race before funding, receipt-time gas reservation, pending nonce exclusivity, and recovery across multiple series sharing one endpoint. The frontend verifies signed transaction identity and public-chain finality before reconciling replacements after a browser restart, and checks retained replacement receipts again before wallet writes. Unresolved receipts survive completed-history truncation. Its duplicate-action guard depends on this browser retaining local storage; it does not provide cross-device idempotency. These reviews are not a full protocol audit.
 
-Local verification includes51Solidity tests,57hermetic browser regressions and both actual local-chain browser variants, each covering the financial lifecycle, a separate buyer/seller offer, and externally replaced transaction recovery. [Checkpoint evidence](evidence/operations/checkpoint.json) separates these from public and hosting gates.
+Local verification includes51Solidity tests,61hermetic browser regressions and both actual local-chain browser variants, each covering the financial lifecycle, a separate buyer/seller offer, and externally replaced transaction recovery. [Checkpoint evidence](evidence/operations/checkpoint.json) separates these from public and hosting gates.
 
 ## Scope still pending
 

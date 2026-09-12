@@ -1,7 +1,7 @@
 {
   "scope": "Implementation and isolated tests; no public checkpoint/sale or operated remote bucket claimed",
   "contractCommit": "bc1fad7",
-  "frontendCommit": "d33c7b4",
+  "frontendCommit": "f58bda8",
   "checks": {
     "solidity": 51,
     "coreDataAcquisition": 29,
@@ -10,7 +10,7 @@
     "keeperUnit": 14,
     "keeperActualAnvil": 1,
     "operationsUnit": 6,
-    "frontendHermetic": 57,
+    "frontendHermetic": 61,
     "localBrowserVariants": [
       "retained witness",
       "verified onchain growth cache"
@@ -18,7 +18,8 @@
     "staticFindings": 13,
     "staticDelta": "Source line shifts and eight-argument funding signature only; dispositions preserved",
     "denominatorMutation": "killed",
-    "localBrowserCasesPerVariant": 3
+    "localBrowserCasesPerVariant": 3,
+    "replacementReorg": "Actual isolated Anvil cancellation reconciled, then orphaned; next attempted action emitted zero transaction submissions and restored pending guards"
   },
   "keeperTest": {
     "scope": "Production checkpoint contract with fixture discovery/bindings on isolated Anvil",
@@ -79,5 +80,11 @@
     "Hosted checkpoint, bucket restoration and HTTPS verification",
     "Public financial lifecycle and live Graph join"
   ],
-  "publicRefund": "old-offer-refund.json"
+  "publicRefund": "old-offer-refund.json",
+  "hostedCI": {
+    "commit": "8a873b7",
+    "url": "https://github.com/MihRazvan/eth-online-2026/actions/runs/34697434807",
+    "conclusion": "success",
+    "limit": "Before final frontend reorg follow-up; follow-up has local verification"
+  }
 }

@@ -1,0 +1,14 @@
+{
+  "scope": "local-chain-only",
+  "originalHash": "0xf7e36b423d2161f5b8face948e39da263fbad63f1aa86f963c97cf9d06065303",
+  "replacementHash": "0x5cee38305804352caebba6c694af6ce15d79207db1c88438a441d32f6faebc26",
+  "originalNonce": 10,
+  "sender": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+  "sameSignedNonce": true,
+  "originalActionWasNotCompleted": true,
+  "browserClosedBeforeReplacement": true,
+  "reorgAfterSuccessfulReconciliation": true,
+  "duplicateSignatures": 0,
+  "originalPendingGuardRestored": true,
+  "publicFinalityTestedSeparately": true
+}
