@@ -1,5 +1,5 @@
 //! Typed, permissionless pool-history context. This output has no settlement authority.
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 use substreams::errors::Error;
 use substreams_ethereum_core::pb::eth::v2::Block;
 
@@ -92,6 +92,59 @@ fn same_block(actual: u64, expected: u64) -> Result<(), Error> {
     Ok(())
 }
 
+/// The retained upstream decoder emits receipt `Log.index` (transaction-local).
+/// Resolve it against the same full block's receipts, whose `block_index` is the
+/// committed block-global index. Call-trace logs can be reverted and are not used.
+struct ReceiptLogIndices {
+    logs: BTreeMap<(String, u32), (u32, String)>,
+}
+impl ReceiptLogIndices {
+    fn from_block(block: &Block) -> Result<Self, Error> {
+        let mut logs = BTreeMap::new();
+        let mut transactions = BTreeSet::new();
+        let mut block_indices = BTreeSet::new();
+        for transaction in &block.transaction_traces {
+            let Some(receipt) = &transaction.receipt else {
+                continue;
+            };
+            if receipt.logs.is_empty() {
+                continue;
+            }
+            let hash = hex_value(&hex::encode(&transaction.hash), 32)?;
+            if !transactions.insert(hash.clone()) {
+                return Err(Error::msg("ambiguous receipt transaction hash"));
+            }
+            for log in &receipt.logs {
+                let address = hex_value(&hex::encode(&log.address), 20)?;
+                if logs
+                    .insert((hash.clone(), log.index), (log.block_index, address))
+                    .is_some()
+                    || !block_indices.insert(log.block_index)
+                {
+                    return Err(Error::msg("ambiguous receipt log index"));
+                }
+            }
+        }
+        Ok(Self { logs })
+    }
+    fn resolve(
+        &self,
+        transaction_hash: &str,
+        local_index: u32,
+        manager: &str,
+    ) -> Result<u32, Error> {
+        let key = (hex_value(transaction_hash, 32)?, local_index);
+        let (block_index, address) = self
+            .logs
+            .get(&key)
+            .ok_or_else(|| Error::msg("upstream event receipt log missing"))?;
+        if address != &hex_value(manager, 20)? {
+            return Err(Error::msg("upstream event receipt address mismatch"));
+        }
+        Ok(*block_index)
+    }
+}
+
 #[substreams::handlers::map]
 pub fn map_pool_context(
     params: String,
@@ -107,6 +160,7 @@ pub fn transform(
     block: Block,
 ) -> Result<PoolContextBlock, Error> {
     let config = Config::parse(params)?;
+    let receipt_indices = ReceiptLogIndices::from_block(&block)?;
     let header = block
         .header
         .ok_or_else(|| Error::msg("missing block header"))?;
@@ -139,7 +193,11 @@ pub fn transform(
                 tick_spacing: e.tick_spacing.parse()?,
                 tick: tick(&e.tick)?,
                 sqrt_price_x96: decimal(e.sqrt_price_x96, false)?,
-                log_index: e.log_index,
+                log_index: receipt_indices.resolve(
+                    &e.transaction_hash,
+                    e.log_index,
+                    &e.contract,
+                )?,
                 transaction_hash: hex_value(&e.transaction_hash, 32)?,
             });
         }
@@ -149,7 +207,11 @@ pub fn transform(
             same_block(e.block_number, block.number)?;
             out.swaps.push(Swap {
                 pool_id,
-                log_index: e.log_index,
+                log_index: receipt_indices.resolve(
+                    &e.transaction_hash,
+                    e.log_index,
+                    &e.contract,
+                )?,
                 transaction_hash: hex_value(&e.transaction_hash, 32)?,
                 tick: tick(&e.tick)?,
                 amount0: decimal(e.amount0, true)?,
@@ -170,7 +232,11 @@ pub fn transform(
             }
             out.liquidity_changes.push(LiquidityChange {
                 pool_id,
-                log_index: e.log_index,
+                log_index: receipt_indices.resolve(
+                    &e.transaction_hash,
+                    e.log_index,
+                    &e.contract,
+                )?,
                 transaction_hash: hex_value(&e.transaction_hash, 32)?,
                 tick_lower: lower,
                 tick_upper: upper,
@@ -202,7 +268,9 @@ pub fn transform(
 mod tests {
     use super::*;
     use prost::Message;
-    use substreams_ethereum_core::pb::eth::v2::BlockHeader;
+    use substreams_ethereum_core::pb::eth::v2::{
+        BlockHeader, Log, TransactionReceipt, TransactionTrace,
+    };
     fn params() -> String {
         format!(
             "chain_id=11155111&pool_manager={}&pool_ids={}",
@@ -220,6 +288,25 @@ mod tests {
                     seconds: 10,
                     nanos: 0,
                 }),
+                ..Default::default()
+            }),
+            transaction_traces: vec![trace(0xef, &[(0, 106), (1, 107), (2, 108)])],
+            ..Default::default()
+        }
+    }
+    fn trace(hash_byte: u8, indices: &[(u32, u32)]) -> TransactionTrace {
+        TransactionTrace {
+            hash: vec![hash_byte; 32],
+            receipt: Some(TransactionReceipt {
+                logs: indices
+                    .iter()
+                    .map(|&(index, block_index)| Log {
+                        address: vec![0xab; 20],
+                        index,
+                        block_index,
+                        ..Default::default()
+                    })
+                    .collect(),
                 ..Default::default()
             }),
             ..Default::default()
@@ -315,7 +402,8 @@ mod tests {
             block(),
         )
         .unwrap();
-        assert_eq!(out.swaps[0].log_index, 1);
+        assert_eq!(out.swaps[0].log_index, 107);
+        assert_eq!(out.swaps[1].log_index, 108);
         assert!(transform(
             &params(),
             upstream::Events {
@@ -366,6 +454,8 @@ mod tests {
             block(),
         )
         .unwrap();
+        assert_eq!(out.initialized[0].log_index, 107);
+        assert_eq!(out.liquidity_changes[0].log_index, 108);
         assert_eq!(out.initialized[0].tick, 0);
         assert_eq!(out.initialized[0].tick_spacing, 60);
         assert_eq!(
@@ -383,5 +473,88 @@ mod tests {
             block()
         )
         .is_err());
+    }
+    #[test]
+    fn same_local_index_in_different_transactions_orders_by_block_index() {
+        let first = swap();
+        let mut second = swap();
+        second.transaction_hash = "12".repeat(32);
+        second.tick = "240".into();
+        let mut input = block();
+        // Both receipts use local index 0. Deliberately reverse the source array
+        // and transaction array so neither input order can stand in for log order.
+        input.transaction_traces = vec![trace(0x12, &[(0, 108)]), trace(0xef, &[(0, 107)])];
+        let out = transform(
+            &params(),
+            upstream::Events {
+                swap_events: vec![second, first],
+                ..Default::default()
+            },
+            input,
+        )
+        .unwrap();
+        assert_eq!(
+            out.swaps
+                .iter()
+                .map(|s| (s.log_index, s.tick))
+                .collect::<Vec<_>>(),
+            vec![(107, -120), (108, 240)]
+        );
+        assert_eq!(
+            out.swaps[0].transaction_hash,
+            format!("0x{}", "ef".repeat(32))
+        );
+    }
+    #[test]
+    fn rejects_missing_or_mismatched_receipt_mapping() {
+        let events = upstream::Events {
+            swap_events: vec![swap()],
+            ..Default::default()
+        };
+        let mut missing_transaction = block();
+        missing_transaction.transaction_traces.clear();
+        assert!(transform(&params(), events.clone(), missing_transaction)
+            .unwrap_err()
+            .to_string()
+            .contains("receipt log missing"));
+        let mut missing_receipt = block();
+        missing_receipt.transaction_traces[0].receipt = None;
+        assert!(transform(&params(), events.clone(), missing_receipt).is_err());
+        let mut missing_local = block();
+        missing_local.transaction_traces = vec![trace(0xef, &[(1, 107)])];
+        assert!(transform(&params(), events.clone(), missing_local).is_err());
+        let mut wrong_transaction = block();
+        wrong_transaction.transaction_traces[0].hash = vec![0x12; 32];
+        assert!(transform(&params(), events.clone(), wrong_transaction).is_err());
+        let mut wrong_address = block();
+        wrong_address.transaction_traces[0]
+            .receipt
+            .as_mut()
+            .unwrap()
+            .logs[0]
+            .address = vec![0x12; 20];
+        assert!(transform(&params(), events, wrong_address)
+            .unwrap_err()
+            .to_string()
+            .contains("address mismatch"));
+    }
+    #[test]
+    fn rejects_ambiguous_local_or_global_receipt_indices() {
+        let events = upstream::Events {
+            swap_events: vec![swap()],
+            ..Default::default()
+        };
+        for traces in [
+            vec![trace(0xef, &[(0, 107), (0, 108)])],
+            vec![trace(0xef, &[(0, 107)]), trace(0x12, &[(0, 107)])],
+            vec![trace(0xef, &[(0, 107)]), trace(0xef, &[(1, 108)])],
+        ] {
+            let mut input = block();
+            input.transaction_traces = traces;
+            assert!(transform(&params(), events.clone(), input)
+                .unwrap_err()
+                .to_string()
+                .contains("ambiguous receipt"));
+        }
     }
 }
