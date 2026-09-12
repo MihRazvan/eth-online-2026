@@ -12,6 +12,14 @@
 !packages/keeper/
 !packages/keeper/src/
 !packages/keeper/src/**
+!packages/data/
+!packages/data/src/
+!packages/data/src/**
+!packages/core/
+!packages/core/src/
+!packages/core/src/**
+!packages/substreams/
+!packages/substreams/feestrip-pool-context-v0.1.1.spkg
 !scripts/
 !scripts/chain/
 !scripts/chain/proof.mjs
@@ -20,6 +28,7 @@
 !scripts/proof/validate_witness.py
 !deployments/
 !deployments/sepolia.json
+!deployments/subgraph-sepolia.json
 !docs/
 !docs/evidence/
 !docs/evidence/sepolia-deployment.json

@@ -76,3 +76,22 @@ test('host configuration pins public contracts and never falls back to a deploye
  assert.throws(()=>hostedConfig({...env,KEEPER_ENABLED:'true'}),/EXPECTED_KEEPER_SIGNER_REQUIRED/);
  assert.throws(()=>hostedConfig({...env,KEEPER_ENABLED:'1'}));
 });
+
+test('optional in-process analytics are authenticated but never alter preservation readiness',async t=>{
+ let calls=0;
+ const origin=await listening(operationsServer({token,status:()=>operationsStatus({...good(),keeper:null}),recoveryHandler:()=>{},analysisHandler:(_req,res)=>{calls++;res.writeHead(200,{'content-type':'application/json'});res.end(JSON.stringify({sourceBlock:13,allocationAuthority:'contract-only'}));}}),t);
+ const query='/api/analysis?seriesId=1&quantity=10&price=20';
+ assert.equal((await fetch(origin+query)).status,401);assert.equal(calls,0);
+ const headers={authorization:`Bearer ${token}`};assert.equal((await fetch(origin+query,{headers})).status,200);assert.equal(calls,1);
+ const status=await(await fetch(origin+'/api/operations',{headers})).json();assert.equal(status.readyForNewSales,false);
+});
+
+test('hosted analysis pins Graph deployment and package independently of environment provider substitutions',async()=>{
+ const {hostedAnalysisConfig}=await import('../src/analysis.mjs');
+ const base=hostedConfig({SEPOLIA_RPC_URL:'https://rpc.example/private',OPERATIONS_GATEWAY_TOKEN:token});
+ assert.equal(hostedAnalysisConfig({...base,env:{}}),null);
+ const config=hostedAnalysisConfig({...base,env:{ANALYSIS_ENABLED:'true',SUBGRAPH_URL:'https://attacker.invalid',PACKAGE_HASH:'0xwrong'}});
+ assert.equal(config.chainId,11155111);assert.equal(config.database,'/data/analysis.sqlite');assert.match(config.subgraphUrl,/api.studio.thegraph.com/);assert.match(config.packageIdentity,/^0x[0-9a-f]{64}$/);
+ assert.throws(()=>hostedAnalysisConfig({...base,retention:{...base.retention,feeStrip:address},env:{ANALYSIS_ENABLED:'true'}}),/MISMATCH/);
+ assert.throws(()=>hostedAnalysisConfig({...base,env:{ANALYSIS_ENABLED:'yes'}}),/INVALID/);
+});

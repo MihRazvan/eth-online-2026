@@ -25,3 +25,12 @@ test('Graph errors, deployment substitutions and mismatched block metadata fail 
  await assert.rejects(querySubgraph({...args,hash:undefined,fetchImpl:()=>assert.fail('invalid selection must not reach provider')}),/source block and hash required/);
 });
 test('reorg undo cursor is persisted atomically with removed blocks',()=>{const s=new HistoryStore();s.apply({number:1,hash:hash(1),cursor:'before',swaps:[]});s.apply({number:2,hash:hash(2),parentHash:hash(1),cursor:'head',swaps:[]});assert.throws(()=>s.undo(1,hash(1),''));assert.equal(s.head().number,2);s.undo(1,hash(1),'provider-undo');assert.equal(s.head().cursor,'provider-undo');assert.equal(s.head().number,1);s.close();});
+
+test('analysis bounds retained samples and excludes post-endpoint activity before materializing history',()=>{
+ const store=new HistoryStore();
+ for(let n=10;n<=14;n++)store.apply({number:n,hash:'0x'+String(n).padStart(64,'0'),parentHash:'0x'+String(n-1).padStart(64,'0'),cursor:'cursor',swaps:[{chainId:1,manager:'0xa',pool:'0xb',logIndex:0,tick:n}]});
+ const query={chainId:1,manager:'0xa',pool:'0xb',fromBlock:10};
+ assert.throws(()=>store.samples({...query,toBlock:14,maxSamples:3}),/bounded analysis/);
+ const snapshot=store.snapshotSamples({...query,number:14,toBlock:11,maxSamples:3});assert.equal(snapshot.block.number,14);assert.deepEqual(snapshot.samples.map(s=>s.block),[10,11]);
+ assert(store.db.prepare("SELECT name FROM sqlite_master WHERE type='index' AND name='swaps_pool_block'").get());store.close();
+});

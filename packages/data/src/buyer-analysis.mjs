@@ -3,7 +3,14 @@ const safeInt=value=>{const n=Number(value);if(!Number.isSafeInteger(n))throw ne
 async function query(url,headers,query,variables,fetchImpl){
  const response=await fetchImpl(url,{method:'POST',headers:{'content-type':'application/json',...headers},body:JSON.stringify({query,variables}),signal:AbortSignal.timeout(15000)});
  if(!response.ok)throw new Error(`Subgraph HTTP ${response.status}`);
- const body=await response.json();if(body.errors?.length||!body.data)throw new Error('Subgraph query failed');return body.data;
+ // A provider response is untrusted input; bound it even without Content-Length.
+ let body;
+ if(response.body){
+  const chunks=[];let length=0;
+  for await(const chunk of response.body){length+=chunk.length;if(length>2*1024*1024)throw new Error('Subgraph response too large');chunks.push(Buffer.from(chunk));}
+  body=JSON.parse(Buffer.concat(chunks).toString());
+ }else body=await response.json();
+ if(body.errors?.length||!body.data)throw new Error('Subgraph query failed');return body.data;
 }
 function meta(data,deployment){const m=data._meta;if(!m||m.deployment!==deployment||m.hasIndexingErrors!==false||!/^0x[0-9a-f]{64}$/i.test(m.block?.hash??''))throw new Error('Subgraph deployment, hash or indexing status invalid');return {block:safeInt(m.block.number),hash:m.block.hash,deployment,hasIndexingErrors:false};}
 function checkpoint(row,series,expectedPackage){
@@ -28,7 +35,7 @@ export async function loadBuyerAnalysis({store,url,deployment,headers={},seriesI
  if(series.chainId!==safeInt(chainId))throw new Error('Configured chain differs from Subgraph');
  // Query metadata and ticks together AFTER the network await. A WAL read snapshot
  // prevents a concurrent sink reorg from attributing new-fork ticks to an old hash.
- const snapshot=store.snapshotSamples({number:block,chainId:series.chainId,manager:series.poolManager,pool:series.poolId,fromBlock:series.activationBlock});
+ const snapshot=store.snapshotSamples({number:block,chainId:series.chainId,manager:series.poolManager,pool:series.poolId,fromBlock:series.activationBlock,toBlock:series.endBlock});
  if(!snapshot.block||!snapshot.first)throw new Error('Common source block not retained');
  const saved=checkpoint(snapshot.block,series,packageIdentity);checkpoint(snapshot.first,series,packageIdentity);
  const stream={chainId:series.chainId,poolManager:series.poolManager,poolId:series.poolId,fromBlock:snapshot.first.number,toBlock:block,blockHash:snapshot.block.hash,package:saved.identity.packageHash,cursor:saved.providerCursor,finalBlockHeight:saved.finalBlockHeight,samples:snapshot.samples};

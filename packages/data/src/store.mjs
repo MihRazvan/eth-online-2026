@@ -1,7 +1,7 @@
 import {DatabaseSync} from 'node:sqlite';
 /** One local SQLite sink. Apply cursor and events in the same transaction; undo by retained block hash. */
 export class HistoryStore {
- constructor(path=':memory:') {this.db=new DatabaseSync(path);this.db.exec(`PRAGMA journal_mode=WAL; CREATE TABLE IF NOT EXISTS blocks (number INTEGER PRIMARY KEY, hash TEXT NOT NULL, cursor TEXT NOT NULL); CREATE TABLE IF NOT EXISTS swaps (block INTEGER NOT NULL, logIndex INTEGER NOT NULL, chainId INTEGER NOT NULL, manager TEXT NOT NULL, pool TEXT NOT NULL, tick INTEGER NOT NULL, PRIMARY KEY(block,logIndex));`);}
+ constructor(path=':memory:',{readOnly=false}={}) {this.db=new DatabaseSync(path,{readOnly});this.db.exec('PRAGMA busy_timeout=2000');if(!readOnly)this.db.exec(`PRAGMA journal_mode=WAL; CREATE TABLE IF NOT EXISTS blocks (number INTEGER PRIMARY KEY, hash TEXT NOT NULL, cursor TEXT NOT NULL); CREATE TABLE IF NOT EXISTS swaps (block INTEGER NOT NULL, logIndex INTEGER NOT NULL, chainId INTEGER NOT NULL, manager TEXT NOT NULL, pool TEXT NOT NULL, tick INTEGER NOT NULL, PRIMARY KEY(block,logIndex)); CREATE INDEX IF NOT EXISTS swaps_pool_block ON swaps(chainId,manager,pool,block,logIndex);`);}
  apply({number,hash,parentHash,cursor,swaps}) {
   const tip=this.db.prepare('SELECT * FROM blocks ORDER BY number DESC LIMIT 1').get();
   if(tip&&tip.number===number&&tip.hash===hash)return;
@@ -17,7 +17,7 @@ export class HistoryStore {
  head(){return this.db.prepare('SELECT * FROM blocks ORDER BY number DESC LIMIT 1').get();}
  block(number){return this.db.prepare('SELECT * FROM blocks WHERE number=?').get(number);}
  first(){return this.db.prepare('SELECT * FROM blocks ORDER BY number LIMIT 1').get();}
- snapshotSamples({number,...query}) {this.db.exec('BEGIN');try{const block=this.block(number),first=this.first(),samples=this.samples({...query,toBlock:number});this.db.exec('COMMIT');return {block,first,samples};}catch(e){this.db.exec('ROLLBACK');throw e;}}
- samples({chainId,manager,pool,fromBlock,toBlock}) {const args=[chainId,manager.toLowerCase(),pool.toLowerCase()];const initial=this.db.prepare('SELECT block,logIndex,tick FROM swaps WHERE chainId=? AND manager=? AND pool=? AND block<=? ORDER BY block DESC,logIndex DESC LIMIT 1').get(...args,fromBlock);return [...(initial?[initial]:[]),...this.db.prepare('SELECT block,logIndex,tick FROM swaps WHERE chainId=? AND manager=? AND pool=? AND block>? AND block<=? ORDER BY block,logIndex').all(...args,fromBlock,toBlock)];}
+ snapshotSamples({number,toBlock=number,...query}) {this.db.exec('BEGIN');try{const block=this.block(number),first=this.first(),samples=this.samples({...query,toBlock:Math.min(number,toBlock)});this.db.exec('COMMIT');return {block,first,samples};}catch(e){this.db.exec('ROLLBACK');throw e;}}
+ samples({chainId,manager,pool,fromBlock,toBlock,maxSamples=20000}) {const args=[chainId,manager.toLowerCase(),pool.toLowerCase()];const initial=this.db.prepare('SELECT block,logIndex,tick FROM swaps WHERE chainId=? AND manager=? AND pool=? AND block<=? ORDER BY block DESC,logIndex DESC LIMIT 1').get(...args,fromBlock);const rows=this.db.prepare('SELECT block,logIndex,tick FROM swaps WHERE chainId=? AND manager=? AND pool=? AND block>? AND block<=? ORDER BY block,logIndex LIMIT ?').all(...args,fromBlock,toBlock,maxSamples+1);if(rows.length+(initial?1:0)>maxSamples)throw new Error('History exceeds bounded analysis sample limit');return [...(initial?[initial]:[]),...rows];}
  close(){this.db.close();}
 }

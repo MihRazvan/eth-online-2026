@@ -14,12 +14,15 @@ import {hostedConfig,privateDirectory,privateJSON} from './config.mjs';
 import {operationsStatus,retentionStatus} from './readiness.mjs';
 import {operationsServer} from './http.mjs';
 import {recoveryAcquirer} from './acquire.mjs';
+import {hostedAnalysisConfig} from './analysis.mjs';
+import {analysisHandler} from '../../data/src/http.mjs';
 
 let server,store,child,stopping=false,proof={ready:false,observedAt:0};
 const stop=()=>{stopping=true;child?.kill('SIGTERM');};
 for(const signal of ['SIGINT','SIGTERM'])process.once(signal,stop);
 try{
  const config=hostedConfig();privateDirectory(config.directory);
+ const analysis=hostedAnalysisConfig({...config});
  // This service never loads .env or uses the deployment wallet.
  const keeperKey=process.env.KEEPER_PRIVATE_KEY;
  delete process.env.KEEPER_PRIVATE_KEY;delete process.env.PRIVATE_KEY;
@@ -33,7 +36,7 @@ try{
  const worker=new RetentionWorker(config.retention,store,{acquireWitness:recoveryAcquirer({store,scope:()=>worker.scope,config:config.retention,replica:()=>replica})});
  if(config.remote)replica=new OffhostReplica({store,scope:worker.scope,remote:new S3Remote(config.remote)});
  const recovery=recoveryServer({store,scope:worker.scope});
- server=operationsServer({token:config.gatewayToken,recoveryHandler:recovery.listeners('request')[0],status:()=>operationsStatus({config:config.retention,
+ server=operationsServer({token:config.gatewayToken,analysisHandler:analysis?analysisHandler(analysis):null,recoveryHandler:recovery.listeners('request')[0],status:()=>operationsStatus({config:config.retention,
   keeper:config.keeper?readKeeperStatus(config.keeper.database):null,retention:retentionStatus(store,worker.scope),replication:replica?.publicStatus(),proof})});
  server.listen(config.port,'0.0.0.0');await once(server,'listening');
  console.log(JSON.stringify({status:'operations-listening',port:config.port,chainId:config.retention.chainId,feeStrip:config.retention.feeStrip}));

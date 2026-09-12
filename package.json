@@ -36,18 +36,18 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "3.1131.0",
+    "@bufbuild/protobuf": "1.10.1",
+    "@connectrpc/connect": "1.7.0",
+    "@connectrpc/connect-node": "1.7.0",
+    "@substreams/core": "0.17.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "viem": "2.56.3"
   },
   "devDependencies": {
-    "@bufbuild/protobuf": "1.10.1",
-    "@connectrpc/connect": "1.7.0",
-    "@connectrpc/connect-node": "1.7.0",
     "@graphprotocol/graph-cli": "0.98.1",
     "@graphprotocol/graph-ts": "0.38.2",
     "@playwright/test": "1.63.0",
-    "@substreams/core": "0.17.0",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
     "@vitejs/plugin-react": "5.1.4",

@@ -28,7 +28,7 @@ function authorized(req,token){
  return actual.length===expected.length&&timingSafeEqual(actual,expected);
 }
 /** The public surface is GET-only. No RPC forwarding, arbitrary upstreams or signer entry points. */
-export function operationsServer({status,recoveryHandler,token,analysisOrigin=null,fetcher=fetch}){
+export function operationsServer({status,recoveryHandler,token,analysisHandler=null,analysisOrigin=null,fetcher=fetch}){
  if(typeof token!=='string'||token.length<32)throw new Error('GATEWAY_TOKEN_REQUIRED');
  let active=0;
  const server=createServer(async(req,res)=>{
@@ -41,7 +41,8 @@ export function operationsServer({status,recoveryHandler,token,analysisOrigin=nu
   try{
    if(url.pathname==='/api/operations')return json(res,200,await status());
    if(url.pathname.startsWith('/api/recovery'))return await recoveryHandler(req,res);
-   if(!analysisOrigin)return json(res,503,{error:'ANALYSIS_NOT_OPERATED'});
+   if(analysisHandler)return await analysisHandler(req,res);
+   if(!analysisOrigin)return json(res,503,{error:'Historical activity is not available yet. The project operator needs to start the history service.',allocationAuthority:'contract-only'});
    return await forward(res,new URL(url.pathname+url.search,analysisOrigin),{fetcher});
   }catch{return json(res,503,{error:'SERVICE_UNAVAILABLE'});}
  });

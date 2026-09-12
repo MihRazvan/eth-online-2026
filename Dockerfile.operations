@@ -8,9 +8,13 @@ RUN python3 -m venv /opt/proof && /opt/proof/bin/pip install --no-cache-dir -r s
 COPY packages/operations/src packages/operations/src
 COPY packages/settlement/src packages/settlement/src
 COPY packages/keeper/src packages/keeper/src
+COPY packages/data/src packages/data/src
+COPY packages/core/src packages/core/src
+COPY packages/substreams/feestrip-pool-context-v0.1.1.spkg packages/substreams/feestrip-pool-context-v0.1.1.spkg
 COPY scripts/chain/proof.mjs scripts/chain/proof.mjs
 COPY scripts/proof/validate_witness.py scripts/proof/validate_witness.py
 COPY deployments/sepolia.json deployments/sepolia.json
+COPY deployments/subgraph-sepolia.json deployments/subgraph-sepolia.json
 COPY docs/evidence/sepolia-deployment.json docs/evidence/sepolia-deployment.json
 ENV NODE_ENV=production FEESTRIP_PROOF_PYTHON=/opt/proof/bin/python OPERATIONS_DATA_DIR=/data PORT=8789
 EXPOSE 8789
