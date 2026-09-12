@@ -67,7 +67,7 @@ The active, proof-pending and allocated examples are **different real series**, 
 | [ ] | J18 / submission | Package sponsor evidence and human review materials | Public source/runtime provenance, transaction links, measured cost, reusable Uniswap recipe, current FEEDBACK, licenses/AI record and concise recording script. Each claim links to the correct public/fork/local evidence |
 | [ ] | J19 / final acceptance | Run the full judge rehearsal and publish verified build | Two unaided participants; both desktop/mobile; wrong network, insufficient gas, rejected signature, reload, stale/depleted quote, counterparty action, unaccepted/expired offer refund and acceptance race, proof outage and post-redemption quote renewal; hosted CI and public build verified |
 
-Security-sensitive changes receive separate review before publication. The current51contract tests,55browser regressions and both local-chain settlement variants do not replace J12/J19. The funded-position commitment fix requires replacement of the old immutable public FeeStrip and its associated market, plus updated operational pins and Subgraph configuration.
+Security-sensitive changes receive separate review before publication. The current51contract tests,61browser regressions and both local-chain settlement variants do not replace J12/J19. The funded-position commitment replacement is deployed, independently verified and reflected in the operational pins and Studio v0.2.0 configuration. Hosted preservation and the public financial lifecycle remain pending. Use the [teammate brief](TEAMMATE_BRIEF.md) for the frontend rehearsal and judge script.
 
 ## Team checklist — access, decisions and hands-on work
 

@@ -10,7 +10,7 @@ Formerly FeeStrip. The application now uses the user-selected **usufruct** orcha
 
 Implementation in progress. The product escrows an existing canonical Uniswap v4 NFT for a fixed earning window, sells transferable claims to its native USDC fee income, and returns the same NFT after late capture. Exact historical settlement must be authenticated; estimates never authorize payouts.
 
-Start with [status](docs/STATUS.md), [product requirements](feestrip-handoff/PRODUCT_CONTRACT.md), and [implementation brief](feestrip-handoff/START_HERE.md).
+For teammates and presenters, start with the [project brief, judge demo and end-to-end walkthrough](docs/TEAMMATE_BRIEF.md). Engineering references: [status](docs/STATUS.md), [product requirements](feestrip-handoff/PRODUCT_CONTRACT.md), and [implementation brief](feestrip-handoff/START_HERE.md).
 
 Current milestone: [judge-ready release checklist](docs/JUDGE_READINESS.md), with [ETHOnline 2026 Classic research](docs/research/bounty-readiness.md). Public endpoint operations, participant-wallet acceptance and live Graph composition are explicit unfinished gates.
 

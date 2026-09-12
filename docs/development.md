@@ -59,7 +59,7 @@ node scripts/chain/analyze.mjs /path/to/private-analysis.json 1 1000000000000000
 DATA_CONFIG=/path/to/private-analysis.json node packages/data/src/server.mjs
 ```
 
-The CLI prints a buyer result for the requested claim quantity and USDC cost in base units. The HTTP service binds127.0.0.1:8787 and exposes `/api/analysis?seriesId=1&quantity=1000000000000000000&price=1000000&executionCost=0`. Proxy this route from the frontend origin. It selects a common retained block, requires matching hashes/deployment/chain, reports source lag and unknown coverage, and never supplies settlement amounts. Missing provider access or inconsistent sources produce an explicit error. Live Graph acceptance is currently blocked by missing access; local envelope tests and a WASM build are not a substitute.
+The CLI prints a buyer result for the requested claim quantity and USDC cost in base units. The HTTP service binds127.0.0.1:8787 and exposes `/api/analysis?seriesId=1&quantity=1000000000000000000&price=1000000&executionCost=0`. Proxy this route from the frontend origin. It selects a common retained block, requires matching hashes/deployment/chain, reports source lag and unknown coverage, and never supplies settlement amounts. Missing provider access or inconsistent sources produce an explicit error. Studio and Substreams access are verified; operated initialized history and an actual live buyer join remain pending. Local envelope tests and a WASM build are not a substitute.
 
 ## Public deployment
 
