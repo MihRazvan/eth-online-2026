@@ -11,7 +11,7 @@ async function mount(page: Page, route = "#market") {
     const [{ App }, { initialFixture }, { readOperations }, { default: React }, { default: { createRoot } }] = await Promise.all([
       import("/src/App.tsx"), import("/src/fixtureAdapter.ts"), import("/src/operations.ts"), import("/node_modules/.vite/deps/react.js"), import("/node_modules/.vite/deps/react-dom_client.js"),
     ]);
-    const state = (window as any).guidance = { connected: false, gas: "0", noQuote: false, walletRequests: 0, signatures: 0, analysisRequests: 0 };
+    const state = (window as any).guidance = { connected: false, gas: "0", noQuote: false, noOffer: false, walletRequests: 0, signatures: 0, analysisRequests: 0 };
     const adapter = {
       mode: "testnet",
       async load() {
@@ -19,6 +19,7 @@ async function mount(page: Page, route = "#market") {
         s.saleReadiness = await readOperations({ chainId: 11155111, feeStrip: address });
         s.wallet = { ...s.wallet, connected: state.connected, address, chainId: 11155111, ethBalanceWei: state.gas };
         s.positions = [{ ...s.positions[0], owner: address, ownedByWallet: true }];
+        if (state.noOffer) { s.positions[0].offer = undefined; s.positions[0].offers = []; }
         s.fundedOffers = [{ id: "2", tokenId: "999", seller: "0x2222222222222222222222222222222222222222", buyer: address, fundedMicros: "250000", claims: "2500000000000000000000", originalSupply: "10000000000000000000000", endBlock: "11972000", deadlineTimestamp: "1789214400", expired: false }];
         if (state.noQuote) { s.quote.available = false; s.markets[0].availableClaims = "0"; }
         return s;
@@ -57,9 +58,11 @@ test("service pause belongs to the project team; read-only retry cannot bypass w
   await expect(page.getByRole("heading", { name: "Your wallet", exact: true })).toBeVisible();
   await expect(page.getByText("Add Sepolia ETH before signing.", { exact: false })).toBeVisible();
   await expect(page.getByRole("button", { name: "1. Approve this NFT", exact: true })).toBeDisabled();
-  await page.evaluate(() => { (window as any).guidance.gas = "1000000000000000000"; });
+  await page.evaluate(() => { (window as any).guidance.gas = "1000000000000000000"; (window as any).guidance.noOffer = true; });
   await notice.getByRole("button", { name: "Check service again" }).click();
   await expect(page.getByRole("button", { name: "1. Approve this NFT", exact: true })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "1. Approve this NFT", exact: true })).toHaveAccessibleDescription(/NFT approval and sale acceptance are paused/);
+  await expect(page.getByText("NFT approval does not publish a listing.", { exact: false })).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath("service-pause-desktop.png"), fullPage: true });
   await page.setViewportSize({ width: 390, height: 844 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);

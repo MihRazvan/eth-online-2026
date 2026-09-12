@@ -1723,7 +1723,7 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                                   </select></label>}
                                   <FundedOffer position={p} fixture={fixture} />
                                   {!!p.unavailableOffersCount && <p className="fine">{p.unavailableOffersCount} unaccepted offer(s) have expired or no longer match this position’s current owner, pool, range or liquidity. Buyers can cancel them from My cabinet to recover their exact funding.</p>}
-                                  {!p.offer && <p className="fine">Approval alone cannot start a sale. Share this position with a buyer. They fund an offer, then you review and accept its exact terms here. Expired or consumed offers cannot be accepted.</p>}
+                                  {!p.offer && <p className="fine">This version starts with a funded buyer offer. NFT approval does not publish a listing. Copy the position link and share it with a separate buyer; they fund an offer, then you approve and accept its exact terms here. Expired or consumed offers cannot be accepted.</p>}
                                 </div>
                               </div>
                               {pin && (
@@ -1738,9 +1738,11 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                                   </div>
                                 </div>
                               )}
+                              {salesPaused && <p id={`sale-pause-${p.tokenId}`} className="inline-warning">NFT approval and sale acceptance are paused. The project team must bring settlement checkpointing and proof backup online and verify them first. No wallet signature or extra USDC can resolve this pause.</p>}
                               <div className="position-buttons">
                                 <button
                                   className={p.approved ? "" : "primary"}
+                                  aria-describedby={salesPaused ? `sale-pause-${p.tokenId}` : undefined}
                                   onClick={() =>
                                     begin({
                                       title: "Approve NFT transfer",
@@ -1776,6 +1778,7 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                                 </button>
                                 <button
                                   className={p.approved ? "primary" : ""}
+                                  aria-describedby={salesPaused ? `sale-pause-${p.tokenId}` : undefined}
                                   disabled={
                                     !connected || noGas || salesPaused || !p.approved ||
                                     !p.offer ||
