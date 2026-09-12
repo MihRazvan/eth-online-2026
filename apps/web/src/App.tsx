@@ -1276,6 +1276,11 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                       </h2>
                       <span className="source-tag">Native USDC income</span>
                     </div>
+                    {!s.markets.some((market) => s.wallet.claims[market.id] !== undefined) && <div className="empty-claims">
+                      <h3>No fee claims yet</h3>
+                      <p>Funded offers are escrowed payments, not claims. Claims arrive only after the seller accepts an offer.</p>
+                      <a href="#market">Browse the Orchard for issued claims <Icon /></a>
+                    </div>}
                     {s.markets
                       .filter((m) => s.wallet.claims[m.id] !== undefined)
                       .map((m) => (
@@ -1383,7 +1388,7 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                             <b>
                               Offer #{offer.id} · NFT #{offer.tokenId}
                             </b>
-                            {!fixture && <><a href={positionRoute(offer.tokenId, offer.id)}>Open seller review link</a><button className="text-button" onClick={() => copyLink(positionRoute(offer.tokenId, offer.id))}>Copy offer link</button></>}
+                            {!fixture && <div className="offer-share-links"><a href={positionRoute(offer.tokenId, offer.id)}>Open seller review link</a><button className="text-button" onClick={() => copyLink(positionRoute(offer.tokenId, offer.id))}>Copy offer link</button></div>}
                             <small>
                               {offer.expired
                                 ? "Expired · funds recoverable"

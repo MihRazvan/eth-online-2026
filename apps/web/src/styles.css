@@ -3763,3 +3763,10 @@ h2 {
 .cabinet-positions > .section-top .address { min-width: 0; max-width: 100%; }
 .replacement-receipt input { width: 100%; min-width: 0; }
 .replacement-receipt form { display: grid; gap: .75rem; }
+.offer-share-links { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem 1rem; margin: .5rem 0; }
+.offer-share-links a, .offer-share-links button { min-height: 44px; display: inline-flex; align-items: center; }
+.empty-claims { padding: 1.25rem 0; border-top: 1px solid var(--ink); }
+.empty-claims h3 { margin: 0 0 .75rem; }
+.empty-claims p { max-width: 65ch; margin-bottom: 1rem; }
+.empty-claims a { display: inline-flex; align-items: center; gap: .5rem; min-height: 44px; }
+@media (max-width: 600px) { .offer-share-links { align-items: stretch; flex-direction: column; gap: .25rem; } .offer-share-links button { align-self: flex-start; } }
