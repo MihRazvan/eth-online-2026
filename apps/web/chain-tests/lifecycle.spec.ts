@@ -39,16 +39,31 @@ if (!["localhost", "127.0.0.1", "[::1]"].includes(new URL(rpcURL).hostname))
   throw new Error("Chain browser suite requires a loopback RPC.");
 const client = createPublicClient({ transport: http(rpcURL) });
 function run(script: string, ...args: string[]) {
-  return execFileSync(
-    process.execPath,
-    [resolve(repo, "scripts/chain", script), ...args],
-    {
-      cwd: repo,
-      encoding: "utf8",
-      timeout: 120000,
-      env: { ...process.env, LOCAL_RPC_URL: rpcURL },
-    },
-  );
+  const started = Date.now();
+  try {
+    return execFileSync(
+      process.execPath,
+      [resolve(repo, "scripts/chain", script), ...args],
+      {
+        cwd: repo,
+        encoding: "utf8",
+        timeout: 120000,
+        env: { ...process.env, LOCAL_RPC_URL: rpcURL },
+      },
+    );
+  } catch (error) {
+    const failure = error as { code?: string; status?: number | null; signal?: string | null; stdout?: string | Buffer; stderr?: string | Buffer };
+    const tail = (value: string | Buffer | undefined) => {
+      const output = String(value ?? "")
+        .replace(/\u001b\[[0-?]*[ -/]*[@-~]/g, "")
+        .replace(/https?:\/\/[^\s"'<>]+/gi, "[URL omitted]")
+        .replace(/^.*\b(?:PRIVATE_KEY|MNEMONIC|PASSWORD|DEPLOY_KEY|SECRET|API_KEY|AUTH_TOKEN|JWT)\b.*$/gim, "[credential-labelled line omitted]");
+      return output ? (output.length > 6000 ? "[earlier output omitted]\n" : "") + output.slice(-6000) : "(no output captured; nested commands may buffer their output)";
+    };
+    // Local development scripts only. Do not attach the raw child-process error,
+    // environment or arguments: those bypass the bounded, redacted diagnostics.
+    throw new Error(`Local-chain script ${script} failed after ${Date.now() - started}ms (limit 120000ms; code ${failure.code ?? "none"}; exit ${failure.status ?? "none"}; signal ${failure.signal ?? "none"}).\nstdout tail:\n${tail(failure.stdout)}\nstderr tail:\n${tail(failure.stderr)}`);
+  }
 }
 async function balance(token: Address, who: Address) {
   return client.readContract({
