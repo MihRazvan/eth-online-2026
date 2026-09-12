@@ -3761,3 +3761,5 @@ h2 {
 @media (max-width: 600px) { .fund-form { grid-template-columns: minmax(0, 1fr); } }
 .cabinet-positions > .section-top { flex-wrap: wrap; gap: .75rem; }
 .cabinet-positions > .section-top .address { min-width: 0; max-width: 100%; }
+.replacement-receipt input { width: 100%; min-width: 0; }
+.replacement-receipt form { display: grid; gap: .75rem; }

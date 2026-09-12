@@ -1,3 +1,4 @@
+import { serializePublicTransaction, transactionIdentity } from "./transactionIdentity";
 import { readReceipts } from "./receipts";
 import { readOperations } from "./operations";
 import {
@@ -325,6 +326,36 @@ export class ChainAdapter implements FeeStripAdapter {
   async readTransaction(hash: Hex): Promise<"pending" | "confirmed" | "failed"> {
     try { const receipt = await this.client.getTransactionReceipt({ hash }); return receipt.status === "success" ? "confirmed" : "failed"; }
     catch { return "pending"; }
+  }
+  async reconcileReplacement(original: TransactionProgress, replacementHash: string): Promise<TransactionProgress[]> {
+    try { return await this.reconcileReplacementAction(original, replacementHash); }
+    catch (error) { throw new Error(message(error)); }
+  }
+  private async reconcileReplacementAction(original: TransactionProgress, replacementHash: string): Promise<TransactionProgress[]> {
+    const d = this.deployment;
+    if (original.stage !== "pending" || original.chainId !== d.chainId || !same(original.feeStrip, d.feeStrip) || !original.hash || !/^0x[0-9a-fA-F]{64}$/.test(replacementHash) || same(original.hash, replacementHash)) throw new Error("Choose a different replacement transaction hash for this unresolved receipt.");
+    await this.validate();
+    await this.signer(original.account as Address);
+    if (await this.client.getChainId() !== d.chainId) throw new Error("The receipt RPC is on a different chain.");
+    let signed = original.signedTransaction;
+    if (!signed) {
+      try { signed = serializePublicTransaction(await this.client.getTransaction({ hash: original.hash })); }
+      catch { throw new Error("The original signed transaction is unavailable. Its sender and nonce cannot be authenticated, so this receipt remains unresolved."); }
+    }
+    const identity = await transactionIdentity(signed, { hash: original.hash, account: original.account, chainId: d.chainId });
+    const hash = replacementHash as Hex;
+    const [replacement, receipt] = await Promise.all([this.client.getTransaction({ hash }), this.client.getTransactionReceipt({ hash })]);
+    const replacementBytes = serializePublicTransaction(replacement);
+    const next = await transactionIdentity(replacementBytes, { hash, account: original.account, chainId: d.chainId });
+    if (next.nonce !== identity.nonce) throw new Error("This transaction uses a different nonce. It did not replace the original submission.");
+    const block = await this.client.getBlock({ blockNumber: receipt.blockNumber });
+    if (!same(receipt.transactionHash, hash) || !same(block.hash, receipt.blockHash)) throw new Error("The replacement receipt is not confirmed in the current canonical chain.");
+    const sameAction = identity.to === next.to && identity.value === next.value && identity.data === next.data;
+    await this.signer(original.account as Address);
+    return [
+      { ...original, signedTransaction: signed, stage: "replaced", replacementHash: hash },
+      { chainId: d.chainId, feeStrip: d.feeStrip, account: original.account, hash, signedTransaction: replacementBytes, stage: receipt.status === "success" ? "confirmed" : "failed", label: sameAction ? original.label : "Replacement transaction (different action)", action: sameAction ? original.action : undefined },
+    ];
   }
   private progress(progress: Omit<TransactionProgress, "chainId" | "feeStrip" | "action">) {
     for (const listener of this.progressListeners) listener({ ...progress, chainId: this.deployment.chainId, feeStrip: this.deployment.feeStrip, action: this.activeAction });
@@ -1263,6 +1294,13 @@ export class ChainAdapter implements FeeStripAdapter {
     this.progress({ stage: "signature", label, account, gasEstimate: gasLimit.toString(), maximumFeeWei: maximumFeeWei.toString() });
     const hash = await wallet.sendTransaction({ account, chain: this.chain, to: address, data, gas: gasLimit, ...fees });
     this.progress({ stage: "pending", label, account, hash, gasEstimate: gasLimit.toString(), maximumFeeWei: maximumFeeWei.toString() });
+    // This public signature binds the saved nonce even if the original later disappears from the mempool.
+    try {
+      const signedTransaction = serializePublicTransaction(await this.client.getTransaction({ hash }));
+      const identity = await transactionIdentity(signedTransaction, { hash, account, chainId: this.deployment.chainId });
+      if (identity.to !== address.toLowerCase() || identity.data !== data.toLowerCase() || identity.value !== 0n) throw new Error("Unexpected signed transaction payload");
+      this.progress({ stage: "pending", label, account, hash, signedTransaction });
+    } catch { /* Receipt waiting still proceeds; missing signed bytes are disclosed if manual reconciliation is needed. */ }
     let replacementReason: string | undefined;
     const receipt = await this.client.waitForTransactionReceipt({
       hash, confirmations: 1,

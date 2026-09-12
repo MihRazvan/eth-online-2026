@@ -247,6 +247,7 @@ test("injected wallet changes cannot replace the reviewed signer during refresh,
     adapter.account = A;
     adapter.validate = async () => {};
     adapter.client.getBalance = async () => 10n ** 18n;
+    adapter.client.getTransaction = async () => { throw new Error("Original transaction not supplied by this stub"); };
     adapter.client.estimateGas = async () => 21000n;
     adapter.client.estimateFeesPerGas = async () => ({ maxFeePerGas: 1000000000n, maxPriorityFeePerGas: 100000000n });
     adapter.read = async (_address: string, _abi: unknown, fn: string) => {

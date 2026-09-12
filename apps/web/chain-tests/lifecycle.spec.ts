@@ -497,3 +497,46 @@ test("an unlisted canonical NFT connects two wallets through exact small terms, 
   writeFileSync(testInfo.outputPath("two-wallet-flow.json"), JSON.stringify(evidence, null, 2) + "\n");
   await sellerContext.close();
 });
+
+test("a closed browser can authenticate a wallet cancellation and safely clear its pending submission", async ({ page }, testInfo) => {
+  const buyer = deployment.actors!.buyer;
+  await login(page, "buyer", "positions");
+  await page.getByRole("button", { name: "Publish sell quote", exact: true }).click();
+  await page.getByLabel("Maker claim quantity").fill("10");
+  await page.getByLabel("Maker total USDC ask").fill("0.01");
+  await page.getByRole("button", { name: "Review maker quote", exact: true }).click();
+  await client.request({ method: "anvil_setAutomine", params: [false] });
+  let replacementHash: Hex | undefined;
+  try {
+    await page.getByRole("dialog").getByRole("button", { name: "Approve and publish quote", exact: true }).click();
+    await expect.poll(async () => page.evaluate(() => JSON.parse(localStorage.getItem("usufruct:transaction-receipts:v1") ?? "[]").find((row: any) => row.stage === "pending")?.signedTransaction)).toBeTruthy();
+    const saved = await page.evaluate(() => JSON.parse(localStorage.getItem("usufruct:transaction-receipts:v1") ?? "[]").find((row: any) => row.stage === "pending"));
+    const original = await client.getTransaction({ hash: saved.hash });
+    const context = page.context();
+    await page.close();
+    const wallet = createWalletClient({ account: buyer, transport: http(rpcURL) });
+    replacementHash = await wallet.sendTransaction({ chain: null, to: buyer, value: 0n, data: "0x", nonce: original.nonce, gas: 21000n, maxFeePerGas: original.maxFeePerGas! * 2n + 1n, maxPriorityFeePerGas: original.maxPriorityFeePerGas! * 2n + 1n });
+    await client.request({ method: "anvil_mine", params: ["0x1"] });
+    expect((await client.getTransactionReceipt({ hash: replacementHash })).status).toBe("success");
+    const fresh = await context.newPage();
+    await login(fresh, "buyer", "positions");
+    await fresh.getByText("Saved transaction receipts", { exact: true }).click();
+    await fresh.getByText("Replaced or cancelled in your wallet?", { exact: true }).click();
+    await fresh.getByLabel(/^Replacement transaction hash for /).fill(replacementHash);
+    await fresh.getByRole("button", { name: "Check replacement receipt", exact: true }).click();
+    await expect(fresh.getByRole("status")).toContainText("original transaction was superseded");
+    const records = await fresh.evaluate(() => JSON.parse(localStorage.getItem("usufruct:transaction-receipts:v1") ?? "[]"));
+    expect(records.find((row: any) => row.hash === saved.hash)).toMatchObject({ stage: "replaced", replacementHash });
+    expect(records.find((row: any) => row.hash === replacementHash)).toMatchObject({ stage: "confirmed", label: "Replacement transaction (different action)" });
+    expect(records.find((row: any) => row.hash === replacementHash).action).toBeUndefined();
+    expect(records.some((row: any) => row.stage === "pending")).toBe(false);
+    await fresh.getByRole("button", { name: "Publish sell quote", exact: true }).click();
+    await fresh.getByLabel("Maker claim quantity").fill("10");
+    await fresh.getByLabel("Maker total USDC ask").fill("0.01");
+    await fresh.getByRole("button", { name: "Review maker quote", exact: true }).click();
+    await expect(fresh.getByRole("dialog")).toBeVisible();
+    await fresh.getByRole("button", { name: "Close transaction review" }).click();
+    await fresh.screenshot({ path: testInfo.outputPath("verified-wallet-cancellation.png"), fullPage: true });
+    writeFileSync(testInfo.outputPath("replacement-receipt.json"), JSON.stringify({ scope: "local-chain-only", originalHash: saved.hash, replacementHash, originalNonce: original.nonce, sender: buyer, sameSignedNonce: true, originalActionWasNotCompleted: true, browserClosedBeforeReplacement: true }, null, 2) + "\n");
+  } finally { await client.request({ method: "anvil_setAutomine", params: [true] }); }
+});

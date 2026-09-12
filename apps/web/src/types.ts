@@ -226,6 +226,7 @@ export interface TransactionProgress {
   hash?: `0x${string}`;
   offerId?: string;
   replacementHash?: `0x${string}`;
+  signedTransaction?: `0x${string}`;
   gasEstimate?: string;
   maximumFeeWei?: string;
   action?: Action;
@@ -242,6 +243,7 @@ export interface FeeStripAdapter {
   connect(): Promise<WalletState>;
   findPosition?(input: string): Promise<string>;
   execute(action: Action): Promise<ActionResult>;
+  reconcileReplacement?(original: TransactionProgress, replacementHash: string): Promise<TransactionProgress[]>;
   readTransaction?(hash: `0x${string}`): Promise<"pending" | "confirmed" | "failed">;
   subscribeProgress?(listener: (progress: TransactionProgress) => void): () => void;
   subscribeWallet?(listener: () => void): () => void;

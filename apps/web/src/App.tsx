@@ -1,3 +1,4 @@
+import { ReplacementReceipt } from "./components/ReplacementReceipt";
 import { OfferForm } from "./components/OfferForm";
 import { parsePositionRoute, positionRoute } from "./offerTerms";
 import { readReceipts, saveReceipt } from "./receipts";
@@ -1232,6 +1233,7 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
             </section>
         {connected && !fixture && (positions || pin) && <section className="wallet-prerequisites" aria-label="Wallet prerequisites">
           <p>{money(s.wallet.usdcBalanceMicros, 6)} test USDC · {s.wallet.ethBalanceWei === undefined ? "ETH balance unavailable" : (Number(s.wallet.ethBalanceWei) / 1e18).toPrecision(5) + " ETH for gas"}.</p>
+          {s.mode === "testnet" && <p className="fine"><a href="https://faucet.circle.com/" target="_blank" rel="noreferrer">Get test USDC from Circle</a> (choose Ethereum Sepolia) · <a href="https://ethereum.org/en/developers/docs/networks/#sepolia" target="_blank" rel="noreferrer">Find a Sepolia ETH faucet</a>. Faucet availability and limits can vary.</p>}
           {noGas && <p className="inline-warning">Add Sepolia ETH before signing. USDC cannot pay Ethereum transaction fees.</p>}
           <p className="fine">Use {s.mode === "local" ? "the local development chain and its test tokens" : "Ethereum Sepolia and its authentic test USDC"}. Check your wallet’s network and receive both test assets before funding. Every transaction estimates gas before requesting a signature; proof allocation may cost substantially more than approval or funding.</p>
         </section>}
@@ -1243,6 +1245,11 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
             {s.chainId === 11155111 ? <a href={"https://sepolia.etherscan.io/tx/" + row.hash} target="_blank" rel="noreferrer">View transaction</a> : <code>{row.hash}</code>}
             {row.replacementHash && <small>Replaced by {s.chainId === 11155111 ? <a href={"https://sepolia.etherscan.io/tx/" + row.replacementHash} target="_blank" rel="noreferrer">the replacement transaction</a> : <code>{row.replacementHash}</code>}. This original hash is no longer pending.</small>}
             {row.offerId && row.action?.type === "fundOffer" && <a href={positionRoute(row.action.tokenId, row.offerId)}>Share offer #{row.offerId} with the seller</a>}
+            <ReplacementReceipt original={row} adapter={adapter} onResolved={async (rows) => {
+              for (const next of rows) setReceipts(saveReceipt(next));
+              setMessage("The original transaction was superseded. Its replacement is recorded; check the refreshed offer or holding before another action.");
+              try { await refresh(); } catch { setError("Replacement verified, but the latest state could not be loaded. Refresh before reviewing another action."); }
+            }} />
             {row.label === "Token allowance" && <small>Allowance only permits spending. It does not fund or activate a sale, and can remain after cancellation.</small>}
             {row.action?.type === "fundOffer" && row.offerId && row.stage === "confirmed" && <small>This receipt confirms escrow funding, not issued claims. Check the offer’s current state. After acceptance, open My cabinet to find your claims and publish a sell quote.</small>}
           </article>)}

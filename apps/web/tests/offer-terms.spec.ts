@@ -66,7 +66,8 @@ test("repricing resolves the original receipt and preserves the replacement hash
   const adapter = new ChainAdapter({ mode: "local", chainId: 31337, rpcUrl: "http://127.0.0.1:8561", feeStrip: A, positionManager: B } as any) as any;
   adapter.signer = async () => ({ account: A, wallet: { sendTransaction: async () => originalHash } });
   adapter.client.call = async () => {};
-  adapter.client.estimateGas = async () => 21000n;
+  adapter.client.getTransaction = async () => { throw new Error("Original transaction not supplied by this stub"); };
+    adapter.client.estimateGas = async () => 21000n;
   adapter.client.estimateFeesPerGas = async () => ({ maxFeePerGas: 100n, maxPriorityFeePerGas: 1n });
   adapter.client.getBalance = async () => 10n ** 18n;
   adapter.client.waitForTransactionReceipt = async ({ onReplaced }: any) => {
@@ -111,7 +112,8 @@ test("a receipt timeout preserves the pending hash and prevents a duplicate subm
     const adapter = new ChainAdapter({ mode: "local", chainId: 31337, rpcUrl: "http://127.0.0.1:8561", feeStrip: A, positionManager: B } as any) as any;
     adapter.validate = async () => {}; adapter.signer = async () => ({ account: A, wallet: { sendTransaction: async () => { sent++; return hash; } } });
     adapter.read = async () => A;
-    adapter.client.call = async () => {}; adapter.client.estimateGas = async () => 21000n;
+    adapter.client.call = async () => {}; adapter.client.getTransaction = async () => { throw new Error("Original transaction not supplied by this stub"); };
+    adapter.client.estimateGas = async () => 21000n;
     adapter.client.estimateFeesPerGas = async () => ({ maxFeePerGas: 100n, maxPriorityFeePerGas: 1n }); adapter.client.getBalance = async () => 10n ** 18n;
     adapter.client.waitForTransactionReceipt = async () => { throw new Error("RPC receipt timeout"); };
     adapter.readTransaction = async () => "pending";

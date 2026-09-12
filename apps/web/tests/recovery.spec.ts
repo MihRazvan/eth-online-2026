@@ -115,6 +115,7 @@ async function mount(
       const adapter = new ChainAdapter(deployment as any) as any;
       adapter.validate = async () => {};
     adapter.client.getBalance = async () => 10n ** 18n;
+    adapter.client.getTransaction = async () => { throw new Error("Original transaction not supplied by this stub"); };
     adapter.client.estimateGas = async () => 21000n;
     adapter.client.estimateFeesPerGas = async () => ({ maxFeePerGas: 1000000000n, maxPriorityFeePerGas: 100000000n });
       adapter.read = async () => ({ endBlock: 124n });
@@ -295,6 +296,7 @@ test("settlement prefers scoped API bytes, rejects mismatches and only falls bac
       const adapter = new ChainAdapter(deployment as any) as any;
       adapter.validate = async () => {};
     adapter.client.getBalance = async () => 10n ** 18n;
+    adapter.client.getTransaction = async () => { throw new Error("Original transaction not supplied by this stub"); };
     adapter.client.estimateGas = async () => 21000n;
     adapter.client.estimateFeesPerGas = async () => ({ maxFeePerGas: 1000000000n, maxPriorityFeePerGas: 100000000n });
       adapter.account = A;
@@ -393,6 +395,7 @@ test("only a direct verified cache for the exact series endpoint can settle with
       const adapter = new ChainAdapter(deployment as any) as any;
       adapter.validate = async () => {};
     adapter.client.getBalance = async () => 10n ** 18n;
+    adapter.client.getTransaction = async () => { throw new Error("Original transaction not supplied by this stub"); };
     adapter.client.estimateGas = async () => 21000n;
     adapter.client.estimateFeesPerGas = async () => ({ maxFeePerGas: 1000000000n, maxPriorityFeePerGas: 100000000n });
       adapter.account = A;
