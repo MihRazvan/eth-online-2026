@@ -1,0 +1,18 @@
+{
+  "network": "sepolia",
+  "pools": [
+    "0x0c5089eb2863310ecab41eb94f2705ce37ce455a0f64a9ee627c7470b43161e8"
+  ],
+  "start": 11678801,
+  "packageHash": "0xec91c3e699f52f373dd0afe113adfc16c54f9a71052e091f6982b1153307b276",
+  "initialization": {
+    "0x0c5089eb2863310ecab41eb94f2705ce37ce455a0f64a9ee627c7470b43161e8": {
+      "kind": "swap",
+      "block": 11678801,
+      "hash": "0x7236fd4559531e97ac730024a68ce457d9eaeee9a71d6e7682c00f69cf0a079b",
+      "tick": 59600,
+      "logIndex": 98,
+      "transactionHash": "0x6237cd0124382cc1c66f043a3b979854653839610e720504a222f552781137ed"
+    }
+  }
+}
