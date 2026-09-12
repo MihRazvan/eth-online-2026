@@ -61,7 +61,8 @@
         }
       },
       "allocationAuthority": "contract-only"
-    }
+    },
+    "temporaryReviewContainerStopped": true
   },
   "railway": {
     "project": "usufruct",
@@ -82,11 +83,13 @@
   ],
   "publicRefund": "old-offer-refund.json",
   "hostedCI": {
-    "commit": "8a873b7",
-    "url": "https://github.com/MihRazvan/eth-online-2026/actions/runs/34697434807",
+    "commit": "759e835",
+    "url": "https://github.com/MihRazvan/eth-online-2026/actions/runs/34698532030",
     "conclusion": "success",
-    "limit": "Before final frontend reorg follow-up; follow-up has local verification"
+    "scope": "All three jobs, including both actual browser variants and complete financial lifecycle"
   },
   "publicDeployment": "commitment-upgrade-readback.json",
-  "graphUpgrade": "graph-upgrade-verification.json"
+  "graphUpgrade": "graph-upgrade-verification.json",
+  "publicFrontend": "vercel-upgrade-smoke.json",
+  "finalityObservation": "upgrade-finality-observation.json"
 }

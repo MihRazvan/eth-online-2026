@@ -1,0 +1,13 @@
+{
+  "scope": "Read-only disconnected production frontend; no participant-wallet acceptance or operated backend",
+  "commit": "759e835",
+  "url": "https://usufruct-mu.vercel.app",
+  "checkedAt": "2026-09-12T14:13:43.008Z",
+  "feeStrip": "0xd84eE56b24841c887c73e8b9079A01c28b1B3E8E",
+  "market": "0x08B350FB5f2a1efF499F5cECD8C6Df427F282882",
+  "fundingCommitmentVersion": 1,
+  "desktop": true,
+  "mobileOverflow": false,
+  "emptyMarket": true,
+  "operationsStatus": 503
+}
