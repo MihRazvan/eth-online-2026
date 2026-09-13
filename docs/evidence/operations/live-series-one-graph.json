@@ -1,0 +1,301 @@
+{
+  "schemaVersion": 1,
+  "checkedAt": "2026-09-13T13:54:47.555Z",
+  "scope": "Actual public Sepolia series 1, hosted authenticated Substreams history and Studio buyer analysis joined at one independently canonical finalized hash. Read-only evidence; no financial action or human acceptance.",
+  "publicEndpoint": "https://usufruct-mu.vercel.app/api/analysis?seriesId=1&quantity=1000000000000000000000&price=50000&executionCost=0",
+  "operations": {
+    "schemaVersion": 1,
+    "chainId": "11155111",
+    "feeStrip": "0xd84ee56b24841c887c73e8b9079a01c28b1b3e8e",
+    "observedAt": 1789307687366,
+    "readyForNewSales": true,
+    "checks": {
+      "protocol": {
+        "ready": true,
+        "code": "READY"
+      },
+      "keeper": {
+        "ready": true,
+        "code": "READY"
+      },
+      "retention": {
+        "ready": true,
+        "code": "READY"
+      },
+      "replication": {
+        "ready": true,
+        "code": "READY"
+      }
+    },
+    "allocationAuthority": "contract-only"
+  },
+  "analysis": {
+    "seriesId": "1",
+    "poolKey": "11155111:0xe03a1074c86cfedd5c142c4f04f1a1536e203543:0x0c5089eb2863310ecab41eb94f2705ce37ce455a0f64a9ee627c7470b43161e8",
+    "sourceBlock": 11696247,
+    "sourceHash": "0xa81c275bfbb0c454d480f0240c27f4687c7b5c2424dccd647590a5739239d868",
+    "subgraphDeployment": "QmXEm3WDjvy2q2xSQYoK3HmoBzGKV6oR4JgEe2QRJkWAcw",
+    "substreamsPackage": "0xec91c3e699f52f373dd0afe113adfc16c54f9a71052e091f6982b1153307b276",
+    "substreamsFinalBlock": 11696247,
+    "sourceFinalized": true,
+    "lagBlocks": 66,
+    "indexingLagBlocks": 0,
+    "finalityLagBlocks": 66,
+    "stale": false,
+    "grossBreakEvenUSDC": "500000",
+    "netBreakEvenUSDC": "500000",
+    "knownBlocks": 22,
+    "inRangeBlocks": 22,
+    "totalBlocks": 22,
+    "occupancyBps": 10000,
+    "coverageBps": 10000,
+    "allocationAuthority": "contract-only",
+    "caveats": [
+      "Historical occupancy is block-weighted end-state context, not within-swap fee attribution.",
+      "Pool donations and wash trading can inflate past income. Future income is uncertain."
+    ]
+  },
+  "studio": {
+    "url": "https://api.studio.thegraph.com/query/1760193/usufruct/v0.2.0",
+    "series": {
+      "id": "1",
+      "chainId": "11155111",
+      "poolManager": "0xe03a1074c86cfedd5c142c4f04f1a1536e203543",
+      "poolId": "0x0c5089eb2863310ecab41eb94f2705ce37ce455a0f64a9ee627c7470b43161e8",
+      "positionManager": "0x429ba70129df741b2ca2a85bc3a2a3328e5c09b4",
+      "tokenId": "39216",
+      "claim": "0x3f4cd0787e83c05fda83e24d7016e57438dce644",
+      "residualOwner": "0x92aae0857979a139344f5b6f008e71f27a507522",
+      "tickLower": 58980,
+      "tickUpper": 60180,
+      "liquidity": "3411586204",
+      "activationBlock": "11696226",
+      "endBlock": "11696317",
+      "originalSupply": "10000000000000000000000",
+      "captured": false,
+      "allocated": false,
+      "nftReturned": false,
+      "closed": false,
+      "capturedUSDC": "0",
+      "soldUSDC": "0",
+      "redeemedQuantity": "0",
+      "updatedAtBlock": "11696226"
+    },
+    "_meta": {
+      "block": {
+        "number": 11696247,
+        "hash": "0xa81c275bfbb0c454d480f0240c27f4687c7b5c2424dccd647590a5739239d868"
+      },
+      "deployment": "QmXEm3WDjvy2q2xSQYoK3HmoBzGKV6oR4JgEe2QRJkWAcw",
+      "hasIndexingErrors": false
+    }
+  },
+  "rpc": {
+    "provider": "https://ethereum-sepolia-rpc.publicnode.com",
+    "chainId": 11155111,
+    "source": {
+      "number": "11696247",
+      "hash": "0xa81c275bfbb0c454d480f0240c27f4687c7b5c2424dccd647590a5739239d868"
+    },
+    "head": {
+      "number": "11696313",
+      "hash": "0xa99636c5f53495cf9d330616b726d1aec7826c63b3781c963bb42f5aadf58a87"
+    },
+    "finalized": {
+      "number": "11696247",
+      "hash": "0xa81c275bfbb0c454d480f0240c27f4687c7b5c2424dccd647590a5739239d868"
+    },
+    "activation": {
+      "transactionHash": "0xd2d549c1607418cb2b8893d456bc4d9153e4b51ab19c93854da831eb09f70336",
+      "blockNumber": "11696226",
+      "blockHash": "0x16ab24ccfffaba7df2e3af7466d0dedc34913dcaf2030324003b47667b394296",
+      "status": "success"
+    },
+    "seriesAtSource": {
+      "tokenId": "39216",
+      "claim": "0x3f4Cd0787E83C05fDa83E24D7016E57438dce644",
+      "residualOwner": "0x92AAe0857979a139344f5b6F008e71F27A507522",
+      "key": {
+        "currency0": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+        "currency1": "0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14",
+        "fee": 3000,
+        "tickSpacing": 60,
+        "hooks": "0x0000000000000000000000000000000000000000"
+      },
+      "tickLower": 58980,
+      "tickUpper": 60180,
+      "liquidity": "3411586204",
+      "activationBlock": "11696226",
+      "endBlock": "11696317",
+      "baselineX128": "0",
+      "quantity": "10000000000000000000000",
+      "capturedUSDC": "0",
+      "otherReserve": "0",
+      "soldUSDC": "0",
+      "redeemedQuantity": "0",
+      "paidClaims": "0",
+      "residualUSDC": "0",
+      "captured": false,
+      "allocated": false,
+      "nftReturned": false,
+      "closed": false
+    },
+    "nftOwnerAtSource": "0xd84eE56b24841c887c73e8b9079A01c28b1B3E8E",
+    "currentMint": {
+      "tokenId": "39216",
+      "transactionHash": "0x997b7aaa5d1c94645429f1c9827f3a22fc3f1835a98a9bff977dceb3e01a30de",
+      "blockNumber": "11684184",
+      "blockHash": "0xd155e80637a8135f1abf1b2e237cc6ca26c2ff1cfe14411603bc716d35d51ac0",
+      "zeroAddressTransferVerified": true,
+      "receiptProvider": "Configured HTTPS RPC; credential omitted",
+      "blockHashIndependentlyVerified": true
+    },
+    "activationBaselineX128": "0"
+  },
+  "retained": {
+    "selectedBlock": {
+      "number": 11696247,
+      "hash": "0xa81c275bfbb0c454d480f0240c27f4687c7b5c2424dccd647590a5739239d868"
+    },
+    "identity": {
+      "chainId": 11155111,
+      "poolManager": "0xe03a1074c86cfedd5c142c4f04f1a1536e203543",
+      "poolIds": [
+        "0x0c5089eb2863310ecab41eb94f2705ce37ce455a0f64a9ee627c7470b43161e8"
+      ],
+      "packageHash": "0xec91c3e699f52f373dd0afe113adfc16c54f9a71052e091f6982b1153307b276",
+      "history": {
+        "startBlock": 11678801,
+        "initialization": [
+          {
+            "kind": "swap",
+            "pool": "0x0c5089eb2863310ecab41eb94f2705ce37ce455a0f64a9ee627c7470b43161e8",
+            "block": 11678801,
+            "hash": "0x7236fd4559531e97ac730024a68ce457d9eaeee9a71d6e7682c00f69cf0a079b",
+            "logIndex": 98,
+            "tick": 59600,
+            "transactionHash": "0x6237cd0124382cc1c66f043a3b979854653839610e720504a222f552781137ed"
+          }
+        ]
+      }
+    },
+    "providerCursorPresent": true,
+    "providerCursorSha256": "0a6b5b2b110acc03bc3f33e91ad7bc2a27687de167277048b281064a5e82289a",
+    "finalBlockHeight": 11696247,
+    "extent": {
+      "count": 17447,
+      "first": 11678801,
+      "last": 11696247
+    },
+    "samples": [
+      {
+        "block": 11678801,
+        "logIndex": 98,
+        "tick": 59600
+      },
+      {
+        "block": 11696168,
+        "logIndex": 50,
+        "tick": 60066
+      }
+    ],
+    "tail": [
+      {
+        "number": 11696228,
+        "hash": "0x60450256acd724a3984b010fdb546e5dc03eaebf70ef0af4aaca7b5a6de9cac4"
+      },
+      {
+        "number": 11696229,
+        "hash": "0xb4e62b5d065574aa084f8b91cd2040a704edbe1d6641c556fd4bce6ac08a0d41"
+      },
+      {
+        "number": 11696230,
+        "hash": "0x8a5a06df549f8acc09cef58a4f6f2e830347b6ef7d702a0956ae52ee46f3dfa7"
+      },
+      {
+        "number": 11696231,
+        "hash": "0x16284712d52a99caa534af133e317b91ebbeea575652fe522fa8aa125cf47302"
+      },
+      {
+        "number": 11696232,
+        "hash": "0xc5546c3b2c26e77e3336065f265038a1a481d5b2811fb8c363f1ae7350c335cc"
+      },
+      {
+        "number": 11696233,
+        "hash": "0xc830c5993beae6e0f621a9edb0db181aeeb2899efb645f1b918df898b4ab75cb"
+      },
+      {
+        "number": 11696234,
+        "hash": "0x3ddc6c5563659c5bb12fc93faf358692c9b99e5ae9071e065807808e5c5ae6d7"
+      },
+      {
+        "number": 11696235,
+        "hash": "0xf65f875f6da4855fd6497ed01f343cd2047b9fb18ef5e0fd4d21761f0fd3a8c6"
+      },
+      {
+        "number": 11696236,
+        "hash": "0x56c03d32a3c4874b91ae28adabee72b4cf14a796a273d7966c82039fdc2e593e"
+      },
+      {
+        "number": 11696237,
+        "hash": "0x0e58f50cf14a12422773346f371d7d3ab9907e5443fad252c6d2248cfc056a97"
+      },
+      {
+        "number": 11696238,
+        "hash": "0x4123c8d9357d977b432bec0943d54b78cbbd9d7891f438b68b3bd9083901994f"
+      },
+      {
+        "number": 11696239,
+        "hash": "0x411e17d9459dbc7913c98e9579a34c7fc8f98b6eeba15b21784983a16fcc0a32"
+      },
+      {
+        "number": 11696240,
+        "hash": "0x6d13c83b3a353c6e72ccfd457167ec31ddcb06b15f1b16663ff8880abd74a27b"
+      },
+      {
+        "number": 11696241,
+        "hash": "0x7ea2eb6ca42826f383dce87d34cd075d2d9e7cd680798331363c3b1f4d4a3f3a"
+      },
+      {
+        "number": 11696242,
+        "hash": "0xe4b963cf91062dceb86900a503ac3d37e304deee83e63e22c1257313e28b78d4"
+      },
+      {
+        "number": 11696243,
+        "hash": "0x0343e7f437ce06f5f515a74fed14d7155b6e04455c7836b221f0118da9d5060a"
+      },
+      {
+        "number": 11696244,
+        "hash": "0x85098985a2f4306b147df84de0d9ddfff6530886e3d44b1dad1d3f369bf57f36"
+      },
+      {
+        "number": 11696245,
+        "hash": "0x3bff29fbc2bf14836204c58043766badb9876bf27e8dc1244e33081ce4c62f16"
+      },
+      {
+        "number": 11696246,
+        "hash": "0x405acad21b1c24e0f781e332854a265906f9f354a54c12c711e5015677cea961"
+      },
+      {
+        "number": 11696247,
+        "hash": "0xa81c275bfbb0c454d480f0240c27f4687c7b5c2424dccd647590a5739239d868"
+      }
+    ],
+    "allTailAndAnchorHashesMatchIndependentRpc": true,
+    "packageSha256": "0xec91c3e699f52f373dd0afe113adfc16c54f9a71052e091f6982b1153307b276"
+  },
+  "independentlyRecomputedOccupancy": {
+    "knownBlocks": 22,
+    "inRangeBlocks": 22,
+    "totalBlocks": 22,
+    "coverageBps": 10000,
+    "occupancyBps": 10000
+  },
+  "limitations": [
+    "Controlled public test activity is not organic demand or a fee forecast.",
+    "Coverage is block-weighted end-state occupancy from activation through the selected source block, not intra-block fee attribution or complete endpoint coverage.",
+    "The historical pool anchor seeds tick state; the current NFT/activation identity and baseline are separately verified onchain.",
+    "Graph analytics do not authenticate settlement fees; allocation and redemption remain contract-only.",
+    "This evidence does not establish human participant wallet acceptance or authenticated endpoint restoration."
+  ]
+}
