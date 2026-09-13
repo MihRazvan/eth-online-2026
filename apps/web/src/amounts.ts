@@ -33,8 +33,9 @@ export function money(value: string | bigint, places = 2): string {
   const n = BigInt(value),
     negative = n < 0n,
     absolute = negative ? -n : n;
-  // A positive test payment or entitlement must never appear to be free.
-  if (absolute > 0n && absolute < 10_000n && places < 6) places = 6;
+  // Never discard payable micro-units from a price or entitlement. Keep the
+  // compact format only when it represents the exact amount.
+  if (places >= 0 && places < 6 && absolute % (10n ** BigInt(6 - places)) !== 0n) places = 6;
   const whole = (absolute / 1_000_000n).toLocaleString("en-US");
   const decimals = (absolute % 1_000_000n)
     .toString()
