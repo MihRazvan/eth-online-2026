@@ -1,3 +1,5 @@
+import { useAppUpdate } from "./appUpdate";
+import { AppUpdateNotice } from "./components/AppUpdateNotice";
 import type { SellerListing } from "./listingTypes";
 import {
   ListingForm,
@@ -322,6 +324,8 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
   useEffect(() => {
     setScenarioIncome(adapter.mode === "fixture" ? "840" : "");
   }, [adapter, route]);
+  const appUpdate = useAppUpdate(error);
+  const updatePending = busy || progress?.stage === "signature" || (progress?.stage === "pending" && receipts.some(row => row.hash === progress.hash && row.stage === "pending"));
   const [theme, setTheme] = useState(() => {
     try {
       return localStorage.getItem("usufruct-theme") === "light"
@@ -605,7 +609,8 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
               <p role="status">Reading market and chain state…</p>
             </section>
           )}
-          {error && (
+          {appUpdate && <AppUpdateNotice pending={updatePending} />}
+          {error && !appUpdate && (
             <p className="inline-warning" role="alert">
               {error}
             </p>
@@ -878,7 +883,8 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
             </button>
           </div>
         )}
-        {error && !review && (
+        {appUpdate && !review && <AppUpdateNotice pending={updatePending} />}
+        {error && !appUpdate && !review && (
           <div className="alert error" role="alert">
             {error}
             <button aria-label="Dismiss error" onClick={() => setError("")}>
@@ -2706,7 +2712,8 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
               ))}
             </dl>
             <p className="review-warning">{review.warning}</p>
-            {error && (
+            {appUpdate && <AppUpdateNotice pending={updatePending} />}
+            {error && !appUpdate && (
               <p className="inline-warning" role="alert">
                 {error}
               </p>
@@ -2720,6 +2727,7 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                 className="primary wide"
                 disabled={
                   busy ||
+                  appUpdate ||
                   wrongNetwork ||
                   accountChanged ||
                   (noGas &&

@@ -1,3 +1,5 @@
+import { notifyAppUpdate, useAppUpdate } from "./appUpdate";
+import { AppUpdateNotice } from "./components/AppUpdateNotice";
 import React from "react";
 import { createRoot } from "react-dom/client";
 import type { EIP1193Provider } from "viem";
@@ -7,20 +9,22 @@ import { FixtureAdapter } from "./fixtureAdapter";
 import type { FeeStripAdapter } from "./types";
 import "./styles.css";
 import "./fonts.css";
+window.addEventListener("vite:preloadError", () => notifyAppUpdate());
 const root = createRoot(document.getElementById("root")!);
 function Bootstrap({ error }: { error?: string }) {
+  const appUpdate = useAppUpdate(error);
   return (
     <div className="app">
       <div className="titlebar">
         <span className="path">usufruct.exe — /</span>
       </div>
       <main id="main-content">
-        <section className="loading-state" aria-busy={!error}>
+        <section className="loading-state" aria-busy={!error && !appUpdate}>
           <p className="tele">usufruct · network configuration</p>
           <h1 className="display">
-            {error ? "Chain connection unavailable" : "USUFRUCT"}
+            {appUpdate ? "APP UPDATE" : error ? "Chain connection unavailable" : "USUFRUCT"}
           </h1>
-          {error ? (
+          {appUpdate ? <AppUpdateNotice /> : error ? (
             <>
               <p role="alert">{error}</p>
               <p>
