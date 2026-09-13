@@ -25,12 +25,12 @@ async function confirm(page: Page, name: string) {
 test("disconnected market explains original Q and exact earning endpoint; filters and empty search work", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/#market");
   await expect(
     page.getByText("Deterministic fixtures", { exact: true }),
   ).toBeVisible();
   await expect(
-    page.getByText("block 11,972,000", { exact: true }),
+    page.getByText("End of block 11,972,000 · window open", { exact: true }),
   ).toBeVisible();
   await expect(
     page.getByRole("link", { name: "Open WETH / USDC NFT 1482" }),
@@ -64,7 +64,7 @@ test("fractional purchase shows exact USDC review and carries unpaid period inco
   await expect(page.getByRole("status")).toContainText(
     "No transaction was broadcast",
   );
-  await page.getByRole("link", { name: "My cabinet", exact: true }).click();
+  await page.getByRole("link", { name: "Holdings", exact: true }).click();
   await expect(page.locator(".holding-row").first()).toContainText("250.1");
 });
 test("NFT approval does not activate; exact funded acceptance preserves retained rights", async ({
@@ -72,6 +72,7 @@ test("NFT approval does not activate; exact funded acceptance preserves retained
 }) => {
   await page.goto("/#pin");
   await wallet(page);
+  await page.getByRole("button", { name: /3 · Funded offers/ }).click();
   await page
     .getByRole("button", { name: "1. Approve this NFT", exact: true })
     .click();
@@ -101,6 +102,7 @@ test("multiple funded offers remain individually recoverable and rejected cancel
 }) => {
   await page.goto("/#pin");
   await wallet(page);
+  await page.getByRole("button", { name: /3 · Funded offers/ }).click();
   await page
     .getByRole("button", { name: "Fund an offer", exact: true })
     .click();
@@ -111,7 +113,7 @@ test("multiple funded offers remain individually recoverable and rejected cancel
       .click();
     await confirm(page, "Fund offer");
   }
-  await page.getByRole("link", { name: "My cabinet", exact: true }).click();
+  await page.getByRole("link", { name: "Holdings", exact: true }).click();
   await expect(page.locator(".funded-offer-row")).toHaveCount(2);
   await expect(
     page.getByRole("region", { name: "Your funded offers" }),
@@ -139,11 +141,11 @@ test("multiple funded offers remain individually recoverable and rejected cancel
   await expect(page.locator(".funded-offer-row")).toContainText(
     "$101.000000 USDC",
   );
-  await page.getByRole("link", { name: "Pin a tree", exact: true }).click();
+  await page.getByRole("link", { name: "Pin a seed", exact: true }).click();
   await expect(
     page.locator(".position-entry").first().locator(".funded-offer"),
   ).toContainText("$101.00");
-  await page.getByRole("link", { name: "My cabinet", exact: true }).click();
+  await page.getByRole("link", { name: "Holdings", exact: true }).click();
   await page.getByRole("button", { name: "Review cancellation" }).click();
   await confirm(page, "Cancel fixture offer");
   await expect(page.locator(".funded-offer-row")).toHaveCount(0);
@@ -215,7 +217,7 @@ test("rejected signature and transaction revert preserve balances and offer stat
     .click();
   await expect(page.getByRole("alert")).toContainText("Transaction reverted");
   await page.getByRole("button", { name: "Close transaction review" }).click();
-  await page.getByRole("link", { name: "My cabinet", exact: true }).click();
+  await page.getByRole("link", { name: "Holdings", exact: true }).click();
   await expect(page.locator(".holding-row").first()).toContainText("250");
 });
 test("wrong network has an explicit recovery action", async ({ page }) => {
@@ -263,10 +265,12 @@ test("indexer lag is visible and an empty position state explains eligibility", 
 }) => {
   await page.goto("/#pin");
   await wallet(page);
+  await page.getByRole("button", { name: /3 · Funded offers/ }).click();
   await condition(page, "indexer-lag");
   await expect(
     page.getByText("Indexer lag: 3,000 blocks", { exact: true }),
   ).toBeVisible();
+  await page.getByRole("button", { name: "1 · Choose a position", exact: true }).click();
   await page.getByLabel("Fixture condition").selectOption("no-positions");
   await expect(
     page.getByRole("heading", { name: "No supported positions" }),
@@ -295,7 +299,7 @@ test("narrow market and claim stay within viewport; financial labels remain avai
   page,
 }, testInfo) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("/");
+  await page.goto("/#market");
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= innerWidth,

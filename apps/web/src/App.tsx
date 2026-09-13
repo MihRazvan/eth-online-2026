@@ -597,6 +597,25 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
             </p>
           )}
         </main>
+        <footer>
+          <span className="tele">
+            usufruct ·{" "}
+            {fixture
+              ? "deterministic fixture preview"
+              : "waiting for chain state"}
+          </span>
+          <nav aria-label="Information">
+            <a href="#privacy">Privacy</a>
+            <a href="#terms">Terms</a>
+            <a
+              href="https://github.com/MihRazvan/eth-online-2026#prior-work-and-attribution"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Source &amp; credits ↗
+            </a>
+          </nav>
+        </footer>
       </div>
     );
   }
@@ -626,7 +645,8 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
     : s.listingDirectory?.listings.find(
         (row) => row.listingId === route.slice(8),
       );
-  const pinCandidates = s.positions.filter((p) => !p.seriesId);
+  const pinCandidates =
+    s.scenario === "no-positions" ? [] : s.positions.filter((p) => !p.seriesId);
   const rawPinPosition =
     pinCandidates.find((p) => p.tokenId === pinToken) ??
     (parsePositionRoute(route) ? undefined : pinCandidates[0]);
@@ -1985,6 +2005,20 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                         Loading the linked canonical position…
                       </p>
                     )}
+                    {pinCandidates.length === 0 && !findingPosition && (
+                      <div className="empty">
+                        <h3>No supported positions to pin</h3>
+                        <p>
+                          Only validated, nonempty, hookless canonical Uniswap
+                          v4 NFTs containing authentic USDC can be sold. Find a
+                          position by its exact NFT ID or open the market to
+                          read issued claims.
+                        </p>
+                        <a className="text-link" href="#market">
+                          Explore the market ↗
+                        </a>
+                      </div>
+                    )}
                     <fieldset className="tree-options">
                       <legend className="sr-only">
                         Choose a position to pin
@@ -2060,7 +2094,7 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                         NFTs containing authentic USDC can be sold.
                       </p>
                       <a className="text-link" href={pin ? "#market" : "#pin"}>
-                        {pin ? "Explore the orchard ↗" : "Pin a seed ↗"}
+                        {pin ? "Explore the market ↗" : "Pin a seed ↗"}
                       </a>
                     </div>
                   ) : (

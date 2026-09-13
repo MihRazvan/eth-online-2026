@@ -14,20 +14,20 @@ test("fractional inventory remains visible below one basis point of original Q",
   expect(fruitMarkState(Q / 10n, Q, 1)).toBe("empty");
 });
 
-test("mobile orchard navigation reaches seller and holder tasks with legible type", async ({ page }) => {
+test("mobile market navigation reaches seller and holder tasks with legible type", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("/");
+  await page.goto("/#market");
   await expect(page).toHaveTitle(/usufruct/);
   for (const [link, heading] of [
-    ["Orchard", "The orchard"],
-    ["Pin a tree", "Pin a tree"],
-    ["My cabinet", "My cabinet"],
+    ["Market", "MARKET"],
+    ["Pin a seed", "PIN A SEED"],
+    ["Holdings", "HOLDINGS"],
   ]) {
-    await page.getByRole("link", { name: link, exact: true }).click();
+    await page.getByRole("navigation", { name: "Main navigation" }).getByRole("link", { name: link, exact: true }).click();
     await expect(page.getByRole("heading", { name: heading, exact: true, level: 1 })).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   }
   await page.evaluate(() => document.fonts.ready);
-  expect(await page.evaluate(() => document.fonts.check('italic 64px "Instrument Serif"'))).toBe(true);
-  expect(await page.evaluate(() => document.fonts.check('16px "Courier Prime"'))).toBe(true);
+  expect(await page.evaluate(() => document.fonts.check('64px "Anton"'))).toBe(true);
+  expect(await page.evaluate(() => document.fonts.check('13px "Space Mono"'))).toBe(true);
 });

@@ -28,6 +28,7 @@ test("target links permit only canonical decimal NFT and explicit offer identifi
 test("editable offer review preserves exact terms and rejects unaffordable funding", async ({ page }) => {
   await page.goto("/#pin");
   await page.getByRole("button", { name: "Use fixture wallet", exact: true }).first().click();
+  await page.getByRole("button", { name: /3 · Funded offers/ }).click();
   await page.getByRole("button", { name: "Fund an offer", exact: true }).click();
   await expect(page.getByLabel("Upfront USDC", { exact: true })).toHaveValue("1");
   await page.getByLabel("Upfront USDC", { exact: true }).fill("1.234567");
