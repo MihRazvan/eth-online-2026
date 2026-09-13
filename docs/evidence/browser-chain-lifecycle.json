@@ -3,7 +3,7 @@
   "chainId": 31337,
   "seriesId": "1",
   "tokenId": "1",
-  "endpoint": "625",
+  "endpoint": "626",
   "originalSupply": "10000000000000000000000",
   "capturedUSDC": "1199999999",
   "soldUSDC": "799999999",
@@ -11,7 +11,7 @@
   "reservedDust": "2",
   "cancelledOfferRefund": "100000000",
   "recovery": {
-    "artifactDigest": "dcf833cf8e57a343e9a64451e52a93f7e86cecbbb0499e737c125790a0359dc2",
+    "artifactDigest": "e1ec2ea9cac618f3853d8fd407585988657f01b5b2973dab2efcac813c2a2e98",
     "filesystemCopies": 2,
     "actualApi": true,
     "staticWitnessRemoved": true,
@@ -21,23 +21,23 @@
   "receipts": [
     {
       "action": "fundOffer",
-      "hash": "0xda0f587a35d6f4a23683d462ece332078d90c78d62ab906d37178afe89f8c586"
+      "hash": "0x45e023a7f64565cd23fc83afc7c0dfb05fa5871ecee6f9cbb848d01eb99d89c9"
     },
     {
       "action": "approveNFT",
-      "hash": "0x02661465c409d891407640492243041cbb0383c013763ae8f6075171c31a343b"
+      "hash": "0xce7ced9341b8b06de9da03d4e935fc58223cbb29bd05387222ae9c610b7cd7dc"
     },
     {
       "action": "acceptOffer",
-      "hash": "0x52691b1908c6578a97b08cbcf86215e0865732e0a57d2af64baeed9e3e773c4e"
+      "hash": "0x610ed3b5551b68e09566c72292773aeeff2dc7d11c1cdc75fcec48a7c8f773ba"
     },
     {
       "action": "shipAquaStrategy",
-      "hash": "0x4b3ea37ae6d926cd84fa7d90b403ff40659be39eb74a6561156e239deb709a53"
+      "hash": "0x4e06f2773e5719a6a3d8e786ff80f30782e34de280d5a916152f2b96c388b6d0"
     },
     {
       "action": "swapClaims",
-      "hash": "0x1f1fff46e54aae16d84f9a6c30df5ebdcb76f2f55dcda34924b7adc585f40800"
+      "hash": "0xf411ca914dc106df9aaa0ad9cf4e9ee646e5a94f9e9f1f1c9f4ddfdc6c40b198"
     },
     {
       "action": "capture",
@@ -49,7 +49,7 @@
     },
     {
       "action": "settleRetainedWitness",
-      "hash": "0xb0af32cbbbabd782792eea55f27ee36a20339fd6166fd8e28b052b8bde61ecc7"
+      "hash": "0xa45e918842f9c71e7311b12e9485dd2d9949532f9e3912439c26a6420bd7bfc9"
     },
     {
       "action": "redeem:holder",

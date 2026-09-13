@@ -212,7 +212,9 @@ test("real browser funding, exact NFT sale, Aqua maker publication, trade, late 
     .click();
   await confirm(page, "Approve and publish quote", "shipAquaStrategy");
   await login(page, "holder", "market/1");
+  await page.getByText("Maker quote & execution details", { exact: true }).click();
   await expect(page.locator(".quote-info")).toContainText(getAddress(buyer));
+  await page.getByText("Fees, history & scenarios", { exact: true }).click();
   const analysisPanel = page.locator(".sourced-analysis");
   await expect(analysisPanel).toContainText("Source comparison not requested");
   await analysisPanel.getByRole("button", { name: "Load sourced analysis", exact: true }).click();
@@ -283,6 +285,7 @@ test("real browser funding, exact NFT sale, Aqua maker publication, trade, late 
   });
   expect((await recoveryWorker.tick()).status).toBe("observed");
   await login(page, "holder", "market/1");
+  await page.getByText("Settlement & proof recovery", { exact: true }).click();
   const recoveryPanel=page.getByRole("region",{name:"Historical proof recovery"});
   await expect(recoveryPanel).toBeVisible();
   const downloadPromise=page.waitForEvent("download");
