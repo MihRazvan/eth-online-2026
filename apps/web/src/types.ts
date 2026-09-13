@@ -72,6 +72,8 @@ export interface Market {
   residualOwner?: string;
   residualUsdcMicros?: string;
   otherReserve?: string;
+  otherTokenSymbol?: string;
+  otherTokenDecimals?: number;
   nativePairLabel?: string;
   lowerTick: number;
   upperTick: number;

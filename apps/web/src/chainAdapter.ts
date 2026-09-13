@@ -795,6 +795,8 @@ export class ChainAdapter implements FeeStripAdapter {
     const relative = (100 * (tick - lowerTick)) / (upperTick - lowerTick);
     return {
       poolId: id,
+      otherTokenSymbol: cash0 ? symbol1 : symbol0,
+      otherTokenDecimals: cash0 ? dec1 : dec0,
       pair: `${cash0 ? symbol1 : symbol0} / ${cash0 ? symbol0 : symbol1}`,
       lowerPrice: formatPrice(Math.min(...prices)),
       upperPrice: formatPrice(Math.max(...prices)),
