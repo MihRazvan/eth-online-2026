@@ -111,16 +111,20 @@ function Status({ market }: { market: Market }) {
 function Range({
   market,
   compact = false,
+  testPool = false,
 }: {
   market: Market;
   compact?: boolean;
+  testPool?: boolean;
 }) {
   return (
     <div className={"range-view " + (compact ? "compact" : "")}>
       <div className="range-caption">
         <span>
-          <Icon name="lock" size={12} /> Fixed price range
-          {market.priceIsIndicative ? " · indicative ratios" : ""}
+          <Icon name="lock" size={12} />{" "}
+          {testPool
+            ? `Test-pool price range (USDC per ${market.pair.split(" / ")[0]})`
+            : `Fixed price range${market.priceIsIndicative ? " · indicative ratios" : ""}`}
         </span>
         {!compact && <Status market={market} />}
       </div>
@@ -134,13 +138,18 @@ function Range({
               : { left: `${market.currentRangePercent}%` }
           }
         >
-          <span>{compact ? "Current price" : `$${market.currentPrice}`}</span>
+          <span>
+            {compact
+              ? (testPool ? "Current ratio" : "Current price")
+              : `${testPool ? "" : "$"}${market.currentPrice}`}
+          </span>
         </div>
       </div>
       <div className="range-labels">
-        <span>${market.lowerPrice}</span>
-        <span>${market.upperPrice}</span>
+        <span>{testPool ? "" : "$"}{market.lowerPrice}</span>
+        <span>{testPool ? "" : "$"}{market.upperPrice}</span>
       </div>
+      {testPool && <p className="fine">Pool ratio, not a USD market valuation.</p>}
       {!compact && (
         <p className="fine">
           USDC per {market.pair.split(" / ")[0]}. Range and liquidity cannot
@@ -306,8 +315,13 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
     [offerSelection, setOfferSelection] = useState<string | null>(null),
     [progress, setProgress] = useState<TransactionProgress | null>(null),
     [receipts, setReceipts] = useState(readReceipts),
-    [scenarioIncome, setScenarioIncome] = useState("840"),
+    [scenarioIncome, setScenarioIncome] = useState(() =>
+      adapter.mode === "fixture" ? "840" : "",
+    ),
     [makerQuoteSeries, setMakerQuoteSeries] = useState<string | null>(null);
+  useEffect(() => {
+    setScenarioIncome(adapter.mode === "fixture" ? "840" : "");
+  }, [adapter, route]);
   const [theme, setTheme] = useState(() => {
     try {
       return localStorage.getItem("usufruct-theme") === "light"
@@ -1130,7 +1144,7 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                       Original NFT #{selected.tokenId}
                     </span>
                   </div>
-                  <Range market={selected} />
+                  <Range market={selected} testPool={s.chainId === 11155111} />
                   <dl className="instrument-facts">
                     <div>
                       <dt>Fixed liquidity</dt>
@@ -2118,7 +2132,11 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                           </div>
                           {market ? (
                             <>
-                              <Range market={market} compact />
+                              <Range
+                                market={market}
+                                compact
+                                testPool={s.chainId === 11155111}
+                              />
                               <Lifecycle
                                 market={market}
                                 held={s.wallet.claims[market.id] ?? "0"}
@@ -2769,6 +2787,7 @@ function ScenarioResult({
   supply: string;
   cost: bigint | null;
 }) {
+  if (income.trim() === "") return <p className="fine">Enter a scenario</p>;
   try {
     const total = parseUsdc(income),
       q = validQuantity(quantity) ? parseClaims(quantity) : 0n,
@@ -2789,7 +2808,7 @@ function ScenarioResult({
       </dl>
     );
   } catch {
-    return <p className="fine">Enter an amount with at most 6 decimals.</p>;
+    return <p className="fine">Enter a nonnegative amount with at most 6 decimals.</p>;
   }
 }
 function FundedOffer({

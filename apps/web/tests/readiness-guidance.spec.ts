@@ -199,3 +199,39 @@ test("Sepolia Pin explains exact test-pool ratios without implying a USD valuati
     await expect(page.getByText(`Test-pool range 2,800–3,600 USDC per ${symbol}`, { exact: true })).toBeVisible();
   }
 });
+
+
+test("real-network claim scenarios start neutral and calculate only explicit valid inputs", async ({ page }, testInfo) => {
+  await page.route("**/api/operations", route => route.fulfill({ json: readiness() }));
+  await mount(page, "#market/fs-1482");
+  const scenario = page.locator(".scenario-box"), input = scenario.getByLabel("Scenario: total sold-period USDC");
+  await expect(input).toHaveValue("");
+  await expect(scenario.getByText("Enter a scenario", { exact: true })).toBeVisible();
+  await expect(scenario.locator(".scenario-results")).toHaveCount(0);
+  const range = page.locator(".range-view");
+  await expect(range).toContainText("Test-pool price range (USDC per WETH)");
+  await expect(range).toContainText("Pool ratio, not a USD market valuation.");
+  await expect(range.locator(".range-labels")).toHaveText("2,8003,600");
+  await expect(range).not.toContainText("$");
+  await input.fill("0.6");
+  await expect(scenario.getByText("Your scenario payout", { exact: true }).locator("..").locator("dd")).toHaveText("$0.06");
+  await page.getByRole("button", { name: "Refresh chain state", exact: true }).click();
+  await expect(input).toHaveValue("0.6");
+  await input.fill("0");
+  await expect(scenario.getByText("Your scenario payout", { exact: true }).locator("..").locator("dd")).toHaveText("$0.00");
+  for (const invalid of ["-1", "0.0000001"]) {
+    await input.fill(invalid);
+    await expect(scenario.locator(".scenario-results")).toHaveCount(0);
+    await expect(scenario).toContainText("Enter a nonnegative amount with at most 6 decimals.");
+  }
+  await input.fill("");
+  await expect(scenario.getByText("Enter a scenario", { exact: true })).toBeVisible();
+  await page.setViewportSize({ width: 390, height: 1000 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await range.screenshot({ path: testInfo.outputPath("claim-test-pool-ratio.png") });
+  await scenario.screenshot({ path: testInfo.outputPath("claim-neutral-scenario.png") });
+  await input.fill("1");
+  await page.evaluate(() => { location.hash = "#market/fs-1483"; });
+  await expect(input).toHaveValue("");
+  expect(await page.evaluate(() => (window as any).guidance.signatures)).toBe(0);
+});
