@@ -298,7 +298,7 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
     [route, setRoute] = useState(currentRoute),
     [filter, setFilter] = useState("all"),
     [search, setSearch] = useState(""),
-    [quantity, setQuantity] = useState("1000"),
+    [quantityInput, setQuantityInput] = useState<{ route: string; value: string } | null>(null),
     [review, setReview] = useState<Review | null>(null),
     [busy, setBusy] = useState(false),
     [message, setMessage] = useState(""),
@@ -325,6 +325,9 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
   useEffect(() => {
     setScenarioIncome(adapter.mode === "fixture" ? "840" : "");
   }, [adapter, route]);
+  useEffect(() => {
+    setQuantityInput(null);
+  }, [route]);
   const appUpdate = useAppUpdate(error);
   const updatePending = busy || progress?.stage === "signature" || (progress?.stage === "pending" && receipts.some(row => row.hash === progress.hash && row.stage === "pending"));
   const [theme, setTheme] = useState(() => {
@@ -717,6 +720,16 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
       (m.pair + " " + m.tokenId).toLowerCase().includes(search.toLowerCase()),
   );
   const selectedQuote = selected?.quote ?? s.quote;
+  const initialCapacity = selected && selectedQuote.available && BigInt(selectedQuote.expiresAt) >= BigInt(s.timestamp)
+    ? BigInt(selected.availableClaims)
+    : 0n;
+  const initialQuantity = initialCapacity < 1000n * 10n ** 18n ? initialCapacity : 1000n * 10n ** 18n;
+  // Only an untouched selection follows executable capacity. Preserve explicit
+  // input across quote refreshes so a smaller quote surfaces its normal warning.
+  const quantity = quantityInput?.route === route
+    ? quantityInput.value
+    : formatClaims(initialQuantity).replaceAll(",", "");
+  const setQuantity = (value: string) => setQuantityInput({ route, value });
   const quantityOkay = validQuantity(quantity),
     quantityBase = quantityOkay ? parseClaims(quantity) : 0n,
     cost =
