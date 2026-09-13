@@ -4,7 +4,7 @@
 
 **Sell one window of a Uniswap position’s USDC fees upfront. Keep the right to recover the same position.**
 
-[Live app](https://usufruct-mu.vercel.app) · [Project brief](PROJECT_BRIEF.md) · [Submission](docs/submission.md) · [Quickstart](docs/QUICKSTART.md) · [Architecture](docs/ARCHITECTURE.md) · [Docs](docs/README.md)
+[Live app](https://usufruct-mu.vercel.app) | [Demo walkthrough](https://youtu.be/VBQnQqMLmTY) | [Slides](SLIDES.md) | [Submission](docs/submission.md) | [Project brief](PROJECT_BRIEF.md) | [Quickstart](docs/QUICKSTART.md) | [Architecture](docs/ARCHITECTURE.md) | [Docs](docs/README.md)
 
 ## Problem first
 
@@ -23,6 +23,10 @@ usufruct turns one fixed earning window into transferable claims and settles its
 **One window, not monthly strips.** Other-currency fees are not converted to USDC. Income may be zero; resale and proof availability are not guaranteed. Early closure requires all original claims plus the residual right.
 
 ## Built with
+
+<img width="1920" height="1080" alt="slide-4-stack" src="https://github.com/user-attachments/assets/6780e70a-3ab7-4192-8c46-92228b4ab82a" />
+
+The slide records earlier development benchmarks. The current Studio deployment is **v0.2.0**; see [Verification](docs/VERIFICATION.md) for the completed public lifecycle and measured transaction costs.
 
 | Integration | What it does | Implementation |
 | --- | --- | --- |
@@ -46,6 +50,6 @@ The [live app](https://usufruct-mu.vercel.app) uses Ethereum Sepolia and test as
 
 ## Prior work and attribution
 
-[ScopeLift Fixed Fee Swap](https://github.com/ScopeLift/fixed-fee-swap) is related prior work; fee/principal separation is not claimed as new. This implementation focuses on an individual canonical NFT, whole-period unpaid claims, an exact delayed endpoint, and NFT return independent of fee allocation.
+[ScopeLift Fixed Fee Swap](https://github.com/ScopeLift/fixed-fee-swap) is related prior work; fee/principal separation is not claimed as new. This implementation focuses on **an individual canonical NFT**, whole-period unpaid claims, an exact delayed endpoint, and NFT return independent of fee allocation.
 
 Powered by SwapVM — © Degensoft Ltd 2025. Upstream contracts, fonts and other imported material retain their notices; their audits do not cover this application. See [AI assistance](docs/AI_ASSISTANCE.md) and [MIT license](LICENSE). The application was formerly called FeeStrip; deployed contract names and signing domains retain that identity.
