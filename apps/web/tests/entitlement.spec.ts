@@ -1,3 +1,4 @@
+import { openClaimDetails } from "./claim-details";
 import { test, expect, type Page } from "@playwright/test";
 import { readFile } from "node:fs/promises";
 import { receiptSnapshot } from "../src/components/EntitlementReceipt";
@@ -5,6 +6,7 @@ import { initialFixture } from "../src/fixtureAdapter";
 
 async function connect(page: Page, route = "market/fs-1482") {
   await page.goto("/#" + route);
+  if (route.startsWith("market/")) await openClaimDetails(page);
   await page
     .getByRole("button", { name: "Use fixture wallet", exact: true })
     .first()
@@ -25,6 +27,7 @@ test("disconnected receipt never presents fixture balances as owned; purchase sh
   page,
 }) => {
   await page.goto("/#market/fs-1482");
+  await openClaimDetails(page);
   const receipt = page.getByRole("region", {
     name: "Fee-claim rights",
     exact: true,
@@ -73,6 +76,7 @@ test("matured rights survive capture and NFT return; allocation uses original Q 
     .filter({ hasText: "NFT #1484" })
     .getByRole("link", { name: "Read claim & recovery" })
     .click();
+  await openClaimDetails(page);
   await expect(receipt).toContainText("Proof allocation pending");
   await expect(receipt).toContainText(
     "NFT return does not release the fee reserve",

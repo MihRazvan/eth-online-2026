@@ -1,3 +1,4 @@
+import { openClaimDetails } from "./claim-details";
 import { test, expect, type Page } from "@playwright/test";
 import { createHash } from "node:crypto";
 import { mkdirSync } from "node:fs";
@@ -147,6 +148,7 @@ test("unavailable recovery never promises proof or a download; fixture receipt h
   page,
 }) => {
   await page.goto("/#market/fs-1482");
+  await openClaimDetails(page);
   await expect(
     page.getByRole("region", { name: "Historical proof recovery" }),
   ).toContainText("Fixture · no proof service");

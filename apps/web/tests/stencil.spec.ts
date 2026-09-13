@@ -1,3 +1,4 @@
+import { openClaimDetails } from "./claim-details";
 import { expect, test } from "@playwright/test";
 
 test("landing and legal information render before a delayed adapter snapshot", async ({ page }) => {
@@ -80,6 +81,7 @@ FixtureAdapter.prototype.load = async function() {
     await expect(page.getByRole("button", { name: "1. Approve this NFT", exact: true })).not.toBeVisible();
     await claims.click();
     await expect(page).toHaveURL(/#market\/fs-2041$/);
+    await openClaimDetails(page);
     await expect(page.getByRole("region", { name: "Your fee-claim receipt", exact: true })).toContainText("2041");
   });
 }

@@ -786,61 +786,48 @@ h3 {
   margin: 8px 0 20px;
   min-height: 44px;
 }
-.detail-heading {
-  display: grid;
-  grid-template-columns: 240px 1fr auto;
-  gap: 30px;
-  align-items: center;
-  padding-bottom: 26px;
-  border-bottom: 1px solid var(--rule);
-}
-.detail-stencil > .stencil {
-  width: 220px;
-  height: 220px;
-}
-.detail-stencil > .tele {
-  font-size: 9px;
-}
-.detail-heading h1 {
-  font-size: clamp(48px, 7vw, 76px);
-  line-height: 0.98;
-  margin-top: 16px;
-}
-.detail-heading .pair {
-  margin-bottom: 12px;
-}
-.term-label {
-  display: grid;
-  text-align: right;
-  font-size: 11px;
-  max-width: 170px;
-  gap: 5px;
-}
-.term-label > span {
-  color: var(--muted);
-}
+/* Claim detail follows the reference: artwork and one compact purchase column. */
 .detail-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 360px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 44px;
-  margin-top: 28px;
+  margin-top: 26px;
   align-items: start;
 }
-.detail-main {
-  min-width: 0;
-}
-.detail-main > section {
-  margin-bottom: 35px;
-  padding-top: 24px;
-  border-top: 1px solid var(--rule);
-}
-.detail-main > section:first-child {
-  padding-top: 0;
-  border-top: 0;
-}
-.detail-main h2 {
-  font-size: 30px;
-}
+.claim-art-column { min-width: 0; }
+.claim-art-column .art-big { width: 100%; max-width: 400px; color: var(--ink); }
+.claim-art-column .art-big > .stencil { display: block; width: 100%; height: auto; }
+.claim-art-column .print-strip { margin: 8px 0 18px; padding: 12px 0; }
+.claim-art-column .print-strip .tele { display: none; }
+.claim-art-caption { margin-bottom: 8px; }
+.claim-art-column > .fine { font-size: 10px; }
+.claim-trade { min-width: 0; }
+.claim-state { margin-bottom: 13px; }
+.claim-readout { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--rule2); margin-top: 14px; }
+.claim-readout > div { min-width: 0; padding: 12px 14px; }
+.claim-readout > div + div { border-left: 1px solid var(--rule2); }
+.claim-readout strong { display: block; font-family: "Space Mono", monospace; font-size: 22px; letter-spacing: 0; line-height: 1.5; overflow-wrap: anywhere; }
+.claim-readout small { display: block; color: var(--muted); font-size: 10px; }
+.claim-exact-quantity { margin-top: 18px; }
+.claim-exact-quantity > label { display: block; font-size: 11px; color: var(--muted); margin-bottom: 7px; }
+.claim-exact-quantity .amount-input input { padding: 8px 12px; font-size: 18px; }
+.claim-exact-quantity > .fine { margin-top: 7px; font-size: 10px; }
+.claim-terms { margin-top: 24px; font-size: 11px; }
+.claim-terms li { gap: 16px; }
+.claim-terms li > span:last-child { overflow-wrap: anywhere; max-width: 68%; }
+.claim-purchase-note { margin-top: 14px; font-size: 11px; line-height: 1.65; }
+.claim-trade .lifecycle-actions { margin-top: 14px; }
+.claim-details { margin-top: 48px; border-top: 1px solid var(--rule); }
+.claim-disclosure { border-bottom: 1px solid var(--rule); }
+.claim-disclosure > summary { padding: 20px 0; list-style: none; cursor: pointer; font-size: 11px; text-transform: uppercase; letter-spacing: .16em; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.claim-disclosure > summary::-webkit-details-marker { display: none; }
+.claim-disclosure > summary:after { content: "+"; color: var(--seltext); font-size: 18px; }
+.claim-disclosure[open] > summary:after { content: "−"; }
+.claim-disclosure-body { padding: 4px 0 28px; }
+.claim-disclosure-body > section + section { margin-top: 28px; }
+.claim-disclosure-body h2 { font-size: 30px; }
+.claim-disclosure .scenario-box { max-width: 560px; }
+.claim-disclosure .instrument-facts { margin-top: 20px; }
 .pair {
   display: flex;
   align-items: center;
@@ -886,8 +873,7 @@ h3 {
   font-size: 11px;
 }
 .trade-panel {
-  padding: 22px;
-  border: 1px solid var(--rule2);
+  padding: 0;
   background: var(--bg);
 }
 .trade-header {
@@ -2052,7 +2038,7 @@ dialog .review-lines {
 }
 @media (max-width: 900px) {
   .detail-layout {
-    grid-template-columns: minmax(0, 1fr) 320px;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: 25px;
   }
   .detail-heading {
@@ -2273,15 +2259,19 @@ dialog .review-lines {
     gap: 30px;
   }
   .detail-layout > aside {
-    order: -1;
     width: 100%;
   }
   .detail-main {
     width: 100%;
   }
   .trade-panel {
-    padding: 20px;
+    padding: 0;
   }
+  .claim-art-column .art-big { max-width: 340px; margin: 0 auto; }
+  .claim-art-column { width: 100%; }
+  .claim-art-column > .fine { margin-bottom: 0; }
+  .claim-readout strong { font-size: 21px; }
+  .claim-details { margin-top: 34px; }
   .trade-panel > .fine {
     font-size: 11px;
   }
@@ -3002,54 +2992,14 @@ dialog .review-lines {
     max-width: 115px;
   }
 }
-.claim-selection {
-  margin: 8px 0 26px;
-}
-.selection-word {
-  position: relative;
-  background: var(--panel);
-  border: 1px solid var(--rule2);
-  padding: 18px 12px;
-  overflow: hidden;
-}
-.selection-word > .display {
-  position: relative;
-  font-size: clamp(34px, 4vw, 48px);
-  display: block;
-  line-height: 1;
-}
-.selection-band {
-  position: absolute;
-  inset: 0 auto 0 0;
-  background: var(--sel);
-}
-.selection-slider-label {
-  display: block;
-  margin-top: 12px;
-  font-size: 10px;
-  color: var(--muted);
-}
-.selection-slider-label input {
-  display: block;
-  width: 100%;
-  min-height: 28px;
-}
-.selection-hint {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  font-size: 10px;
-  margin: 4px 0 8px;
-}
-.selection-hint button {
-  font-size: 9px;
-  min-height: 28px;
-  color: var(--seltext);
-}
-.claim-selection > .fine {
-  font-size: 10px;
-}
+.claim-selection { margin: 8px 0 0; }
+.selection-word { position: relative; background: var(--panel); border: 1px solid var(--rule2); padding: 20px 16px; overflow: hidden; cursor: ew-resize; }
+.selection-word:focus-within { outline: 2px solid var(--sel); outline-offset: 3px; }
+.selection-word > .display { position: relative; font-size: clamp(34px, 7vw, 60px); display: block; line-height: 1.1; margin: 0; pointer-events: none; }
+.selection-band { position: absolute; inset: 0 auto 0 0; background: var(--sel); pointer-events: none; }
+.selection-surface { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: ew-resize; touch-action: none; }
+.selection-hint { display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: 9px; margin: 4px 0 0; color: var(--muted); }
+.selection-hint button { font-size: 9px; min-height: 32px; color: var(--seltext); padding: 0; }
 .trade-header {
   margin-top: 20px;
 }
@@ -3158,3 +3108,22 @@ dialog > .fine[aria-live] {
 .sale-service-notice.service-paused h2{font-size:30px}
 .sale-service-notice.service-paused p{margin:7px 0 0}
 @media(prefers-reduced-motion:reduce){.brand-intro{transition:none}.brand-intro .stencil *{animation:none!important}}
+
+/* The supplied fee-model card, with explicitly illustrative rather than historical bars. */
+.listing-estimate { border: 1px solid var(--rule2); padding: 15px 16px 16px; margin-top: 22px; }
+.esthead { display: flex; justify-content: space-between; gap: 14px; align-items: baseline; flex-wrap: wrap; }
+.estval { font-size: 27px; font-weight: 700; letter-spacing: 0; overflow-wrap: anywhere; }
+.estval small { font-size: 11px; color: var(--muted); font-weight: 400; }
+.estuse { border: 1px solid var(--sel); color: var(--seltext); padding: 6px 13px; min-height: 44px; font-size: 11px; letter-spacing: .15em; text-transform: uppercase; }
+.estuse:hover:enabled { background: var(--sel); color: var(--selink); }
+.estrow { display: flex; justify-content: space-between; gap: 10px; margin-top: 14px; }
+.estnote { color: var(--muted); font-size: 12px; line-height: 1.65; margin: 10px 0 0; }
+.estimate-range { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 20px 0 10px; }
+.estimate-range > div { display: flex; flex-direction: column; justify-content: flex-end; gap: 8px; min-width: 0; }
+.estimate-bar { display: block; width: 100%; border-top: 1px solid var(--rule2); background: repeating-linear-gradient(90deg, var(--rule2) 0 1px, transparent 1px 4px); }
+.estimate-range > div:nth-child(2) .estimate-bar { border-color: var(--sel); background: repeating-linear-gradient(90deg, var(--sel) 0 1px, transparent 1px 4px); }
+.estimate-range .tele { font-size: 8px; letter-spacing: .08em; min-height: 24px; }
+.estimate-range strong { font-size: 11px; font-weight: 400; overflow-wrap: anywhere; }
+.listing-estimate details { margin-top: 16px; border-top: 1px solid var(--rule); }
+.listing-estimate summary { cursor: pointer; padding: 14px 0; font-size: 11px; }
+.listing-estimate .field { margin-top: 10px; }

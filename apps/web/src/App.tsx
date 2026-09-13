@@ -368,8 +368,9 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
   const dialog = useRef<HTMLDialogElement>(null),
     lastFocus = useRef<HTMLElement | null>(null);
   const refreshVersion = useRef(0),
-    paused = useRef(false);
-  paused.current = busy || !!review;
+    paused = useRef(false),
+    positionRequest = useRef(0);
+  paused.current = busy || !!review || findingPosition;
   const refresh = async () => {
     const version = ++refreshVersion.current;
     const next = await adapter.load();
@@ -427,7 +428,9 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
     };
   }, [adapter]);
   useEffect(() => {
+    ++positionRequest.current;
     const target = parsePositionRoute(route);
+    if (!target) setFindingPosition(false);
     if (!target || !adapter.findPosition) return;
     let active = true;
     setPinStep(target.offerId ? 3 : 2);
@@ -1099,40 +1102,133 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
             <a className="back-link" href="#market">
               <Icon name="back" size={15} /> All positions
             </a>
-            <div className="detail-heading">
-              <div className="detail-stencil">
-                <Stencil
-                  seed={selected.tokenId}
-                  fill={
-                    BigInt(selected.originalSupply) > 0n
-                      ? Number(
-                          (BigInt(selected.availableClaims) * 10000n) /
-                            BigInt(selected.originalSupply),
-                        ) / 10000
-                      : 0
+            <div className="detail-layout claim-primary">
+              <section className="claim-art-column" aria-label="Position identity">
+                <div className="art-big">
+                  <Stencil seed={selected.tokenId} fill={!noQuote && !quoteStale && BigInt(selected.originalSupply) > 0n ? Number((BigInt(selected.availableClaims) * 10000n) / BigInt(selected.originalSupply)) / 10000 : 0} annotations={{ tokenId: selected.tokenId, lowerTick: selected.lowerTick, endBlock: selected.endBlock }} animate />
+                </div>
+                <PrintStrip label="one position / one agreed window" />
+                <p className="claim-art-caption tele">{selected.pair} · {selected.feeTier} · NFT {selected.tokenId}</p>
+                <p className="fine">Dotted fill: executable claims. Blue selection: your proposed purchase.</p>
+              </section>
+              <aside className="trade-panel claim-trade">
+                <p className="tele claim-state">
+                  {selected.phase === "active" ? "Window open" : selected.phase === "matured" ? "Window ended · capture pending" : selected.phase === "captured" ? "Fees captured · allocation pending" : selected.phase === "allocated" ? "Allocation verified" : "Closed by recombination"}
+                </p>
+                <WindowClock market={selected} block={s.blockNumber} />
+                <ClaimSelection market={{ ...selected, availableClaims: noQuote || quoteStale ? "0" : selected.availableClaims }} quantity={quantityBase} onChange={setQuantity} />
+                <h2 className="sr-only">Buy fee claims</h2>
+                <div className="readout claim-readout">
+                  <div>
+                    <span className="tele">Your selection</span>
+                    <strong>{quantityOkay ? sharePercent(quantityBase.toString(), selected.originalSupply) : "0.00"}%</strong>
+                    <small>of original Q</small>
+                  </div>
+                  <div>
+                    <span className="tele">You pay</span>
+                    <strong>{canBuy ? money(cost) : "Unavailable"}</strong>
+                    <small>USDC</small>
+                  </div>
+                </div>
+                <div className="claim-exact-quantity">
+                  <label htmlFor="quantity">Claims to buy</label>
+                  <div className="amount-input">
+                    <input id="quantity" inputMode="decimal" value={quantity} onChange={event => setQuantity(event.target.value)} aria-describedby="quantity-help" />
+                    <span>claims</span>
+                  </div>
+                  <p id="quantity-help" className="fine">Original Q: {formatClaims(selected.originalSupply)} claims. Exact fractions supported.</p>
+                </div>
+                <ul className="terms claim-terms">
+                  <li><span>Position</span><span>NFT {selected.tokenId} · {selected.pair}</span></li>
+                  <li><span>Window</span><span>Block {integer(selected.startBlock)}–{integer(selected.endBlock)}</span></li>
+                  <li><span>Executable now</span><span>{noQuote || quoteStale ? "Unavailable" : `${formatClaims(selected.availableClaims)} claims · ${sharePercent(selected.availableClaims, selected.originalSupply)}% of Q`}</span></li>
+                  <li><span>Price per claim</span><span>{noQuote || quoteStale ? "Unavailable" : `${money(selected.askMicros, 6)} USDC`}</span></li>
+                  <li><span>Settles</span><span>After capture and verified allocation</span></li>
+                  <li><span>NFT return right</span><span title={selected.residualOwner}>{selected.residualOwner ? `${selected.residualOwner.slice(0, 6)}…${selected.residualOwner.slice(-4)}` : fixture ? "Fixture residual owner" : "Unavailable"}</span></li>
+                </ul>
+                {noQuote ? (
+                  <div className="inline-warning">
+                    No executable quote. Resale liquidity is not guaranteed.
+                  </div>
+                ) : quoteStale ? (
+                  <div className="inline-warning">
+                    Quote expired. Refresh before signing.
+                  </div>
+                ) : !quantityOkay ? (
+                  <div className="inline-warning">
+                    Enter a positive claim amount with at most 18 decimals.
+                  </div>
+                ) : quantityBase > BigInt(selected.availableClaims) ? (
+                  <div className="inline-warning">
+                    Quantity exceeds available maker inventory.
+                  </div>
+                ) : connected && cost > BigInt(s.wallet.usdcBalanceMicros) ? (
+                  <div className="inline-warning">
+                    Insufficient USDC for this purchase.
+                  </div>
+                ) : null}
+                <button
+                  className="primary wide"
+                  disabled={
+                    connected &&
+                    (!canBuy ||
+                      wrongNetwork ||
+                      cost > BigInt(s.wallet.usdcBalanceMicros))
                   }
-                />
-                <span className="tele">
-                  NFT {selected.tokenId} · executable fraction of Q
-                </span>
-              </div>
-              <div>
-                <Pair market={selected} />
-                <h1>NFT {selected.tokenId}</h1>
-                <p className="tele">One window · issued fee claims</p>
-              </div>
-              <div className="term-label">
-                <span>
-                  {selected.startDate} — {selected.endDate}
-                </span>
-                <b>End of block {integer(selected.endBlock)}</b>
-                <small>
-                  Dates are estimates. Blocks define the earning window.
-                </small>
-              </div>
+                  onClick={connected ? buy : connect}
+                >
+                  {connected
+                    ? "Review purchase"
+                    : fixture
+                      ? "Use fixture wallet"
+                      : "Connect wallet"}
+                  <Icon />
+                </button>
+                <p className="claim-purchase-note fine">One window’s unpaid native-USDC income, including fees earned before purchase. The NFT return right stays separate.</p>
+                  <div className="lifecycle-actions">
+                    {selected.phase === "matured" && (
+                      <button
+                        onClick={() => lifecycleAction("capture", selected)}
+                      >
+                        Capture actual fees <Icon />
+                      </button>
+                    )}
+                    {selected.phase === "captured" && (
+                      <button
+                        onClick={() => lifecycleAction("settle", selected)}
+                      >
+                        {fixture
+                          ? "Preview fixture allocation"
+                          : "Allocate fee reserve"}{" "}
+                        <Icon />
+                      </button>
+                    )}
+                    {selected.phase === "allocated" && BigInt(held) > 0n && (
+                      <button
+                        className="primary"
+                        onClick={() => lifecycleAction("redeem", selected)}
+                      >
+                        Redeem {formatClaims(held)} claims <Icon />
+                      </button>
+                    )}
+                    {fixture && selected.phase === "active" && (
+                      <button
+                        className="text-button"
+                        onClick={async () => {
+                          adapter.advance(selected.id);
+                          await refresh();
+                        }}
+                      >
+                        Fixture: advance beyond cutoff
+                      </button>
+                    )}
+                  </div>
+              </aside>
             </div>
-            <div className="detail-layout">
-              <div className="detail-main">
+            <section className="claim-details" aria-label="Claim details">
+              <details className="claim-disclosure">
+                <summary>Claim rights &amp; your receipt</summary>
+                <div className="claim-disclosure-body">
                 <EntitlementReceipt
                   market={selected}
                   quantity={
@@ -1143,6 +1239,12 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                   feeStrip={s.feeStrip}
                   mode={s.mode}
                 />
+                </div>
+              </details>
+              <details className="claim-disclosure">
+                <summary>Position, range &amp; exact terms</summary>
+                <div className="claim-disclosure-body">
+                  <p className="fine">{selected.startDate} — {selected.endDate}. Dates are estimates; blocks define the earning window.</p>
                 <section className="instrument">
                   <div className="section-top">
                     <h2>The original position</h2>
@@ -1188,6 +1290,11 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                     )}
                   </details>
                 </section>
+                </div>
+              </details>
+              <details className="claim-disclosure">
+                <summary>Fees, history &amp; scenarios</summary>
+                <div className="claim-disclosure-body">
                 {fixture ? (
                   <History market={selected} fixture />
                 ) : (
@@ -1199,12 +1306,73 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                     hasQuote={!noQuote && !quoteStale}
                   />
                 )}
+                <dl className="trade-facts">
+                  <div>
+                    <dt>Price per claim</dt>
+                    <dd>
+                      {noQuote
+                        ? "Unavailable"
+                        : money(selected.askMicros, 6) + " USDC"}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>You pay</dt>
+                    <dd>
+                      {noQuote ? "—" : money(cost)} <small>USDC</small>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Break-even period fees</dt>
+                    <dd>
+                      {noQuote
+                        ? "—"
+                        : money(
+                            quantityBase > 0n
+                              ? (cost * BigInt(selected.originalSupply) +
+                                  quantityBase -
+                                  1n) /
+                                  quantityBase
+                              : claimCost(
+                                  selected.originalSupply,
+                                  selected.askMicros,
+                                ),
+                          )}
+                    </dd>
+                  </div>
+                </dl>
+                  <p className="fine">Break-even is total USDC the whole window must earn for this purchase price, before gas.</p>
+                <div className="scenario-box">
+                  <h3>What would your claim earn?</h3>
+                  <label htmlFor="scenario-income">
+                    Scenario: total sold-period USDC
+                  </label>
+                  <input
+                    id="scenario-income"
+                    inputMode="decimal"
+                    value={scenarioIncome}
+                    onChange={(e) => setScenarioIncome(e.target.value)}
+                  />
+                  <ScenarioResult
+                    income={scenarioIncome}
+                    quantity={quantity}
+                    supply={selected.originalSupply}
+                    cost={canBuy ? cost : null}
+                  />
+                  <p className="fine">
+                    An assumption you set, not a forecast. Fees can be zero if
+                    the position leaves its range.
+                  </p>
+                </div>
+                </div>
+              </details>
+              <details className="claim-disclosure">
+                <summary>Settlement &amp; proof recovery</summary>
+                <div className="claim-disclosure-body">
                 <RecoveryPanel
                   adapter={adapter}
                   market={selected}
                   sourceBlock={s.sourceBlock}
-                />
-                <section className="settlement-section">
+                />                <section className="settlement-section">
                   <div className="section-top">
                     <h2>The path to redemption</h2>
                     <span className="source-tag">
@@ -1263,124 +1431,13 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                     reserves to the seller. The captured NFT can return before
                     proof.
                   </p>
-                  <div className="lifecycle-actions">
-                    {selected.phase === "matured" && (
-                      <button
-                        onClick={() => lifecycleAction("capture", selected)}
-                      >
-                        Capture actual fees <Icon />
-                      </button>
-                    )}
-                    {selected.phase === "captured" && (
-                      <button
-                        onClick={() => lifecycleAction("settle", selected)}
-                      >
-                        {fixture
-                          ? "Preview fixture allocation"
-                          : "Allocate fee reserve"}{" "}
-                        <Icon />
-                      </button>
-                    )}
-                    {selected.phase === "allocated" && BigInt(held) > 0n && (
-                      <button
-                        className="primary"
-                        onClick={() => lifecycleAction("redeem", selected)}
-                      >
-                        Redeem {formatClaims(held)} claims <Icon />
-                      </button>
-                    )}
-                    {fixture && selected.phase === "active" && (
-                      <button
-                        className="text-button"
-                        onClick={async () => {
-                          adapter.advance(selected.id);
-                          await refresh();
-                        }}
-                      >
-                        Fixture: advance beyond cutoff
-                      </button>
-                    )}
-                  </div>
+
                 </section>
-              </div>
-              <aside className="trade-panel">
-                <WindowClock market={selected} block={s.blockNumber} />
-                <ClaimSelection
-                  market={selected}
-                  quantity={quantityBase}
-                  onChange={setQuantity}
-                />
-                <div className="trade-header">
-                  <h2>Buy fee claims</h2>
-                  <span>Powered by SwapVM</span>
                 </div>
-                <p className="fine">
-                  Your share includes all unpaid income from the entire sold
-                  window.
-                </p>
-                <label htmlFor="quantity">
-                  Claims to buy{" "}
-                  <span>
-                    {formatClaims(selected.availableClaims)} available
-                  </span>
-                </label>
-                <div className="amount-input">
-                  <input
-                    id="quantity"
-                    inputMode="decimal"
-                    value={quantity}
-                    onChange={(e) => setQuantity(e.target.value)}
-                    aria-describedby="quantity-help"
-                  />
-                  <span>claims</span>
-                </div>
-                <p id="quantity-help" className="fine">
-                  {quantityOkay
-                    ? sharePercent(
-                        quantityBase.toString(),
-                        selected.originalSupply,
-                      )
-                    : "0.00"}
-                  % of original {formatClaims(selected.originalSupply)} claims
-                </p>
-                <dl className="trade-facts">
-                  <div>
-                    <dt>Price per claim</dt>
-                    <dd>
-                      {noQuote
-                        ? "Unavailable"
-                        : money(selected.askMicros, 6) + " USDC"}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>You pay</dt>
-                    <dd>
-                      {noQuote ? "—" : money(cost)} <small>USDC</small>
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>Break-even period fees</dt>
-                    <dd>
-                      {noQuote
-                        ? "—"
-                        : money(
-                            quantityBase > 0n
-                              ? (cost * BigInt(selected.originalSupply) +
-                                  quantityBase -
-                                  1n) /
-                                  quantityBase
-                              : claimCost(
-                                  selected.originalSupply,
-                                  selected.askMicros,
-                                ),
-                          )}
-                    </dd>
-                  </div>
-                </dl>
-                <p className="fine">
-                  The whole series must earn this much USDC during the sold
-                  window for this price to break even, before gas.
-                </p>
+              </details>
+              <details className="claim-disclosure">
+                <summary>Maker quote &amp; execution details</summary>
+                <div className="claim-disclosure-body">
                 <div className="quote-info">
                   <span>Maker: {selectedQuote.maker}</span>
                   {selectedQuote.advertisedClaims && (
@@ -1399,68 +1456,9 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                     Balances are shared maker inventory, not a locked reserve.
                   </span>
                 </div>
-                {noQuote ? (
-                  <div className="inline-warning">
-                    No executable quote. Resale liquidity is not guaranteed.
-                  </div>
-                ) : quoteStale ? (
-                  <div className="inline-warning">
-                    Quote expired. Refresh before signing.
-                  </div>
-                ) : !quantityOkay ? (
-                  <div className="inline-warning">
-                    Enter a positive claim amount with at most 18 decimals.
-                  </div>
-                ) : quantityBase > BigInt(selected.availableClaims) ? (
-                  <div className="inline-warning">
-                    Quantity exceeds available maker inventory.
-                  </div>
-                ) : connected && cost > BigInt(s.wallet.usdcBalanceMicros) ? (
-                  <div className="inline-warning">
-                    Insufficient USDC for this purchase.
-                  </div>
-                ) : null}
-                <button
-                  className="primary wide"
-                  disabled={
-                    connected &&
-                    (!canBuy ||
-                      wrongNetwork ||
-                      cost > BigInt(s.wallet.usdcBalanceMicros))
-                  }
-                  onClick={connected ? buy : connect}
-                >
-                  {connected
-                    ? "Review purchase"
-                    : fixture
-                      ? "Use fixture wallet"
-                      : "Connect wallet"}
-                  <Icon />
-                </button>
-                <div className="scenario-box">
-                  <h3>What would your claim earn?</h3>
-                  <label htmlFor="scenario-income">
-                    Scenario: total sold-period USDC
-                  </label>
-                  <input
-                    id="scenario-income"
-                    inputMode="decimal"
-                    value={scenarioIncome}
-                    onChange={(e) => setScenarioIncome(e.target.value)}
-                  />
-                  <ScenarioResult
-                    income={scenarioIncome}
-                    quantity={quantity}
-                    supply={selected.originalSupply}
-                    cost={canBuy ? cost : null}
-                  />
-                  <p className="fine">
-                    An assumption you set, not a forecast. Fees can be zero if
-                    the position leaves its range.
-                  </p>
                 </div>
-              </aside>
-            </div>
+              </details>
+            </section>
           </>
         ) : null}
         {(positions || pin) && (
@@ -1955,33 +1953,45 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                         className="position-lookup"
                         onSubmit={async (event) => {
                           event.preventDefault();
+                          if (findingPosition) return;
+                          const request = ++positionRequest.current;
+                          paused.current = true;
                           setFindingPosition(true);
                           setError("");
                           setMessage("");
+                          let timer: ReturnType<typeof setTimeout> | undefined;
+                          let expired = false;
                           try {
-                            const id =
-                              await adapter.findPosition!(positionLookup);
-                            const next = await refresh();
-                            if (
-                              !next.positions.some(
-                                (position) => position.tokenId === id,
-                              ) &&
-                              !next.markets.some(
-                                (market) => market.tokenId === id,
-                              )
-                            )
-                              throw new Error(
-                                "Position details could not be loaded. Check the NFT ID and try again.",
-                              );
+                            const id = await Promise.race([
+                              (async () => {
+                                const found = await adapter.findPosition!(positionLookup);
+                                if (request !== positionRequest.current) return null;
+                                const next = await refresh();
+                                if (request !== positionRequest.current) return null;
+                                if (!next.positions.some(position => position.tokenId === found) && !next.markets.some(market => market.tokenId === found))
+                                  throw new Error("Position details could not be loaded. Check the NFT ID and try again.");
+                                return found;
+                              })(),
+                              new Promise<never>((_, reject) => {
+                                timer = setTimeout(() => {
+                                  if (request === positionRequest.current) {
+                                    expired = true;
+                                    ++positionRequest.current;
+                                    ++refreshVersion.current;
+                                  }
+                                  reject(new Error("Position lookup took longer than 20 seconds. Check the NFT ID and try again."));
+                                }, 20_000);
+                              }),
+                            ]);
+                            if (!id || request !== positionRequest.current) return;
                             setPinToken(id);
                             location.hash = positionRoute(id);
-                            setMessage(
-                              `Found position #${id}. Finding a position does not approve or transfer it.`,
-                            );
+                            setMessage(`Found position #${id}. Finding a position does not approve or transfer it.`);
                           } catch (error) {
-                            setError((error as Error).message);
+                            if (request === positionRequest.current || expired) setError((error as Error).message);
                           } finally {
-                            setFindingPosition(false);
+                            clearTimeout(timer);
+                            if (request === positionRequest.current || expired) setFindingPosition(false);
                           }
                         }}
                       >
@@ -2272,6 +2282,7 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                                 <div>
                                   {p.ownedByWallet !== false && (
                                     <ListingForm
+                                      estimateFees={adapter.estimatePositionFees?.bind(adapter)}
                                       position={p}
                                       snapshot={s}
                                       disabled={

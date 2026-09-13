@@ -17,22 +17,24 @@ export function Stencil({
   fill = 0.6,
   className = "",
   animate = false,
+  annotations,
 }: {
   seed?: string;
   fill?: number;
   className?: string;
   animate?: boolean;
+  annotations?: { tokenId: string; lowerTick: number; endBlock: string };
 }) {
   const id = useId().replaceAll(":", "");
-  let state = [...seed].reduce((v, c) => (v * 31 + c.charCodeAt(0)) >>> 0, 17);
+  let state = /^\d+$/.test(seed) ? Number(BigInt(seed) & 0xffffffffn) || 1 : [...seed].reduce((v, c) => (v * 31 + c.charCodeAt(0)) >>> 0, 17);
   const random = () => {
     state = (Math.imul(state, 1664525) + 1013904223) >>> 0;
     return state / 4294967296;
   };
   const barbs = [];
-  let angle = random() * 360;
   const axis = random() * 360,
     n = 13 + Math.floor(random() * 7);
+  let angle = random() * 360;
   for (let i = 0; i < n; i++) {
     angle += (360 / n) * (0.55 + random() * 0.95);
     const len =
@@ -45,7 +47,7 @@ export function Stencil({
     barbs.push(
       <path
         key={i}
-        d={`M${100 - w},${b} C${100 - w * 0.62},${b - len * 0.35} ${100 - w * 0.26},${b - len * 0.72} 100,${t} C${100 + w * 0.26},${b - len * 0.72} ${100 + w * 0.62},${b - len * 0.35} ${100 + w},${b} Z`}
+        d={`M${100 - w},${b} C${100 - w * 0.62},${b - len * 0.35} ${100 - w * 0.26},${b - len * 0.72} 100,${t} C${100 + w * 0.26},${b - len * 0.72} ${100 + w * 0.62},${b - len * 0.35} ${100 + w},${b} C${100 + w * 0.5},${b + 3} ${100 - w * 0.5},${b + 3} ${100 - w},${b} Z`}
         transform={`rotate(${angle} 100 100)`}
       />,
     );
@@ -107,6 +109,12 @@ export function Stencil({
         <circle cx="100" cy="100" r="34" />
       </g>
       <circle cx="100" cy="100" r="5" fill="var(--sel)" />
+      {annotations && <g className="stencil-annotations" fill="currentColor" fontFamily="Space Mono, monospace" fontSize="5" letterSpacing=".3">
+        <path d="M62 60 24 30H8 M145 74 180 52H194 M141 135 174 171H192" stroke="currentColor" strokeWidth=".45" fill="none" />
+        <text x="8" y="26">NFT {annotations.tokenId}</text>
+        <text x="194" y="48" textAnchor="end">TICK {annotations.lowerTick}</text>
+        <text x="192" y="181" textAnchor="end">N {annotations.endBlock}</text>
+      </g>}
     </svg>
   );
 }
@@ -175,8 +183,7 @@ export function WindowClock({
         <span>End {integer(market.endBlock)}</span>
       </div>
       <p className="fine">
-        Block progress through the earning window. It is not fee income or
-        settlement progress.
+        Block progress · not fee income or settlement progress.
       </p>
     </div>
   );
@@ -592,21 +599,14 @@ export function ClaimSelection({
     available = BigInt(market.availableClaims);
   const basisPoints = Q > 0n ? (quantity * 10000n) / Q : 0n;
   const fraction = Number(basisPoints) / 100;
-  const write = (units: bigint) =>
-    onChange(formatClaims(units).replaceAll(",", ""));
+  const write = (units: bigint) => onChange(formatClaims(units).replaceAll(",", ""));
   return (
     <div className="claim-selection">
       <div className="selection-word">
-        <span
-          className="selection-band"
-          style={{ width: `${Math.max(0, Math.min(100, fraction))}%` }}
-          aria-hidden="true"
-        />
-        <span className="display">NFT {market.tokenId}</span>
-      </div>
-      <label className="selection-slider-label">
-        Select a share of original Q
+        <span className="selection-band" style={{ width: `${Math.max(0, Math.min(100, fraction))}%` }} aria-hidden="true" />
+        <h1 className="display">NFT {market.tokenId}</h1>
         <input
+          className="selection-surface"
           type="range"
           min="0"
           max="10000"
@@ -620,24 +620,13 @@ export function ClaimSelection({
             write(units > available ? available : units);
           }}
         />
-      </label>
+      </div>
       <div className="selection-hint">
-        <span>
-          {sharePercent(quantity.toString(), market.originalSupply)}% of
-          original Q selected
-        </span>
-        <button
-          className="text-button"
-          disabled={available === 0n}
-          onClick={() => write(available)}
-        >
+        <span>Drag or use arrow keys to select</span>
+        <button className="text-button" disabled={available === 0n} onClick={() => write(available)}>
           Select all executable
         </button>
       </div>
-      <p className="fine">
-        Blue marks your selection, not purchased claims. Use the exact quantity
-        below for smaller fractions.
-      </p>
     </div>
   );
 }

@@ -1,3 +1,4 @@
+import { openClaimDetails } from "./claim-details";
 import { test, expect, type Page } from "@playwright/test";
 
 const address = "0x1111111111111111111111111111111111111111";
@@ -37,6 +38,7 @@ async function mount(page: Page, route = "#market", positionPair = "WETH / USDC"
       React.createElement(App, { adapter })));
   }, { address, positionPair });
   await expect(page.getByRole("region", { name: "New-sale service status" })).toBeVisible();
+  if (route.startsWith("#market/")) await openClaimDetails(page);
 }
 
 const analysis = (patch = {}) => ({ status: "available", analysis: { seriesId: "fs-1482", poolKey: "pool", sourceBlock: 11842994, sourceHash: "0x" + "3".repeat(64), subgraphDeployment: "simulated-subgraph", substreamsPackage: "simulated-substreams", substreamsCursor: "simulated-cursor", lagBlocks: 6, stale: false, grossBreakEvenUSDC: "840000", netBreakEvenUSDC: "840000", knownBlocks: 75, inRangeBlocks: 50, totalBlocks: 100, occupancyBps: 6667, coverageBps: 7500, substreamsFinalBlock: null, sourceFinalized: false, allocationAuthority: "contract-only", caveats: ["Simulated source data for a browser regression."], ...patch } });

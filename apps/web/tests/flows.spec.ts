@@ -1,3 +1,4 @@
+import { openClaimDetails } from "./claim-details";
 import { test, expect, type Page } from "@playwright/test";
 async function wallet(page: Page) {
   await page
@@ -14,6 +15,7 @@ async function condition(page: Page, value: string) {
 }
 async function detail(page: Page) {
   await page.goto("/#market/fs-1482");
+  await openClaimDetails(page);
 }
 async function confirm(page: Page, name: string) {
   await page
@@ -190,6 +192,7 @@ test("late capture releases original NFT before allocation; claims redeem afterw
   await page.getByRole("button", { name: "Redeem 400 claims" }).click();
   await expect(page.getByRole("dialog")).toContainText("$33.600000 USDC");
   await confirm(page, "Confirm fixture action");
+  await openClaimDetails(page);
   await expect(
     page.getByText("No claims remaining", { exact: true }),
   ).toBeVisible();
