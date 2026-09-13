@@ -1,0 +1,199 @@
+{
+  "schemaVersion": 1,
+  "checkedAt": "2026-09-13T12:30:40.043Z",
+  "scope": "Independent read-only check of the running Railway Graph database: SQLite integrity, continuous retained extent, anchored bundled Substreams identity, 20 finalized tail blocks matching canonical Sepolia RPC, and Studio at the identical block/hash. Not joined buyer analysis, a public checkpoint or sale/settlement acceptance.",
+  "hosting": {
+    "projectId": "cb65063e-ebf1-452c-b077-5e3da03041e2",
+    "environment": "production",
+    "service": "endpoint-operations",
+    "reportedDeploymentId": "c2506416-973e-4e53-8897-2ad363ed1454",
+    "reportedSourceCommit": "9d089b1",
+    "identitySource": "Deployment ID/source supplied by integration owner; bundled data identities independently verified here"
+  },
+  "sqlite": {
+    "quickCheck": "ok",
+    "readOnly": true,
+    "retainedExtent": {
+      "count": 17042,
+      "first": 11678801,
+      "last": 11695842
+    },
+    "qualifiedTail": 20,
+    "storedTickObservations": 1,
+    "tailStillRetainedAfterRpcChecks": true
+  },
+  "identity": {
+    "chainId": 11155111,
+    "poolManager": "0xe03a1074c86cfedd5c142c4f04f1a1536e203543",
+    "poolIds": [
+      "0x0c5089eb2863310ecab41eb94f2705ce37ce455a0f64a9ee627c7470b43161e8"
+    ],
+    "packageHash": "0xec91c3e699f52f373dd0afe113adfc16c54f9a71052e091f6982b1153307b276",
+    "history": {
+      "startBlock": 11678801,
+      "initialization": [
+        {
+          "kind": "swap",
+          "pool": "0x0c5089eb2863310ecab41eb94f2705ce37ce455a0f64a9ee627c7470b43161e8",
+          "block": 11678801,
+          "hash": "0x7236fd4559531e97ac730024a68ce457d9eaeee9a71d6e7682c00f69cf0a079b",
+          "logIndex": 98,
+          "tick": 59600,
+          "transactionHash": "0x6237cd0124382cc1c66f043a3b979854653839610e720504a222f552781137ed"
+        }
+      ]
+    }
+  },
+  "anchors": {
+    "retained": true,
+    "allBlockHashesMatchRpc": true
+  },
+  "blocks": [
+    {
+      "number": 11695823,
+      "hash": "0x89ed67a700aab6c132ee39957913eb912ee0a8e1955a29db25cb0c67e3d52137"
+    },
+    {
+      "number": 11695824,
+      "hash": "0xdfe654c36ed5374d1e9baefc77b2f261ba132556a8f3ea057c5bd529d3e7fb0d"
+    },
+    {
+      "number": 11695825,
+      "hash": "0x62f373890da83174d418320ae9931e46f2315a8aa6bfdb10b010ae9864fa457c"
+    },
+    {
+      "number": 11695826,
+      "hash": "0x0cb2a4455d2aa7f3b967c2ee8d595e4fe11b57108649b95f7041cf0215f89e58"
+    },
+    {
+      "number": 11695827,
+      "hash": "0x60c5ae146053af930b63b169f0e8ee2a3fd3c8e8458f79a40bec1a6e04119d28"
+    },
+    {
+      "number": 11695828,
+      "hash": "0x46f0f8bf8d6ebb856295c16525b0aee7176651ff095d60b1379c062506e10177"
+    },
+    {
+      "number": 11695829,
+      "hash": "0x430c15e4cdef95159f95b96f5a483590e7b241cff39a76d61979b1ffa865a364"
+    },
+    {
+      "number": 11695830,
+      "hash": "0xdcd9a05606b16e8e29e254ff9a2102ba1c654279153ccfd68ad70fde7edc9218"
+    },
+    {
+      "number": 11695831,
+      "hash": "0xcdc879e58b861ebe7071501b895377a91523e7cf1c84c30c7412edf4867bf10d"
+    },
+    {
+      "number": 11695832,
+      "hash": "0xd4b33c7586a8b55ee4d13c9852bb86e7e6e4fa5a11e9bc0392608c6ad4845628"
+    },
+    {
+      "number": 11695833,
+      "hash": "0x369c19b107ad518b259952f275886c1bed58d9a761bba9ec32c822665a91acfd"
+    },
+    {
+      "number": 11695834,
+      "hash": "0x76c02b43f3ad3fd36710521359f4c0f218a75d18c221ab788d6d1e208da584d3"
+    },
+    {
+      "number": 11695835,
+      "hash": "0x8ba737af522f7f35457475aeaff90fb68baa4c55c09d49636c629e8e4ad49730"
+    },
+    {
+      "number": 11695836,
+      "hash": "0xc41c10516496ce5faf36b2535bc39206754493b69116f374e11535337bc43ef4"
+    },
+    {
+      "number": 11695837,
+      "hash": "0x70f1a5473964e5787ea7153d5d986c5f1702628ec841837ea7b3a13096655ee3"
+    },
+    {
+      "number": 11695838,
+      "hash": "0x78e4eb30f9f0e9956b103845c35d4fb0705e7b730be7cf9bda2aae8d9cb396dd"
+    },
+    {
+      "number": 11695839,
+      "hash": "0x18a30082accca77d7e9c87224dd35a331e2d1468da992c5636dfbb39fa48f619"
+    },
+    {
+      "number": 11695840,
+      "hash": "0x06f906abeaa8bbea925d8d301d9f48cb8c29aa2015bd0c13aab50ddc8f268fee"
+    },
+    {
+      "number": 11695841,
+      "hash": "0x2af294bc45cd3cdb151cf906aafd3ff959e14ab6dfc8afee7494e8a655124e6a"
+    },
+    {
+      "number": 11695842,
+      "hash": "0x5d2809024746caff96725131798146e5cc3322a69faf2676b32b3c69757c5462"
+    }
+  ],
+  "allBlockHashesMatchRpc": true,
+  "rpc": {
+    "headNumber": "11695905",
+    "headHash": "0x5188cadf9cdc9a2c6bd43a69a4a90d1a61cc2ccea7454622ca4a3e05f0ed1524",
+    "finalizedNumber": "11695842",
+    "finalizedHash": "0x5d2809024746caff96725131798146e5cc3322a69faf2676b32b3c69757c5462",
+    "tailFinalized": true
+  },
+  "substreamsFinalBlockHeight": 11695842,
+  "subgraph": {
+    "block": 11695842,
+    "hash": "0x5d2809024746caff96725131798146e5cc3322a69faf2676b32b3c69757c5462",
+    "deployment": "QmXEm3WDjvy2q2xSQYoK3HmoBzGKV6oR4JgEe2QRJkWAcw",
+    "hasIndexingErrors": false,
+    "seriesCount": 0
+  },
+  "nextSeriesId": "1",
+  "runtimeFlags": {
+    "analysisEnabled": true,
+    "streamEnabled": true
+  },
+  "resources": {
+    "observedAt": "2026-09-13T12:30:40.042Z",
+    "cgroupMemoryBytes": 265908224,
+    "cgroupMemoryLimitBytes": "536870912",
+    "cgroupMemoryPeakBytes": "274731008",
+    "cgroupMemoryEvents": {
+      "low": 0,
+      "high": 0,
+      "max": 0,
+      "oom": 0,
+      "oom_kill": 0,
+      "oom_group_kill": 0
+    },
+    "applicationNodeProcesses": [
+      {
+        "pid": 1,
+        "rssBytes": 126521344
+      },
+      {
+        "pid": 15,
+        "rssBytes": 117202944
+      },
+      {
+        "pid": 9,
+        "rssBytes": 102408192
+      }
+    ],
+    "applicationNodeRssSumBytes": 346132480,
+    "verifierRssBytes": 109060096,
+    "volumeTotalBytes": 454299648,
+    "volumeAvailableBytes": 420208640,
+    "volumeUsedBytes": 24027136,
+    "databaseBytes": 17133568,
+    "databaseWalBytes": 4128272,
+    "databaseShmBytes": 32768,
+    "scope": "Point-in-time OS/cgroup counters include this read-only verifier where applicable; not a sustained load benchmark or disk quota guarantee. Summed process RSS can count shared pages repeatedly; cgroup memory is the aggregate resource counter."
+  },
+  "allocationAuthority": "contract-only",
+  "previousReadOnlySample": {
+    "checkedAt": "2026-09-13T12:29:52.657Z",
+    "retainedBlockCount": 17012,
+    "retainedLastBlock": 11695812,
+    "tailCanonicalAndStudioMatched": true
+  },
+  "advancedDuringQualificationBlocks": 30
+}
