@@ -10,14 +10,20 @@ Exact frontend steps and local rehearsal commands. Read the [project brief and j
 | Original terms | Q 10000; buyer 2,500 claims for 0.25 test USDC; seller initially 7500. Read current balances before further actions |
 | Actual secondary holder | Teammate 0x746b…4C6d bought 189+63+748=1,000 claims. The initially planned agent-controlled holder did not receive those claims |
 | Captured / returned | Actual late capture 1.499999 USDC; original NFT returned at 11696393 **before allocation** |
-| Allocation | Public allocation observed:0.999999 USDC sold reserve /0.500000 residual. Teammate redemption confirmed:1,000 claims paid 0.099999 USDC; remaining wallets/residual/dust reconciliation still pending |
+| Allocation | Public allocation observed: 0.999999 USDC sold reserve / 0.500000 residual. Teammate redemption confirmed:1,000 claims paid 0.099999 USDC; buyer 1,500 claims paid 0.149999 USDC; seller 6,500 paid0.649999 plus 0.500000 residual. All are actual confirmed payouts |
 | Preservation | Keeper saved N at N+2; endpoint/receipt finalized; remote proof restored into fresh local DB/two copies using 2 GETs, zero writes and no RPC witness fallback |
 | Graph | Actual live joined series 1 query verified at 11696247; partial earning history 22/22 known blocks, all in range |
-| Immediate owners | Lead verifies receipts, pays only its controlled wallets and maintains judge inventory. Teammate redemption is confirmed. Team records confusion, tests a fresh repeat session and completes human submission |
+| Immediate owners | Lead preserves confirmed receipts/reserve accounting and maintains the backed judge quote. Teammate redemption is confirmed. Team records confusion, tests a fresh repeat session and completes human submission |
+
+Confirmed payouts are **0.099999 USDC** for the teammate’s 1,000 claims, **0.149999 USDC** for the original buyer’s 1,500 claims, and **0.649999 USDC** for the seller’s 6,500 claims. The seller separately withdrew the **0.500000 USDC residual**. A later controlled holder bought **10 claims for 0.000500 USDC** and redeemed them for **0.000999 USDC** through the updated public UI. Current totals are **9,010 claims redeemed / 0.900996 USDC paid / 0.099003 USDC retained**, with **990 funded, unredeemed claims** reserved for judges. A single redemption of those 990 claims would pay 0.098999 USDC and leave four micro-USDC of rounding dust; splitting redemptions may increase dust. The reserve remains a liability, not available project cash. [Complete public lifecycle evidence](evidence/operations/live-series-one-lifecycle.md).
+
+The controlled repeat [purchase](https://sepolia.etherscan.io/tx/0x239f863f30530277460a0ef8f05f03724196cf0f6cecc9767c894fb27a93b909) and [redemption](https://sepolia.etherscan.io/tx/0xd82bf3a5625e43d8e5018024cc546b87c84ebf8cbe4469ad3dc3d45452bdeb50) extend the earlier lifecycle snapshot. They are actual canonical receipt observations, not a claim of finality or a second unaided human session.
+
+The renewed **990-claim / 0.049500-USDC ask**, expiring **20 September at 14:45 UTC**, is reviewed but its publication receipt is still pending at this checkpoint. Treat the older quote as stale after the redemption. Fresh executable inventory must be checked before inviting another buyer.
 
 [Receipts and sponsor evidence](evidence/sponsors.md), [remote restoration](evidence/operations/live-series-one-restore.json), [native endpoint comparison](evidence/operations/live-series-one-native-oracle.md), [live Graph join](evidence/operations/live-series-one-graph.md). This was controlled public testing with funded donations. It is not yet a completed unaided user study.
 
-**Continue this series from its actual current state.** Do not republish, fund again, repeat capture or return the NFT again to follow an old checklist. Allocation being observed does not mean a pending redemption succeeded. Review the correct current claim balance and predicted payout, sign once, retain the receipt, and compare the actual USDC increase. The originalQ remains 10000 after other holders redeem. A fresh judge needs an executable quote backed by unredeemed inventory; renew quotes after relevant state changes.
+**Continue this series from its actual current state.** Do not republish, fund again, repeat capture or return the NFT again to follow an old checklist. Allocation being observed does not mean a pending redemption succeeded. Review the correct current claim balance and predicted payout, sign once, retain the receipt, and compare the actual USDC increase. The original Q remains 10000 after other holders redeem. A fresh judge needs an executable quote backed by unredeemed inventory; renew quotes after relevant state changes.
 
 ## End-to-end test: exact manual flow
 
