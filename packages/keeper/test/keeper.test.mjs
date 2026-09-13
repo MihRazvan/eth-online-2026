@@ -6,13 +6,15 @@ import {join} from 'node:path';
 import {DatabaseSync} from 'node:sqlite';
 import {privateKeyToAccount} from 'viem/accounts';
 import {parseTransaction,decodeFunctionData,keccak256,zeroHash} from 'viem';
-import {keeperConfig} from '../src/config.mjs';
+import {keeperConfig,legacyKeeperFingerprints} from '../src/config.mjs';
 import {KeeperStore,readKeeperStatus,recoverDeadLock} from '../src/store.mjs';
 import {CheckpointKeeper,checkpointAbi} from '../src/worker.mjs';
 const hash=n=>'0x'+BigInt(n).toString(16).padStart(64,'0');
 const address=n=>'0x'+BigInt(n).toString(16).padStart(40,'0');
 const account=privateKeyToAccount('0x'+'11'.repeat(32));
 const fixtureConfig={chainId:31337,genesisHash:hash(1),feeStrip:address(1),verifier:address(2),checkpoints:address(3),poolManager:address(4),usdc:address(5),managerCodeHash:keccak256('0x6000'),codeHashes:Object.fromEntries(['feeStrip','verifier','checkpoints','poolManager'].map(k=>[k,keccak256('0x6000')])),rpcUrls:['http://127.0.0.1:8562'],expectedSigner:account.address,enabled:true,gasLimit:'80000',maxFeePerGas:'10000000000',maxPriorityFeePerGas:'5000000000',maxTxCostWei:'800000000000000',dailyBudgetWei:'8000000000000000',minBalanceWei:'100000000000000'};
+// Captured from the original enabled-inclusive keeperConfig implementation, before this migration.
+const legacyBindings={false:'a467a4cbdddb52db368a6a81caf77538e14e137ff5168af81ecaca88673ee4c4',true:'44f624181cb8832ec96bc2f0c57a5affc473aa66a9ea87cbfa469581e0949dc0'};
 function setup(t,overrides={}){
  const dir=mkdtempSync(join(tmpdir(),'usufruct-keeper-')),path=join(dir,'keeper.sqlite');
  const store=new KeeperStore(path);t.after(()=>{try{store.close();}catch{}rmSync(dir,{recursive:true,force:true});});
@@ -28,9 +30,53 @@ function setup(t,overrides={}){
 }
 test('config is immutable, strictly pinned, requires dedicated signer and explicit enablement',()=>{
  const c=keeperConfig(fixtureConfig);assert.ok(Object.isFrozen(c.codeHashes));assert.equal(keeperConfig(c).fingerprint,c.fingerprint);
+ assert.equal(keeperConfig({...fixtureConfig,enabled:false}).fingerprint,c.fingerprint);
+ assert.deepEqual(legacyKeeperFingerprints(c),[legacyBindings.false,legacyBindings.true]);
  assert.throws(()=>keeperConfig({...fixtureConfig,chainId:1}),/UNSUPPORTED_CHAIN/);
  assert.throws(()=>keeperConfig({...fixtureConfig,enabled:undefined}),/EXPLICIT_ENABLED/);
  assert.throws(()=>keeperConfig({...fixtureConfig,gasLimit:'200000'}),/INVALID_BUDGET/);
+});
+test('existing disabled database enables, pauses and resumes without losing its signed nonce or daily reservation',async t=>{
+ const f=setup(t,{enabled:false});await f.worker.tick();assert.equal(f.state.broadcasts.length,0);
+ f.store.set('config',legacyBindings.false);const discovered=f.store.jobs();f.store.close();
+ const enabledStore=new KeeperStore(f.path);t.after(()=>enabledStore.close());
+ assert.throws(()=>new CheckpointKeeper({...f.config,enabled:true},enabledStore,{client:f.client}),/KEEPER_PRIVATE_KEY_REQUIRED/);
+ assert.equal(enabledStore.get('config'),legacyBindings.false,'missing signer cannot migrate the binding');
+ const client={...f.client,sendRawTransaction:async({serializedTransaction})=>{f.state.broadcasts.push(serializedTransaction);f.state.pendingNonce=1;return keccak256(serializedTransaction);}};
+ const enabled=new CheckpointKeeper({...f.config,enabled:true},enabledStore,{client,account});
+ assert.deepEqual(enabledStore.jobs(),discovered);await enabled.tick();
+ assert.equal(f.state.broadcasts.length,1);const signed=enabledStore.activeTxs()[0],reserved=enabledStore.reserveCost();enabledStore.close();
+ const pausedStore=new KeeperStore(f.path);t.after(()=>pausedStore.close());
+ const paused=new CheckpointKeeper(f.config,pausedStore,{client});await paused.tick();
+ assert.equal(f.state.broadcasts.length,1,'disabled process does not rebroadcast an existing signature');
+ assert.equal(pausedStore.activeTxs()[0].raw,signed.raw);assert.equal(pausedStore.reserveCost(),reserved);pausedStore.close();
+ const resumedStore=new KeeperStore(f.path);t.after(()=>resumedStore.close());
+ const resumed=new CheckpointKeeper({...f.config,enabled:true},resumedStore,{client,account});await resumed.tick();
+ assert.equal(f.state.broadcasts.length,2);assert.equal(f.state.broadcasts.at(-1),signed.raw);
+ assert.equal(resumedStore.nonceTxs(signed.nonce).length,1);assert.equal(resumedStore.reserveCost(),reserved);
+});
+test('legacy enabled binding migrates atomically while preserving every job, signed byte, receipt and reservation',async t=>{
+ const f=setup(t);await f.worker.tick();const tx=f.store.activeTxs()[0];
+ f.store.txState(tx.hash,'mined',{blockHash:hash(600),transactionHash:tx.hash});
+ f.store.set('config',legacyBindings.true);f.store.set('operator-marker',{retained:true});
+ const jobs=f.store.jobs(),transactions=f.store.db.prepare('SELECT * FROM transactions').all(),reserved=f.store.reserveCost(),status=f.store.get('publicStatus');f.store.close();
+ const reopened=new KeeperStore(f.path);t.after(()=>reopened.close());
+ new CheckpointKeeper({...f.config,enabled:false},reopened,{client:f.client});
+ assert.equal(reopened.get('config'),keeperConfig(f.config).fingerprint);
+ assert.deepEqual(reopened.jobs(),jobs);assert.deepEqual(reopened.db.prepare('SELECT * FROM transactions').all(),transactions);
+ assert.equal(reopened.reserveCost(),reserved);assert.deepEqual(reopened.get('publicStatus'),status);assert.deepEqual(reopened.get('operator-marker'),{retained:true});
+});
+test('legacy migration and current binding reject every economic, network, signer and scheduling change',t=>{
+ const f=setup(t);
+ const changes={chainId:11155111,genesisHash:hash(99),feeStrip:address(9),verifier:address(9),checkpoints:address(9),poolManager:address(9),usdc:address(9),managerCodeHash:hash(99),codeHashes:{...f.config.codeHashes,feeStrip:hash(99)},rpcUrls:['http://127.0.0.1:9999'],expectedSigner:address(9),gasLimit:'90000',maxFeePerGas:'11000000000',maxPriorityFeePerGas:'6000000000',maxTxCostWei:'900000000000000',dailyBudgetWei:'9000000000000000',minBalanceWei:'200000000000000',pageSize:21,maxHeadAgeSeconds:121,intervalMs:5000,replaceAfterBlocks:4,maxReplacements:4,broadcastMarginBlocks:3,database:'/different/keeper.sqlite'};
+ for(const binding of [legacyBindings.false,legacyBindings.true,keeperConfig(f.config).fingerprint,'unknown-binding']){
+  f.store.set('config',binding);
+  for(const [key,value] of Object.entries(changes)){
+   const expected=key==='chainId'?/NONCANONICAL_PUBLIC_DEPLOYMENT/:key==='managerCodeHash'?/MANAGER_PIN_MISMATCH/:/KEEPER_CONFIG_CHANGED/;
+   assert.throws(()=>new CheckpointKeeper({...f.config,enabled:false,[key]:value},f.store,{client:f.client}),expected,`${key} under ${binding}`);
+   assert.equal(f.store.get('config'),binding,'rejected migration leaves metadata untouched');
+  }
+ }
 });
 test('receipt observation retains daily spend after an old signature confirms or remine changes receipt',t=>{
  const f=setup(t);let now=1000;f.store.clock=()=>now;

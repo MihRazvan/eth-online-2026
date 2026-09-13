@@ -13,7 +13,7 @@ import {KeeperStore} from '../src/store.mjs';
 import {CheckpointKeeper,checkpointAbi} from '../src/worker.mjs';
 // This publicly known development key is usable ONLY against isolated localhost chain 31337.
 const account=privateKeyToAccount('0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80');
-test('actual isolated Anvil: pinned deployment, durable restart, checkpoint receipt and chain reorg', {skip:process.env.RUN_KEEPER_ANVIL!=='1',timeout:120000},async()=>{
+test('actual isolated Anvil: disabled startup, enablement, durable restart, checkpoint receipt and chain reorg', {skip:process.env.RUN_KEEPER_ANVIL!=='1',timeout:120000},async()=>{
  const dir=mkdtempSync(join(tmpdir(),'usufruct-keeper-anvil-'));let processAnvil,store;
  const rpcUrl='http://127.0.0.1:8562';
  try{
@@ -36,8 +36,8 @@ test('actual isolated Anvil: pinned deployment, durable restart, checkpoint rece
   const feeStrip=await deploy('Fixtures.sol','FixtureFeeStrip',[verifier,poolManager,usdc]);
   const pins=await localRetentionConfig({chainId:31337,rpcUrl,checkpoints,poolManager,verifier,feeStrip,usdc},client);
   const config={...pins,enabled:true,expectedSigner:account.address,gasLimit:'80000',maxFeePerGas:'10000000000',maxPriorityFeePerGas:'5000000000',maxTxCostWei:'800000000000000',dailyBudgetWei:'8000000000000000',minBalanceWei:'100000000000000'};
-  store=new KeeperStore(join(dir,'keeper.sqlite'));let worker=new CheckpointKeeper(config,store,{client,account});
-  assert.equal((await worker.tick()).status,'observed');assert.equal(store.activeTxs().length,0);
+  store=new KeeperStore(join(dir,'keeper.sqlite'));let worker=new CheckpointKeeper({...config,enabled:false},store,{client});
+  assert.equal((await worker.tick()).status,'disabled');assert.equal(store.activeTxs().length,0);
   const endpoint=BigInt(store.jobs()[0].end_block);await client.request({method:'anvil_mine',params:['0x4']});
   assert.equal(await client.getBlockNumber({cacheTime:0}),endpoint+1n);
   await client.request({method:'evm_setAutomine',params:[false]});

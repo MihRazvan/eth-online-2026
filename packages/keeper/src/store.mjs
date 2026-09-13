@@ -27,7 +27,12 @@ export class KeeperStore {
  assertLock(){let owner;try{owner=JSON.parse(readFileSync(this.lock+'/owner.json'));}catch{fail('KEEPER_LOCK_LOST');}if(owner.token!==this.token)fail('KEEPER_LOCK_LOST');}
  get(key){const row=this.db.prepare('SELECT value FROM metadata WHERE key=?').get(key);return row?JSON.parse(row.value):null;}
  set(key,value){this.assertLock();this.db.prepare('INSERT INTO metadata VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value').run(key,JSON.stringify(value));}
- bind(fingerprint){const old=this.get('config');if(old&&old!==fingerprint)fail('KEEPER_CONFIG_CHANGED');this.set('config',fingerprint);}
+ bind(fingerprint,legacyFingerprints=[]){
+  this.assertLock();const old=this.get('config');
+  if(old&&old!==fingerprint&&!legacyFingerprints.includes(old))fail('KEEPER_CONFIG_CHANGED');
+  // One atomic metadata update; migration never touches jobs, signed bytes or spend reservations.
+  this.set('config',fingerprint);
+ }
  jobs(){return this.db.prepare('SELECT * FROM jobs ORDER BY end_block,id').all();}
  upsert(id,end,state){this.assertLock();this.db.prepare('INSERT INTO jobs VALUES (?,?,?,NULL) ON CONFLICT(id) DO UPDATE SET end_block=excluded.end_block,state=excluded.state').run(Number(id),Number(end),state);}
  state(id,state,hash=null){this.assertLock();this.db.prepare('UPDATE jobs SET state=?,endpoint_hash=? WHERE id=?').run(state,hash,id);}

@@ -1,5 +1,5 @@
 import {encodeFunctionData,keccak256,parseAbi,zeroHash} from 'viem';
-import {keeperConfig,fail,safeError} from './config.mjs';
+import {keeperConfig,legacyKeeperFingerprints,fail,safeError} from './config.mjs';
 import {clientsFor,observe,assertObservation,feeStripAbi} from '../../settlement/src/chain.mjs';
 export const checkpointAbi=parseAbi(['function checkpoint(uint256) returns (bytes32)','function hashes(uint256) view returns (bytes32)']);
 const same=(a,b)=>a?.toLowerCase()===b?.toLowerCase();
@@ -11,7 +11,7 @@ export class CheckpointKeeper {
   this.config=keeperConfig(config);this.store=store;this.client=client??clientsFor(this.config)[0];this.account=account;this.observe=observer;
   if(account&&!same(account.address,this.config.expectedSigner))fail('KEEPER_SIGNER_MISMATCH');
   if(this.config.enabled&&!account)fail('KEEPER_PRIVATE_KEY_REQUIRED');
-  store.bind(this.config.fingerprint);this.busy=false;
+  store.bind(this.config.fingerprint,legacyKeeperFingerprints(this.config));this.busy=false;
  }
  publicStatus(){return this.store.get('publicStatus')??{status:'not-observed',chainId:this.config.chainId,signer:this.config.expectedSigner};}
  async tick(){
