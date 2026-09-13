@@ -24,9 +24,7 @@ usufruct turns one fixed earning window into transferable claims and settles its
 
 ## Built with
 
-<img width="1920" height="1080" alt="slide-4-stack" src="https://github.com/user-attachments/assets/6780e70a-3ab7-4192-8c46-92228b4ab82a" />
-
-The slide records earlier development benchmarks. The current Studio deployment is **v0.2.0**; see [Verification](docs/VERIFICATION.md) for the completed public lifecycle and measured transaction costs.
+<img width="1920" height="1080" alt="slide-4-stack" src="https://github.com/user-attachments/assets/b9f3a175-ee3d-4579-bc95-379013ce15c9" />
 
 | Integration | What it does | Implementation |
 | --- | --- | --- |
