@@ -13,7 +13,6 @@
     "test": "node --test packages/core/test/*.test.mjs packages/data/test/*.test.mjs scripts/chain/proof.test.mjs scripts/graph/*.test.mjs packages/listings/test/*.test.mjs",
     "test:contracts": "forge test",
     "test:browser": "pnpm --filter @feestrip/web test",
-    "check:handoff": "node scripts/check-handoff.mjs",
     "test:mutation": "python3 contracts/scripts/check-denominator-mutation.py",
     "test:static": "python3 scripts/static/check.py",
     "generate:abis": "node scripts/generate-abis.mjs",

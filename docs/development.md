@@ -1,6 +1,6 @@
-# Reproduce FeeStrip
+# Development
 
-Use Node24.12.0, pnpm12.3.4 and Foundry1.5.1. Solidity graphs select0.8.26 for native v4 and0.8.30 for the pinned SwapVM runtime. Dependencies and licenses are retained; install only this project's pinned packages.
+Use Node 24.12.0, pnpm 12.3.4 and Foundry 1.5.1. Compiler graphs use Solidity 0.8.26 for native v4 and 0.8.30 for the pinned SwapVM runtime. Dependency versions and licenses are committed.
 
 ```sh
 pnpm install --frozen-lockfile
@@ -8,75 +8,68 @@ forge build
 pnpm generate:abis
 pnpm test
 pnpm test:contracts
-pnpm build
 pnpm build:subgraph
 pnpm exec playwright install chromium
 pnpm test:browser
+pnpm build:vercel
 ```
 
-The default `pnpm dev` serves the visibly labeled deterministic fixture at `http://127.0.0.1:4174`. Fixtures do not claim live revenue, liquidity or transactions. Screenshots and rendered alternatives are in `docs/design`.
+`pnpm dev` opens the labelled fixture interface at http://127.0.0.1:4174. Fixture balances and transactions are simulated. The public build uses only the committed Sepolia manifest and reviewed static assets; local test wallets, generated witnesses and secrets are excluded.
 
-## Real local transactions
+## Local contract transactions
 
-Start a dedicated Anvil process in another terminal. Reset commands erase **that local development chain** and reject a non-loopback RPC or a chain other than31337. Do not share this node with unrelated work.
+Start a dedicated disposable Anvil process:
 
 ```sh
 anvil --host 127.0.0.1 --port 8545 --chain-id 31337 --hardfork cancun
+```
+
+In a separate terminal:
+
+```sh
 pnpm local:reset
 VITE_DATA_MODE=local VITE_ENABLE_TEST_WALLET=true pnpm dev
 ```
 
-Open `http://127.0.0.1:4174/?wallet=seller`, `?wallet=buyer` and `?wallet=holder` in separate browser contexts. The explicit local test flag uses Anvil's unlocked accounts; it does not test a production wallet's signing screens. The chain uses canonical Uniswap source deployments and clearly labeled local faucet currencies. Generated deployment addresses and witnesses are ignored by Git.
+Reset erases only that local chain and rejects a non-loopback RPC or a chain other than 31337. Open `/?wallet=seller`, `/?wallet=buyer` and `/?wallet=holder` in separate browser contexts. The test-wallet flag uses Anvil’s unlocked accounts. It does not reproduce a browser wallet’s signing interface.
 
-The seed creates an existing nonempty hookless NFT, clears no sale terms automatically, and funds an unaccepted offer. Seller approval only authorizes NFT transfer; seller acceptance is the separate funded transaction. Buyers can publish real Aqua inventory and trade claims. After acceptance/trading, run `pnpm local:mature 1` to fund native pool donations, retain the authentic N header/storage witness and advance beyond N. Capture, return the NFT, submit the retained proof, and redeem through the app. Donations are demo activity, not organic yield.
+The seed supplies canonical-source Uniswap contracts, local test currencies, a position NFT and a funded offer. Accept the offer, publish a maker quote and trade claims. `pnpm local:mature 1` generates controlled fee activity, retains a historical witness and advances past the endpoint. Capture, NFT return, allocation and redemption are separate actions.
 
-Install the independent witness validator first (see [retention setup](../packages/settlement/README.md)): create a Python virtual environment, install `scripts/proof/requirements.txt`, and export `FEESTRIP_PROOF_PYTHON` to its Python executable. `pnpm test:settlement` runs the offline cryptographic and recovery regressions.
+## Proof and lifecycle tests
 
-For the independent transaction-level regression, start with `pnpm local:reset` and run `pnpm test:chain`. It compares settlement against a native collection branch at the identical N snapshot, then checks actual payouts, residual assets and dust. It also runs the retention worker at N, restarts without replacement proof access, repairs a corrupted copy, and revalidates the API witness before Solidity settlement. It consumes the seeded offer, so reset before another run. Run `pnpm test:browser:chain` for the saved browser lifecycle; it resets the dedicated node itself. Its receipts and screenshots are distinct from fixture tests.
+```sh
+python3 -m venv /tmp/feestrip-proof-venv
+/tmp/feestrip-proof-venv/bin/pip install -r scripts/proof/requirements.txt
+export FEESTRIP_PROOF_PYTHON=/tmp/feestrip-proof-venv/bin/python
+pnpm test:settlement
+pnpm test:browser:chain
+USE_VERIFIED_GROWTH_CACHE=true pnpm test:browser:chain
+pnpm local:reset
+pnpm test:chain
+```
 
-To isolate browser transactions from a running8545 development node, start another Anvil on8546 and run `LOCAL_RPC_URL=http://127.0.0.1:8546 pnpm test:browser:chain`. It still writes this checkout's generated deployment/witness files; use a separate checkout if another app needs those files unchanged. Browser artifacts are separated under `apps/web/test-results/fixtures` and `apps/web/test-results/chain`. The transaction suite now also cancels the buyer's expired, unaccepted seed offer and verifies its exact refund without changing settled reserves. Buyers can do this through **My cabinet → Your funded offers → Review cancellation**; expiry alone does not refund capital.
+Each browser-chain run resets the dedicated node. The two variants test retained-witness recovery and the exact verified onchain cache. Tests cover real local funding, Aqua transfers, delayed capture, NFT return before allocation, independent payouts, refunds and receipt replacement/reorg handling. Screenshots and traces are Playwright artifacts. Local evidence is separate from the [public receipts](VERIFICATION.md).
 
-## Independent checks
+Override `LOCAL_RPC_URL`, `FEESTRIP_TEST_WEB_PORT`, `FEESTRIP_TEST_RECOVERY_PORT` and `FEESTRIP_TEST_LISTINGS_PORT` when using isolated local services. Use a separate checkout when another app needs the generated deployment files unchanged.
+
+## Services and analysis
+
+The static frontend needs separately running listing, keeper, proof-retention and analysis services. See the package documentation for [signed listings](../packages/listings/README.md), [keeper](../packages/keeper/README.md), [proof retention](../packages/settlement/README.md), [remote backup](../packages/settlement/OFFHOST.md), [Subgraph](../packages/subgraph/README.md) and [Substreams](../packages/substreams/README.md).
+
+For a seeded local chain, `pnpm local:retention-config` generates private configuration. Run `RETENTION_CONFIG="$PWD/.scratch/retention/local/local.generated.json" pnpm dev:recovery` with the proof Python configured. Restarting reuses the same database and artifacts. The read-only retention worker does not mine or submit checkpoint transactions.
+
+Keep RPC tokens, wallet keys and deploy credentials in private environment variables. Every `VITE_` value and browser manifest is public. The [architecture](ARCHITECTURE.md) documents service authority and failure boundaries.
+
+## Additional checks
 
 ```sh
 pnpm test:mutation
 pip install slither-analyzer==0.11.5
 pnpm test:static
-pnpm test:fork
-node scripts/chain/preflight-sepolia.mjs
+pnpm test:operations
+pnpm test:keeper
+pnpm test:public-setup
+pnpm test:substreams
 ```
 
-Mutation runs in a disposable project and must fail an executed independent accounting assertion. Static analysis compares13 individually reviewed findings and fails on any delta. Fork/preflight commands require public RPC access and fail on provider errors; they are deliberately separate from hermetic CI. They do not broadcast transactions. See `docs/evidence/proof.md` for the independent retained-trie Python check and exact public evidence scope.
-
-## Live analysis configuration
-
-The Substreams sink and Subgraph are reusable components under `packages/substreams` and `packages/subgraph`. The Subgraph's checked-in zero-address manifest is not deployable product configuration. Set a verified FeeStrip address/deployment block, deploy to the existing Graph project, ingest the matching chain's stream and retain its database before running live composition.
-
-Keep a private JSON configuration outside tracked files with `rpcUrl`, `subgraphUrl`, immutable Subgraph `deployment`, `database` and 32-byte SHA256 `packageIdentity` of the actual built Substreams package. Keep `GRAPH_API_KEY` in the server environment when the gateway requires it. Endpoints with embedded credentials must never enter a public frontend config or evidence file.
-
-```sh
-node scripts/chain/analyze.mjs /path/to/private-analysis.json 1 1000000000000000000 1000000 0
-DATA_CONFIG=/path/to/private-analysis.json node packages/data/src/server.mjs
-```
-
-The CLI prints a buyer result for the requested claim quantity and USDC cost in base units. The HTTP service binds127.0.0.1:8787 and exposes `/api/analysis?seriesId=1&quantity=1000000000000000000&price=1000000&executionCost=0`. Proxy this route from the frontend origin. It selects a common retained block, requires matching hashes/deployment/chain, reports source lag and unknown coverage, and never supplies settlement amounts. Missing provider access or inconsistent sources produce an explicit error. Studio and Substreams access are verified; operated initialized history and an actual live buyer join remain pending. Local envelope tests and a WASM build are not a substitute.
-
-## Public deployment
-
-Sepolia is the selected candidate. `preflight-sepolia.mjs` checks the canonical manager addresses, pinned deployed code, manager relationship and Circle USDC decimals. The latest read-only result is retained in `docs/evidence/sepolia-preflight.json`. A USDC proxy runtime pin does not freeze its implementation.
-
-The six FeeStrip/Aqua contracts are deployed on Sepolia. Use [the public manifest](../deployments/sepolia.json), [transaction evidence](evidence/sepolia-deployment.json) and [reviewed setup runbook](../scripts/public/README.md). The setup minted canonical hookless USDC/WETH NFT39216 to the configured wallet with4.95USDC liquidity input, preserving15.05USDC outside the position. It did not activate a sale.
-
-Public endpoint proof retention and a permanent blockhash checkpoint are separate operational obligations. The project RPC independently authenticated sampled historical proofs at offsets1,128,8191; the free public provider's proof window was much narrower. Arrange reliable witness capture at N and a checkpoint within256 blocks. A timeout cannot award unresolved buyer reserves to the seller. Complete a controlled funded public sale and exact N proof/native-collection comparison before claiming public lifecycle acceptance.
-
-The private retention helper pins Sepolia genesis to [go-ethereum's chain configuration](https://github.com/ethereum/go-ethereum/blob/master/params/config.go), checks the project provider against that pin and verifies deployed code through both providers. PublicNode did not serve block0 during this setup. A successful worker observation with0jobs validates startup and bindings, not endpoint retention for an activated public sale.
-
-## Continuous local proof recovery
-
-After seeding, run `pnpm local:retention-config`, then `RETENTION_CONFIG="$PWD/.scratch/retention/local/local.generated.json" pnpm dev:recovery` in another terminal with `FEESTRIP_PROOF_PYTHON` set. Start before N. The read-only worker discovers active series and retains exact endpoint proofs; it never mines, checkpoints or settles for you. Vite proxies `/api/recovery` to its loopback8788 API. Restart the same command to reuse the retained database and two filesystem copies. See [retention operations and limitations](../packages/settlement/README.md).
-
-The saved browser lifecycle runs a real recovery API on dedicated loopback8788, deletes the static witness fallback, downloads the retained artifact through the app and settles from that API. Its Python validator dependency is required. Run `USE_VERIFIED_GROWTH_CACHE=true pnpm test:browser:chain` for the separate cache-recovery variant: it authenticates growth onchain, removes every retained proof copy and verifies allocation through the app from the exact cached tuple. Each variant resets its dedicated local chain. By default this test server uses8788. To leave a public preview and retention worker running, set `FEESTRIP_TEST_WEB_PORT=4193 FEESTRIP_TEST_RECOVERY_PORT=8793` alongside a dedicated `LOCAL_RPC_URL`; the test browser and Vite recovery proxy use those isolated ports.
-
-## usufruct design preview
-
-The application has three views: **Orchard** for discovery, **Pin a tree** for funded offers and NFT activation, and **My cabinet** for claims, NFT recovery and offer refunds. The fixed-window economic requirements remain unchanged. `pnpm dev` opens the explicitly labeled fixture preview; its sample values and transactions are simulated. The public testnet build requires `VITE_DATA_MODE=testnet pnpm build` and the correct deployment manifest. See [DESIGN.md](../DESIGN.md) for the identity, [implementation review](design/usufruct-implementation.md) for the interface, and `/brand/index.html` on either preview for the typography, palette and downloadable SVG marks.
+The denominator mutation must be rejected in a disposable project. Static analysis checks an explicitly reviewed finding baseline and fails on a change. Neither result establishes a professional audit; see [Security](../SECURITY.md).

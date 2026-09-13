@@ -1,6 +1,6 @@
 # Quickstart
 
-For a wallet walkthrough of the deployed Sepolia app, use the [teammate brief](TEAMMATE_BRIEF.md) and [exact end-to-end runbook](DEMO_TEST_RUNBOOK.md). The commands below run a local checkout. They do not create a public deployment.
+The commands below run a local checkout. For the deployed application, open [usufruct](https://usufruct-mu.vercel.app) on Ethereum Sepolia; [the project brief](../PROJECT_BRIEF.md) explains the product.
 
 ## Open the interface
 
@@ -60,7 +60,7 @@ python3 -m venv .scratch/proof-venv
 LOCAL_RPC_URL=http://127.0.0.1:8546 FEESTRIP_PROOF_PYTHON="$PWD/.scratch/proof-venv/bin/python" pnpm test:browser:chain
 ```
 
-The suite resets/seeds its disposable chain and starts dedicated interface/recovery/listing services. Defaults are ports 4175, 8788 and 8791; `FEESTRIP_TEST_WEB_PORT`, `FEESTRIP_TEST_RECOVERY_PORT` and `FEESTRIP_TEST_LISTINGS_PORT` override them. It exercises real approval, funded sale, Aqua transfers, capture, original-NFT return, authenticated allocation and independent payouts, including recovery paths. A local pass is not public wallet acceptance. See the [runbook](DEMO_TEST_RUNBOOK.md) for manual steps and how to retain receipts.
+The suite resets/seeds its disposable chain and starts dedicated interface/recovery/listing services. Defaults are ports 4175, 8788 and 8791; `FEESTRIP_TEST_WEB_PORT`, `FEESTRIP_TEST_RECOVERY_PORT` and `FEESTRIP_TEST_LISTINGS_PORT` override them. It exercises real approval, funded sale, Aqua transfers, capture, original-NFT return, authenticated allocation and independent payouts, including recovery paths. A local pass is not public wallet acceptance. See [Development](development.md) for manual local steps and proof dependencies.
 
 ## Build the public frontend
 
@@ -68,8 +68,8 @@ The suite resets/seeds its disposable chain and starts dedicated interface/recov
 pnpm build:vercel
 ```
 
-The public build outputs `dist/vercel`, selects the supported Sepolia configuration and excludes local test-wallet behavior and private operational material. Follow [deployment-vercel.md](deployment-vercel.md) for the actual manifest, proxy and hosting setup.
+The public build outputs `dist/vercel`, selects the supported Sepolia configuration and excludes local test-wallet behavior and private operational material. See [architecture](ARCHITECTURE.md) for the manifest, proxy and service boundaries.
 
 A static build does **not** run the backend. `/api/listings` requires a persistent signed-listing service; `/api/recovery` requires retained proof storage; `/api/analysis` requires verified history; `/api/operations` reports the deployed service readiness. New funding/acceptance remains gated when required preservation services are unavailable. Missing analysis must remain unavailable rather than displaying invented history.
 
-Keep credentials in the server/operator environment. Browser manifests, static assets and every `VITE_` value are public. Use the [readiness checklist](JUDGE_READINESS.md) before a public rehearsal; deployment and a healthy homepage alone do not establish a completed sale or settlement.
+Keep credentials in the server/operator environment. Browser manifests, static assets and every `VITE_` value are public. See [Architecture](ARCHITECTURE.md) for service dependencies and [Verification](VERIFICATION.md) for actual public execution.

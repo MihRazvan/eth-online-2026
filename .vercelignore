@@ -8,7 +8,6 @@
 .playwright-cli/
 contracts/
 docs/
-feestrip-handoff/
 node_modules/
 **/node_modules/
 dist/

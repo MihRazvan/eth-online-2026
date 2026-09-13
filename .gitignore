@@ -24,3 +24,6 @@ apps/web/public/witness-*.json
 contracts/out-proof/
 contracts/cache-proof/
 __pycache__/
+
+# Generated browser screenshots and local review output
+docs/design/

@@ -1,9 +1,0 @@
-{
-  "base": "http://127.0.0.1:4198",
-  "errors": [],
-  "horizontalOverflow": false,
-  "keyboardGuide": true,
-  "creditPreservedInRepository": true,
-  "liveState": "No fee sales yet",
-  "scope": "Disconnected public-RPC presentation check; no wallet or transaction"
-}

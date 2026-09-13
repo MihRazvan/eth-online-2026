@@ -1,6 +1,6 @@
 # Architecture
 
-usufruct separates the right to recover an original Uniswap v4 position from transferable claims on that position’s native USDC fees over one agreed earning window. The deployed contracts retain the FeeStrip name. The [economic contract](../feestrip-handoff/PRODUCT_CONTRACT.md) is the specification; this page maps its boundaries to the implementation.
+usufruct separates the right to recover an original Uniswap v4 position from transferable claims on that position’s native USDC fees over one agreed earning window. The deployed contracts retain the FeeStrip name. The [economic contract](SPECIFICATION.md) is the specification; this page maps its boundaries to the implementation.
 
 ## From signed terms to an instrument
 
@@ -60,4 +60,4 @@ After allocation, post-window USDC belongs to the residual owner; other-currency
 
 The React app uses a validated deployment manifest and an injected wallet. Reviews bind an immutable selected signer through refresh, approval, simulation and send. Public mode fails closed on invalid configuration and never falls back to fixtures. Service readiness gates new funding/acceptance; it cannot promise future availability or returns.
 
-The static frontend calls separately hosted listing, operations, recovery and analysis APIs. The Graph Subgraph indexes instrument events; Rust Substreams derives pool/range history. Their [composition layer](../packages/data/src) joins verified common-block identities and exposes coverage, lag and source finality. History helps a buyer assess a position; it does not establish an executable quote, predict income or authorize payment. See [Graph evidence](evidence/graph-service.md) for the exact verified scope and [quickstart](QUICKSTART.md) for deployment boundaries.
+The static frontend calls separately hosted listing, operations, recovery and analysis APIs. The Graph Subgraph indexes instrument events; Rust Substreams derives pool/range history. Their [composition layer](../packages/data/src) joins verified common-block identities and exposes coverage, lag and source finality. History helps a buyer assess a position; it does not establish an executable quote, predict income or authorize payment. See [Graph evidence](evidence/operations/live-series-one-graph.md) for the exact verified scope and [quickstart](QUICKSTART.md) for deployment boundaries.
