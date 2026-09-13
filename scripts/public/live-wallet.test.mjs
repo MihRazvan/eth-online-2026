@@ -14,7 +14,7 @@ async function setup(t){
  const dir=mkdtempSync(join(realpathSync(tmpdir()),'live-wallet-')),path=join(dir,'journal.json');let wallet;
  const state={sent:[],known:new Map(),receipts:new Map(),nonce:0,pending:0,fee:1000000000n,pin:code,ambiguous:false};
  const block=()=>({number:100n,hash,timestamp:BigInt(Math.floor(Date.now()/1000)),baseFeePerGas:1n});
- const client={getChainId:async()=>11155111,getBlock:async({blockNumber})=>blockNumber===0n?{hash:LIMITS.genesisHash}:block(),getBytecode:async({address:a})=>[address,buyer.address.toLowerCase()].includes(a)?'0x':state.pin,getBalance:async()=>10n**18n,getTransactionCount:async({blockTag})=>blockTag==='pending'?state.pending:state.nonce,estimateFeesPerGas:async()=>({maxFeePerGas:state.fee,maxPriorityFeePerGas:1000000n}),estimateGas:async()=>21000n,
+ const client={getChainId:async()=>11155111,getBlock:async({blockNumber})=>blockNumber===0n?{hash:LIMITS.genesisHash}:block(),getBytecode:async({address:a})=>[address,buyer.address.toLowerCase()].includes(a)?'0x':state.pin,getBalance:async()=>10n**18n,getTransactionCount:async({address:a,blockTag})=>a===address?(blockTag==='pending'?state.pending:state.nonce):0,estimateFeesPerGas:async()=>({maxFeePerGas:state.fee,maxPriorityFeePerGas:1000000n}),estimateGas:async()=>21000n,
  getTransactionReceipt:async({hash:h})=>{if(!state.receipts.has(h))throw missing('TransactionReceiptNotFoundError');return state.receipts.get(h);},getTransaction:async({hash:h})=>{if(!state.known.has(h))throw missing('TransactionNotFoundError');return state.known.get(h);},
  sendRawTransaction:async({serializedTransaction:raw})=>{const saved=JSON.parse(readFileSync(path,'utf8'));assert(saved.transactions.some(e=>e.raw===raw),'Signed bytes must be durable before broadcast');state.sent.push(raw);if(state.ambiguous)throw new Error('RPC secret');const tx=parseTransaction(raw),h=keccak256(raw);state.known.set(h,{hash:h,from:address,nonce:tx.nonce});state.pending=tx.nonce+1;return h;},
  };
@@ -100,4 +100,34 @@ test('installed browser provider exposes standard results and4001 errors with no
  assert.equal(await window.ethereum.request({method:'eth_chainId'}),'0xaa36a7');
  await assert.rejects(window.ethereum.request({method:'personal_sign',params:['0x12',address]}),error=>error.code===4001&&error.message==='UNREVIEWED_WALLET_METHOD');
  await assert.rejects(binding({page,frame:{url:()=> 'https://attacker.example'}},{method:'eth_accounts'}));
+});
+
+test('untracked confirmed transaction before the first send cannot become a new implicit nonce baseline',async t=>{
+ const f=await setup(t);await f.wallet.appendReviewedStage({id:'first',transactions:[f.action()]});assert.equal(f.wallet.publicJournal().initialNonces[address],0);
+ f.state.nonce=1;f.state.pending=1;await assert.rejects(f.wallet.request(address,f.request()),/POLICY_REJECTED/);assert.equal(f.state.sent.length,0);
+ const wallet=await f.reopen();assert.equal(wallet.publicJournal().initialNonces[address],0);await assert.rejects(wallet.request(address,f.request()),/POLICY_REJECTED/);assert.equal(f.state.sent.length,0);
+});
+test('unknown confirmed nonce between reviewed actions blocks a new signature but exact confirmed resume still returns its receipt',async t=>{
+ const f=await setup(t);await f.wallet.appendReviewedStage({id:'first',transactions:[f.action()]});const h=await f.wallet.request(address,f.request());f.confirm(h);
+ await f.wallet.appendReviewedStage({id:'second',prerequisiteHashes:[h],transactions:[f.action('second',{data:'0x87654321'})]});
+ f.state.nonce=2;f.state.pending=2;assert.equal(await f.wallet.request(address,f.request()),h);
+ await assert.rejects(f.wallet.request(address,f.request({data:'0x87654321'})),/POLICY_REJECTED/);assert.equal(f.state.sent.length,1);
+});
+test('canonical own history advances expected nonce across restart without rebasing initial nonce',async t=>{
+ const f=await setup(t);await f.wallet.appendReviewedStage({id:'first',transactions:[f.action()]});const h=await f.wallet.request(address,f.request());f.confirm(h);
+ const wallet=await f.reopen();assert.equal(await wallet.request(address,f.request()),h);assert.equal(wallet.publicJournal().initialNonces[address],0);
+ await wallet.appendReviewedStage({id:'second',prerequisiteHashes:[h],transactions:[f.action('second',{data:'0x87654321'})]});
+ const next=await wallet.request(address,f.request({data:'0x87654321'}));assert.notEqual(next,h);assert.equal(parseTransaction(f.state.sent[1]).nonce,1);assert.equal(wallet.publicJournal().initialNonces[address],0);
+});
+test('legacy unsigned journal binds once; legacy signed journal cannot reset a baseline',async t=>{
+ const f=await setup(t);await f.wallet.appendReviewedStage({id:'first',transactions:[f.action()]});await f.wallet.close();
+ let journal=JSON.parse(readFileSync(f.path));delete journal.initialNonces;journal.version=1;writeFileSync(f.path,JSON.stringify(journal));
+ let wallet=await createLiveWallet(f.options);assert.equal(wallet.publicJournal().initialNonces[address],0);await wallet.request(address,f.request());await wallet.close();
+ journal=JSON.parse(readFileSync(f.path));delete journal.initialNonces;journal.version=1;writeFileSync(f.path,JSON.stringify(journal));
+ await assert.rejects(createLiveWallet(f.options),/Signed legacy journal/);
+});
+test('reorged own transaction can resume its exact original nonce without rebasing or creating another entry',async t=>{
+ const f=await setup(t);await f.wallet.appendReviewedStage({id:'first',transactions:[f.action()]});const h=await f.wallet.request(address,f.request());f.confirm(h);
+ f.state.receipts.clear();f.state.known.clear();f.state.nonce=0;f.state.pending=0;const original=f.state.sent[0];
+ const wallet=await f.reopen();assert.equal(await wallet.request(address,f.request()),h);assert.equal(f.state.sent[1],original);assert.equal(wallet.publicJournal().transactions.length,1);assert.equal(wallet.publicJournal().initialNonces[address],0);
 });

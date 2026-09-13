@@ -105,6 +105,11 @@ export async function createLiveWallet({client,accounts,journalPath,pins}){
   assert((await client.getBlock({blockNumber:head.number})).hash===head.hash);return head;
  }
  const actionFor=e=>journal.stages.find(s=>s.id===e.stage)?.transactions.find(a=>a.id===e.action);
+ function expectedNonce(address){
+  let next=journal.initialNonces[address];assert(Number.isSafeInteger(next)&&next>=0,'Missing initial nonce binding');
+  for(const entry of journal.transactions.filter(e=>actionFor(e).from===address)){assert(entry.nonce===next,'Journal nonce sequence changed');next++;}
+  assert(Number.isSafeInteger(next));return next;
+ }
  async function receipt(entry){
   let r;try{r=await client.getTransactionReceipt({hash:entry.hash});}catch(e){if(notFound(e,'TransactionReceiptNotFoundError'))return null;throw e;}
   const a=actionFor(entry);assert(r.transactionHash===entry.hash&&addr(r.from)===a.from&&(a.to===null?r.to===null:addr(r.to)===a.to));if(a.to===null)assert(addr(r.contractAddress)===addr(getContractAddress({from:a.from,nonce:BigInt(entry.nonce)})));assert(r.gasUsed<=uint(entry.gas)&&r.effectiveGasPrice<=uint(entry.maxFeePerGas));assert(['success','reverted'].includes(r.status));
@@ -122,15 +127,28 @@ export async function createLiveWallet({client,accounts,journalPath,pins}){
   assertLock();const hash=await client.sendRawTransaction({serializedTransaction:entry.raw});assert(hash===entry.hash);return hash;
  }
  try{
-  journal=existsSync(path)?readJSON(path):{version:1,policy,stages:[],transactions:[],signatures:[],pendingIntents:[]};
-  assert(journal.version===1&&digest(journal.policy)===digest(policy));assert(journal.stages.length<=32&&journal.transactions.length<=LIMITS.maxEntries&&journal.signatures.length<=128&&journal.pendingIntents.length<=32);
+  journal=existsSync(path)?readJSON(path):{version:2,initialNonces:null,policy,stages:[],transactions:[],signatures:[],pendingIntents:[]};
+  assert([1,2].includes(journal.version)&&digest(journal.policy)===digest(policy));assert(journal.stages.length<=32&&journal.transactions.length<=LIMITS.maxEntries&&journal.signatures.length<=128&&journal.pendingIntents.length<=32);
   let known=pins;for(const s of journal.stages){assert.deepEqual(normalizeStage(s,policy.addresses,known),s);known={...known,...s.pins};}
   assert(new Set(journal.stages.map(s=>s.id)).size===journal.stages.length);
   for(const e of journal.transactions){const a=actionFor(e);assert(a);await validateSignedTransaction(e,a);}reservedBudget(journal.transactions);
   assert(new Set(journal.transactions.map(e=>e.stage+':'+e.action)).size===journal.transactions.length);
   assert(new Set(journal.transactions.map(e=>actionFor(e).from+':'+e.nonce)).size===journal.transactions.length);
   for(const sig of journal.signatures){const a=journal.stages.find(s=>s.id===sig.stage)?.typedData.find(t=>t.id===sig.action);assert(a&&sig.digest===hashTypedData(a.payload));assert(addr(await recoverTypedDataAddress({...a.payload,signature:sig.signature}))===a.address);}
-  await observe();save();
+  const initialHead=await observe();
+  if(journal.initialNonces===null||journal.version===1){
+   // Only an unsigned journal may acquire its first nonce binding. Never infer
+   // a new baseline from an existing signed history or reset it on restart.
+   assert(journal.transactions.length===0,'Signed legacy journal needs independent recovery');
+   const initial={};for(const address of policy.addresses){
+    const [atHead,latest,pending]=await Promise.all([client.getTransactionCount({address,blockNumber:initialHead.number}),client.getTransactionCount({address,blockTag:'latest'}),client.getTransactionCount({address,blockTag:'pending'})]);
+    assert(Number.isSafeInteger(atHead)&&atHead>=0&&atHead===latest&&latest===pending,'Initial nonce not exclusive');initial[address]=atHead;
+   }
+   assert((await client.getBlock({blockNumber:initialHead.number})).hash===initialHead.hash);journal.initialNonces=initial;journal.version=2;
+  }
+  assert(journal.initialNonces&&typeof journal.initialNonces==='object');exact(journal.initialNonces,policy.addresses);
+  for(const address of policy.addresses)expectedNonce(address);
+  save();
  }catch(error){closeSync(fd);if(readJSON(lock).token===token)unlinkSync(lock);throw error;}
  const capture=(address,request)=>{if(journal.pendingIntents.length===32)journal.pendingIntents.shift();const encoded=canonical(request);journal.pendingIntents.push({address,request:encoded.length<=32768?clone(request):{method:request.method,truncated:true},observedAt:new Date().toISOString()});save();};
  async function mutate(address,request){
@@ -143,7 +161,7 @@ export async function createLiveWallet({client,accounts,journalPath,pins}){
    assert(journal.transactions.length<LIMITS.maxEntries);
    for(const entry of journal.transactions){const r=await receipt(entry);entry.receipt=r;assert(r||actionFor(entry).from!==address,'Previous account transaction unresolved');}
    save();const [nonce,pending,balance,fees]=await Promise.all([client.getTransactionCount({address,blockTag:'latest'}),client.getTransactionCount({address,blockTag:'pending'}),client.getBalance({address}),client.estimateFeesPerGas({type:'eip1559'})]);
-   assert(Number.isSafeInteger(nonce)&&nonce>=0&&nonce===pending);if(tx.nonce!==undefined)assert(BigInt(tx.nonce)===BigInt(nonce));
+   assert(Number.isSafeInteger(nonce)&&nonce>=0&&nonce===pending&&nonce===expectedNonce(address),'Untracked confirmed account transaction');if(tx.nonce!==undefined)assert(BigInt(tx.nonce)===BigInt(nonce));
    const gas=uint(action.gasLimit);if(tx.gas!==undefined)assert(BigInt(tx.gas)<=gas);
    assert(fees.maxFeePerGas>0n&&fees.maxFeePerGas<=LIMITS.maxFeePerGas&&fees.maxPriorityFeePerGas<=fees.maxFeePerGas);
    for(const k of ['maxFeePerGas','maxPriorityFeePerGas'])if(tx[k]!==undefined)assert(BigInt(tx[k])<=LIMITS.maxFeePerGas);
@@ -151,7 +169,7 @@ export async function createLiveWallet({client,accounts,journalPath,pins}){
    const reserved=transaction.value+gas*fees.maxFeePerGas;assert(balance>=reserved);
    assert(await client.estimateGas({...transaction,account:address})<=gas);
    reservedBudget([...journal.transactions,{reservedWei:String(reserved),usdcBudgetMicros:action.usdcBudgetMicros}]);
-   await observe();assert(await client.getTransactionCount({address,blockTag:'latest'})===nonce&&await client.getTransactionCount({address,blockTag:'pending'})===nonce);await prerequisites(stage);
+   await observe();assert(nonce===expectedNonce(address));assert(await client.getTransactionCount({address,blockTag:'latest'})===nonce&&await client.getTransactionCount({address,blockTag:'pending'})===nonce);await prerequisites(stage);
    assertLock();const raw=await byAddress.get(address).signTransaction(transaction);
    const entry={stage:stage.id,action:action.id,raw,hash:keccak256(raw),nonce,gas:String(gas),maxFeePerGas:String(fees.maxFeePerGas),maxPriorityFeePerGas:String(fees.maxPriorityFeePerGas),reservedWei:String(reserved),usdcBudgetMicros:action.usdcBudgetMicros,receipt:null};
    await validateSignedTransaction(entry,action);assertLock();journal.transactions.push(entry);save();return resume(entry);
@@ -177,7 +195,7 @@ export async function createLiveWallet({client,accounts,journalPath,pins}){
     return await exclusive(()=>mutate(address,request));
    }catch(error){const code=['UNREVIEWED_WALLET_INTENT','UNREVIEWED_WALLET_METHOD'].includes(error.message)?error.message:'LIVE_WALLET_POLICY_REJECTED';throw Object.assign(new Error(code),{code:4001});}
   },
-  publicJournal(){return {budget:reservedBudget(journal.transactions),transactions:journal.transactions.map(({raw,...e})=>clone(e)),pendingIntents:clone(journal.pendingIntents)};},
+  publicJournal(){return {initialNonces:clone(journal.initialNonces),budget:reservedBudget(journal.transactions),transactions:journal.transactions.map(({raw,...e})=>clone(e)),pendingIntents:clone(journal.pendingIntents)};},
   async install(page,{address,origin}){
    address=addr(address);assert(byAddress.has(address));const url=new URL(origin);assert(url.protocol==='https:'&&url.origin===origin);
    await page.exposeBinding('__usufructReviewedWallet',async(source,request)=>{assert(source.frame===source.page.mainFrame()&&new URL(source.frame.url()).origin===origin);try{return {ok:true,result:await bridge.request(address,request)};}catch(error){return {ok:false,error:{code:4001,message:error.message}};}});
