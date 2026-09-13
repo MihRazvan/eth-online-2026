@@ -2050,7 +2050,9 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                               ? "Other wallet · offer target"
                               : "In your wallet"}
                             <small>
-                              Range ${p.lowerPrice}–${p.upperPrice}
+                              {s.chainId === 11155111
+                                ? `Test-pool range ${p.lowerPrice}–${p.upperPrice} USDC per ${p.pair.split(" / ")[0]}`
+                                : `Range $${p.lowerPrice}–$${p.upperPrice}`}
                             </small>
                           </span>
                           <span>
@@ -2225,11 +2227,23 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                                     to you. A draft or approval alone never
                                     activates a sale.
                                   </p>
+                                  {pin && s.chainId === 11155111 && (
+                                    <p className="fine">
+                                      Test-pool price range (USDC per {p.pair.split(" / ")[0]})
+                                    </p>
+                                  )}
                                   <div className="mini-range">
-                                    <Icon name="lock" size={14} /> $
-                                    {p.lowerPrice} — ${p.upperPrice}{" "}
+                                    <Icon name="lock" size={14} />{" "}
+                                    {pin && s.chainId === 11155111
+                                      ? `${p.lowerPrice} — ${p.upperPrice}`
+                                      : `$${p.lowerPrice} — $${p.upperPrice}`}{" "}
                                     <span>Fixed during term</span>
                                   </div>
+                                  {pin && s.chainId === 11155111 && (
+                                    <p className="fine">
+                                      Pool ratio, not a USD market valuation.
+                                    </p>
+                                  )}
                                 </div>
                                 <div>
                                   {p.ownedByWallet !== false && (

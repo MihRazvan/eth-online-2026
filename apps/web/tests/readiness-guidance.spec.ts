@@ -5,9 +5,9 @@ const readiness = (ready = false, observedAt = Date.now()) => ({ schemaVersion: 
 
 // Exercise the real App and operations validator with explicitly labelled simulated
 // snapshots. This adapter cannot send transactions or contact any public RPC.
-async function mount(page: Page, route = "#market") {
+async function mount(page: Page, route = "#market", positionPair = "WETH / USDC") {
   await page.goto("/" + route);
-  await page.evaluate(async ({ address }) => {
+  await page.evaluate(async ({ address, positionPair }) => {
     const [{ App }, { initialFixture }, { readOperations }, { default: React }, { default: { createRoot } }] = await Promise.all([
       import("/src/App.tsx"), import("/src/fixtureAdapter.ts"), import("/src/operations.ts"), import("/node_modules/.vite/deps/react.js"), import("/node_modules/.vite/deps/react-dom_client.js"),
     ]);
@@ -18,7 +18,7 @@ async function mount(page: Page, route = "#market") {
         const s = initialFixture(); s.mode = "testnet"; s.feeStrip = address; s.network = "Simulated Sepolia · browser regression";
         s.saleReadiness = await readOperations({ chainId: 11155111, feeStrip: address });
         s.wallet = { ...s.wallet, connected: state.connected, address, chainId: 11155111, ethBalanceWei: state.gas };
-        s.positions = [{ ...s.positions[0], owner: address, ownedByWallet: true }];
+        s.positions = [{ ...s.positions[0], pair: positionPair, owner: address, ownedByWallet: true }];
         if (state.noOffer) { s.positions[0].offer = undefined; s.positions[0].offers = []; }
         s.fundedOffers = [{ id: "2", tokenId: "999", seller: "0x2222222222222222222222222222222222222222", buyer: address, fundedMicros: "250000", claims: "2500000000000000000000", originalSupply: "10000000000000000000000", endBlock: "11972000", deadlineTimestamp: "1789214400", expired: false }];
         if (state.noQuote) { s.quote.available = false; s.markets[0].availableClaims = "0"; }
@@ -35,7 +35,7 @@ async function mount(page: Page, route = "#market") {
     createRoot(host).render(React.createElement(React.Fragment, null,
       React.createElement("p", { style: { padding: "12px 24px", borderBottom: "1px solid", margin: 0 } }, "Browser regression · simulated services and balances · no public transactions"),
       React.createElement(App, { adapter })));
-  }, { address });
+  }, { address, positionPair });
   await expect(page.getByRole("region", { name: "New-sale service status" })).toBeVisible();
 }
 
@@ -179,4 +179,23 @@ test("an older analysis request cannot clear a newer request's loading state or 
   await pending[2].fulfill({ json: { status: "unavailable", reason: "Late obsolete response" } });
   await expect(panel).toContainText("Source comparison loaded");
   await expect(panel).toContainText("$2.840000 USDC");
+});
+
+
+test("Sepolia Pin explains exact test-pool ratios without implying a USD valuation", async ({ page }, testInfo) => {
+  await page.route("**/api/operations", route => route.fulfill({ json: readiness() }));
+  for (const symbol of ["WETH", "ETH"]) {
+    await page.setViewportSize({ width: symbol === "ETH" ? 390 : 1440, height: 1000 });
+    await mount(page, "#pin/2041", `${symbol} / USDC`);
+    await page.getByRole("radio").first().check();
+    await expect(page.getByText(`Test-pool price range (USDC per ${symbol})`, { exact: true })).toBeVisible();
+    await expect(page.getByText("Pool ratio, not a USD market valuation.", { exact: true })).toBeVisible();
+    await expect(page.locator(".mini-range")).toContainText("2,800 — 3,600");
+    await expect(page.locator(".mini-range")).not.toContainText("$");
+    await expect(page.locator(".mini-range")).toContainText("Fixed during term");
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await page.screenshot({ path: testInfo.outputPath(`pin-price-unit-${symbol}.png`), fullPage: true });
+    await page.getByRole("button", { name: /1 · Choose a position/ }).click();
+    await expect(page.getByText(`Test-pool range 2,800–3,600 USDC per ${symbol}`, { exact: true })).toBeVisible();
+  }
 });
