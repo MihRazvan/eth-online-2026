@@ -9,4 +9,8 @@ test('sub-cent USDC payments and liabilities remain visible down to a micro-unit
  assert.equal(money(10000n),'$0.01');
  assert.equal(money(50000n),'$0.05');
  assert.equal(money(3150n,6),'$0.003150');
+ assert.equal(money(49500n),'$0.049500');
+ assert.equal(money(1234567n),'$1.234567');
+ assert.equal(money(-1234567n),'−$1.234567');
+ assert.equal(money(1230000n),'$1.23');
 });
