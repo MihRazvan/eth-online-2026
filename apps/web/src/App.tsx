@@ -1503,6 +1503,17 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
               </nav>
             )}
 
+            {pin && linkedMarket && (
+              <p className="inline-warning" role="status">
+                This position has an activated sale.{" "}
+                <a href={"#market/" + linkedMarket.id}>
+                  View its issued fee claims
+                </a>
+                . Claims can be offered for resale from Holdings; execution
+                requires a counterparty.
+              </p>
+            )}
+
             {connected && !fixture && (positions || pin) && (
               <section
                 className="wallet-prerequisites"
@@ -1991,15 +2002,6 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                         <p>{s.positionDiscoveryNotice}</p>
                       </form>
                     )}
-                    {linkedMarket && (
-                      <p className="inline-warning">
-                        This position has an activated sale.{" "}
-                        <a href={"#market/" + linkedMarket.id}>
-                          View its issued fee claims
-                        </a>
-                        . Buyers can publish a sell quote from Holdings.
-                      </p>
-                    )}
                     {findingPosition && (
                       <p className="fine">
                         Loading the linked canonical position…
@@ -2070,6 +2072,7 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                   </section>
                 )}
                 <section
+                  hidden={pin && !!linkedMarket}
                   className={
                     "position-list " +
                     (pin ? "pin-workflow" : "cabinet-positions")

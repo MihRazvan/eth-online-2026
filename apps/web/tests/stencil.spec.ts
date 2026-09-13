@@ -49,3 +49,37 @@ test("share slider uses original Q while exact input retains fractional base uni
   await expect(page.getByRole("dialog")).toContainText("$0.000001 USDC");
   await expect(page.getByRole("dialog")).toContainText("including income earned before this purchase");
 });
+
+for (const suffix of ["", "?offer=1"]) {
+  test(`a counterparty activation keeps the linked claim reachable from pin/2041${suffix}`, async ({ page }) => {
+    await page.route("**/src/fixtureAdapter.ts", async (route) => {
+      const response = await route.fetch();
+      await route.fulfill({ response, body: await response.text() + `
+const preActivationLoad = FixtureAdapter.prototype.load;
+FixtureAdapter.prototype.findPosition = async function() { return "2041"; };
+FixtureAdapter.prototype.load = async function() {
+  const s = await preActivationLoad.call(this);
+  if (window.counterpartyAccepted) {
+    s.positions = s.positions.map(p => p.tokenId === "2041" ? { ...p, seriesId: "fs-2041", offer: undefined, offers: [] } : p);
+    s.markets.push({ ...s.markets[0], id: "fs-2041", tokenId: "2041" });
+  }
+  return s;
+};` });
+    });
+    await page.goto("/#pin/2041" + suffix);
+    await page.getByRole("button", { name: "Use fixture wallet", exact: true }).first().click();
+    if (suffix) await expect(page.getByRole("button", { name: "1. Approve this NFT", exact: true })).toBeVisible();
+    else await expect(page.getByRole("button", { name: "Review funded offers →", exact: true })).toBeVisible();
+    // A different wallet accepted; focus refresh observes the new series without
+    // changing this browser's deep link or sending any action from this browser.
+    await page.evaluate(() => { (window as any).counterpartyAccepted = true; window.dispatchEvent(new Event("focus")); });
+    const claims = page.getByRole("link", { name: "View its issued fee claims", exact: true });
+    await expect(claims).toBeVisible();
+    await expect(claims).toHaveAttribute("href", "#market/fs-2041");
+    await expect(page.getByRole("heading", { name: "No supported positions to pin", exact: true })).not.toBeVisible();
+    await expect(page.getByRole("button", { name: "1. Approve this NFT", exact: true })).not.toBeVisible();
+    await claims.click();
+    await expect(page).toHaveURL(/#market\/fs-2041$/);
+    await expect(page.getByRole("region", { name: "Your fee-claim receipt", exact: true })).toContainText("2041");
+  });
+}
