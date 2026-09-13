@@ -1,0 +1,304 @@
+{
+  "schemaVersion": 1,
+  "checkedAt": "2026-09-13T14:14:14.817Z",
+  "scope": "Actual Sepolia series 1: independently observed operated keeper checkpoint, two hosted proof copies, authenticated off-host replica and remote-GET-only restoration into a fresh isolated local database. No hosted failover, service restart, public transaction by this verifier or participant payout acceptance is claimed.",
+  "identity": {
+    "chainId": 11155111,
+    "feeStrip": "0xd84eE56b24841c887c73e8b9079A01c28b1B3E8E",
+    "checkpoints": "0x1c8f1a571b229c5ab6b2ab3e0b6db0dcd9bca1cb",
+    "seriesId": "1",
+    "tokenId": "39216",
+    "originalSupply": "10000000000000000000000",
+    "activationBlock": "11696226",
+    "endBlock": "11696317"
+  },
+  "monitoring": {
+    "firstObservation": "2026-09-13T13:39:20.363Z",
+    "observations": 95,
+    "localReadbackFailures": [
+      {
+        "observedAt": "2026-09-13T13:56:22.840Z",
+        "incident": "MONITOR_READBACK_FAILED",
+        "consecutiveFailures": 1
+      }
+    ],
+    "serviceIncidents": [],
+    "firstRetainedObservation": {
+      "observedAt": "2026-09-13T13:55:26.483Z",
+      "head": 11696317,
+      "finalizedHead": 11696247,
+      "endpointHash": "0xb721397ec74fa0554a92609defb3b97653f818056267573aa1311a0f0bc1a2ee",
+      "recovery": {
+        "httpStatus": 200,
+        "state": "retained",
+        "lifecycle": "active",
+        "artifactDigest": "e682bdf0d5f0e02d2a2c30075448ea498edbfb6be30550a1c25c1cbce5fb762a",
+        "copies": 2,
+        "checkpointSaved": false,
+        "growthCached": false,
+        "finalized": false,
+        "lastObservedBlock": "11696317",
+        "lastObservedAt": 1789307722797,
+        "discoveryObservedAt": 1789307723099,
+        "observationError": null,
+        "error": null
+      }
+    }
+  },
+  "keeperBeforeEndpoint": {
+    "status": "observed",
+    "chainId": 11155111,
+    "signer": "0xffaa5fe1c38aa538fd9b1a28d8cf8516fa3728ad",
+    "readyToSign": true,
+    "checkpoints": "0x1c8f1a571b229c5ab6b2ab3e0b6db0dcd9bca1cb",
+    "feeStrip": "0xd84ee56b24841c887c73e8b9079a01c28b1b3e8e",
+    "enabled": true,
+    "observedHead": "11696246",
+    "observedAt": "2026-09-13T13:40:38.227Z",
+    "observedAtMs": 1789306838227,
+    "headTimestamp": "1789306836",
+    "headFresh": true,
+    "gasReady": true,
+    "balanceWei": "10000000000000000",
+    "lowBalance": false,
+    "lastError": null,
+    "configFingerprint": "3e1c42950c970d6f59e7321740d7664137aa9b721facb7d67af86b7a13f30e9d",
+    "discoveryComplete": true,
+    "pendingEndpoints": 1,
+    "missedEndpoints": 0,
+    "checkpointedEndpoints": 0,
+    "pendingTransactions": 0,
+    "dailyReservedWei": "0",
+    "lastSuccess": null
+  },
+  "hostedAfterCheckpoint": {
+    "observedAt": "2026-09-13T13:56:56.227Z",
+    "scope": "Read-only hosted database observation; no journal, signer, service or object-store mutation.",
+    "keeper": {
+      "status": "observed",
+      "chainId": 11155111,
+      "signer": "0xffaa5fe1c38aa538fd9b1a28d8cf8516fa3728ad",
+      "readyToSign": true,
+      "checkpoints": "0x1c8f1a571b229c5ab6b2ab3e0b6db0dcd9bca1cb",
+      "feeStrip": "0xd84ee56b24841c887c73e8b9079a01c28b1b3e8e",
+      "enabled": true,
+      "observedHead": "11696324",
+      "observedAt": "2026-09-13T13:56:54.580Z",
+      "observedAtMs": 1789307814580,
+      "headTimestamp": "1789307808",
+      "headFresh": true,
+      "gasReady": true,
+      "balanceWei": "9952325867984350",
+      "lowBalance": false,
+      "lastError": null,
+      "configFingerprint": "3e1c42950c970d6f59e7321740d7664137aa9b721facb7d67af86b7a13f30e9d",
+      "discoveryComplete": true,
+      "pendingEndpoints": 0,
+      "missedEndpoints": 0,
+      "checkpointedEndpoints": 1,
+      "pendingTransactions": 0,
+      "dailyReservedWei": "102640423760000",
+      "lastSuccess": {
+        "endpoint": "11696317",
+        "hash": "0x29970542ad717021f9cd530916bc568e7010e6aa6ea5bc807da35669a4c12083",
+        "blockNumber": "11696319",
+        "finalized": false
+      }
+    },
+    "transactions": [
+      {
+        "hash": "0x29970542ad717021f9cd530916bc568e7010e6aa6ea5bc807da35669a4c12083",
+        "nonce": 0,
+        "endpoint": 11696317,
+        "max_fee": "1283005297",
+        "priority_fee": "1000000",
+        "reserved": "102640423760000",
+        "created": 1789307728756,
+        "head": 11696318,
+        "state": "mined",
+        "receipt": {
+          "blockNumber": "11696319",
+          "blockHash": "0x33db67faf8dffe0e1d88f244d6fb6d4cbe889e76ac761fea8349f27aaa50b145",
+          "status": "success",
+          "transactionHash": "0x29970542ad717021f9cd530916bc568e7010e6aa6ea5bc807da35669a4c12083",
+          "gasUsed": "45150",
+          "effectiveGasPrice": "1055905471"
+        }
+      }
+    ],
+    "jobs": [
+      {
+        "series_id": "1",
+        "lifecycle": "active",
+        "state": "retained",
+        "artifact_digest": "e682bdf0d5f0e02d2a2c30075448ea498edbfb6be30550a1c25c1cbce5fb762a",
+        "endpoint_hash": "0xb721397ec74fa0554a92609defb3b97653f818056267573aa1311a0f0bc1a2ee",
+        "finalized": 0,
+        "checkpoint_hash": "0xb721397ec74fa0554a92609defb3b97653f818056267573aa1311a0f0bc1a2ee",
+        "growth_cached": 0,
+        "endpoint_observed_at": 1789307812259,
+        "endpoint_observed_block": "11696324",
+        "last_error": null,
+        "updated_at": 1789307812369
+      }
+    ],
+    "replicas": [
+      {
+        "endpoint_hash": "0xb721397ec74fa0554a92609defb3b97653f818056267573aa1311a0f0bc1a2ee",
+        "digest": "e682bdf0d5f0e02d2a2c30075448ea498edbfb6be30550a1c25c1cbce5fb762a",
+        "verified_at": 1789307812776
+      }
+    ]
+  },
+  "hostedAfterFinality": {
+    "observedAt": "2026-09-13T14:13:40.695Z",
+    "scope": "Read-only hosted database observation; no journal, signer, service or object-store mutation.",
+    "keeper": {
+      "status": "observed",
+      "chainId": 11155111,
+      "signer": "0xffaa5fe1c38aa538fd9b1a28d8cf8516fa3728ad",
+      "readyToSign": true,
+      "checkpoints": "0x1c8f1a571b229c5ab6b2ab3e0b6db0dcd9bca1cb",
+      "feeStrip": "0xd84ee56b24841c887c73e8b9079a01c28b1b3e8e",
+      "enabled": true,
+      "observedHead": "11696405",
+      "observedAt": "2026-09-13T14:13:38.972Z",
+      "observedAtMs": 1789308818972,
+      "headTimestamp": "1789308816",
+      "headFresh": true,
+      "gasReady": true,
+      "balanceWei": "9952325867984350",
+      "lowBalance": false,
+      "lastError": null,
+      "configFingerprint": "3e1c42950c970d6f59e7321740d7664137aa9b721facb7d67af86b7a13f30e9d",
+      "discoveryComplete": true,
+      "pendingEndpoints": 0,
+      "missedEndpoints": 0,
+      "checkpointedEndpoints": 1,
+      "pendingTransactions": 0,
+      "dailyReservedWei": "102640423760000",
+      "lastSuccess": {
+        "endpoint": "11696317",
+        "hash": "0x29970542ad717021f9cd530916bc568e7010e6aa6ea5bc807da35669a4c12083",
+        "blockNumber": "11696319",
+        "finalized": true
+      }
+    },
+    "transactions": [
+      {
+        "hash": "0x29970542ad717021f9cd530916bc568e7010e6aa6ea5bc807da35669a4c12083",
+        "nonce": 0,
+        "endpoint": 11696317,
+        "max_fee": "1283005297",
+        "priority_fee": "1000000",
+        "reserved": "102640423760000",
+        "created": 1789307728756,
+        "head": 11696318,
+        "state": "confirmed",
+        "receipt": {
+          "blockNumber": "11696319",
+          "blockHash": "0x33db67faf8dffe0e1d88f244d6fb6d4cbe889e76ac761fea8349f27aaa50b145",
+          "status": "success",
+          "transactionHash": "0x29970542ad717021f9cd530916bc568e7010e6aa6ea5bc807da35669a4c12083",
+          "gasUsed": "45150",
+          "effectiveGasPrice": "1055905471"
+        }
+      }
+    ],
+    "jobs": [
+      {
+        "series_id": "1",
+        "lifecycle": "captured",
+        "state": "retained",
+        "artifact_digest": "e682bdf0d5f0e02d2a2c30075448ea498edbfb6be30550a1c25c1cbce5fb762a",
+        "endpoint_hash": "0xb721397ec74fa0554a92609defb3b97653f818056267573aa1311a0f0bc1a2ee",
+        "finalized": 1,
+        "checkpoint_hash": "0xb721397ec74fa0554a92609defb3b97653f818056267573aa1311a0f0bc1a2ee",
+        "growth_cached": 0,
+        "endpoint_observed_at": 1789308817304,
+        "endpoint_observed_block": "11696405",
+        "last_error": null,
+        "updated_at": 1789308817406
+      }
+    ],
+    "replicas": [
+      {
+        "endpoint_hash": "0xb721397ec74fa0554a92609defb3b97653f818056267573aa1311a0f0bc1a2ee",
+        "digest": "e682bdf0d5f0e02d2a2c30075448ea498edbfb6be30550a1c25c1cbce5fb762a",
+        "verified_at": 1789308817838
+      }
+    ]
+  },
+  "canonicalReadback": {
+    "checkedAt": "2026-09-13T14:13:37.693Z",
+    "chainId": 11155111,
+    "head": {
+      "number": "11696405",
+      "hash": "0x168373a19c2c5765db9840ba62c74ce8f32f366ee645fdfa33766f1a853221e6"
+    },
+    "finalizedHead": {
+      "number": "11696340",
+      "hash": "0x75e4e7e7e6a7845f8229a5d88d71c5e4fdfa9a11c6375c1bfb8fd50b351fa427"
+    },
+    "endpoint": {
+      "number": "11696317",
+      "hash": "0xb721397ec74fa0554a92609defb3b97653f818056267573aa1311a0f0bc1a2ee",
+      "storedCheckpointHash": "0xb721397ec74fa0554a92609defb3b97653f818056267573aa1311a0f0bc1a2ee",
+      "finalized": true
+    },
+    "activation": {
+      "transactionHash": "0xd2d549c1607418cb2b8893d456bc4d9153e4b51ab19c93854da831eb09f70336",
+      "blockNumber": "11696226",
+      "blockHash": "0x16ab24ccfffaba7df2e3af7466d0dedc34913dcaf2030324003b47667b394296",
+      "from": "0x92aae0857979a139344f5b6f008e71f27a507522",
+      "to": "0xd84ee56b24841c887c73e8b9079a01c28b1b3e8e",
+      "status": "success",
+      "gasUsed": "1162357",
+      "effectiveGasPrice": "1075721341",
+      "canonical": true,
+      "finalized": true
+    },
+    "checkpoint": {
+      "transactionHash": "0x29970542ad717021f9cd530916bc568e7010e6aa6ea5bc807da35669a4c12083",
+      "blockNumber": "11696319",
+      "blockHash": "0x33db67faf8dffe0e1d88f244d6fb6d4cbe889e76ac761fea8349f27aaa50b145",
+      "from": "0xffaa5fe1c38aa538fd9b1a28d8cf8516fa3728ad",
+      "to": "0x1c8f1a571b229c5ab6b2ab3e0b6db0dcd9bca1cb",
+      "status": "success",
+      "gasUsed": "45150",
+      "effectiveGasPrice": "1055905471",
+      "canonical": true,
+      "finalized": true
+    }
+  },
+  "restoration": {
+    "checkedAt": "2026-09-13T14:13:24.256Z",
+    "scope": "Fresh local database and proof copies restored exclusively from remote GETs; no public transaction or hosted failover claimed.",
+    "chainId": 11155111,
+    "feeStrip": "0xd84ee56b24841c887c73e8b9079a01c28b1b3e8e",
+    "seriesId": "1",
+    "endpoint": "11696317",
+    "endpointHash": "0xb721397ec74fa0554a92609defb3b97653f818056267573aa1311a0f0bc1a2ee",
+    "artifactDigest": "e682bdf0d5f0e02d2a2c30075448ea498edbfb6be30550a1c25c1cbce5fb762a",
+    "authenticated": true,
+    "remoteReads": 2,
+    "remoteWrites": 0,
+    "rpcWitnessFallback": false,
+    "localCopiesHealthy": true,
+    "freshIsolatedDatabase": true,
+    "freshTwoCopyDirectories": true,
+    "localDirectoryRetainedOutsideGit": true
+  },
+  "verification": {
+    "command": "pnpm exec railway run --no-local --project cb65063e-ebf1-452c-b077-5e3da03041e2 --environment production --service endpoint-operations -- env FEESTRIP_PROOF_PYTHON=/tmp/feestrip-proof-venv/bin/python node scripts/deploy/verify-proof-restore.mjs --series 1",
+    "remoteAccess": "Private runtime credentials injected locally, never printed; bucket GETs only.",
+    "witnessAuthority": "Offline MPT/account/storage verification and canonical ABI binding, anchored to independently checked canonical endpoint and deployment pins. RPC used for chain identity, metadata and canonical headers; never used as a witness fallback.",
+    "tests": "FEESTRIP_PROOF_PYTHON=/tmp/feestrip-proof-venv/bin/python node --test scripts/deploy/verify-proof-restore.test.mjs: 3/3 passed."
+  },
+  "limits": [
+    "Fresh local restoration tests the remote object and validation path. It does not replace or reset the hosted service/database.",
+    "Canonicality/finality observations rely on the configured Sepolia RPC; proof validity is independently authenticated offline.",
+    "Checkpoint inclusion was observed before finality and is explicitly distinguished from the final canonical readback.",
+    "This evidence does not establish participant redemption, financial accounting acceptance, an audit or organic trading volume."
+  ]
+}
