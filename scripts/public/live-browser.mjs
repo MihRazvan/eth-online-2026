@@ -10,6 +10,7 @@
  * {"id":"seller-connect","op":"click","role":"seller","name":"Connect wallet"}
  * {"id":"seller-amount","op":"fill","role":"seller","label":"Asking USDC","value":"0.25"}
  * {"id":"review-01","op":"stage","stage":{...EXACT ROOT-REVIEWED HELPER STAGE...}}
+ * {"id":"setup-send","op":"send-reviewed","stageId":"setup","actionId":"transfer"}
  * {"id":"wallet-status","op":"journal"}
  * {"id":"stop-01","op":"stop"}
  * Stage payloads are never sent to a page. Unknown wallet mutations are retained
@@ -28,6 +29,7 @@ import assert from 'node:assert/strict';
 import {constants,openSync,closeSync,readFileSync,writeFileSync,fsyncSync,lstatSync,existsSync,chmodSync,mkdtempSync,rmSync,unlinkSync,realpathSync} from 'node:fs';
 import {resolve,dirname} from 'node:path';
 import {tmpdir} from 'node:os';
+import {EventEmitter} from 'node:events';
 import {fileURLToPath} from 'node:url';
 import {createHash,randomUUID} from 'node:crypto';
 import {privateDirectory,privateJSON} from '../../packages/operations/src/config.mjs';
@@ -39,8 +41,8 @@ const validID=value=>typeof value==='string'&&/^[a-zA-Z0-9_-]{1,64}$/.test(value
 function exact(value,keys){assert(value&&typeof value==='object'&&!Array.isArray(value));assert(Object.keys(value).every(k=>keys.includes(k)));}
 function short(value,max=300){assert(typeof value==='string'&&value.length>0&&value.length<=max);return value;}
 export function validateCommand(command){
- exact(command,['id','op','role','path','name','label','value','control','stage','checked']);assert(validID(command.id));
- const fields={stage:['stage'],journal:[],stop:[],goto:['role','path'],snapshot:['role'],screenshot:['role'],click:['role','name'],fill:['role','label','value'],select:['role','label','value'],check:['role','label','checked']};
+ exact(command,['id','op','role','path','name','label','value','control','stage','checked','stageId','actionId']);assert(validID(command.id));
+ const fields={'send-reviewed':['stageId','actionId'],stage:['stage'],journal:[],stop:[],goto:['role','path'],snapshot:['role'],screenshot:['role'],click:['role','name'],fill:['role','label','value'],select:['role','label','value'],check:['role','label','checked']};
  assert(Object.hasOwn(fields,command.op));
  const optional=command.op==='click'?['control']:[];
  assert.deepEqual(Object.keys(command).filter(k=>!optional.includes(k)).sort(),['id','op',...fields[command.op]].sort());
@@ -54,6 +56,7 @@ export function validateCommand(command){
  if(command.value!==undefined){assert(typeof command.value==='string'&&command.value.length<=2000);}
  if(command.checked!==undefined)assert(typeof command.checked==='boolean');
  if(command.control!==undefined)assert(['button','link','tab','radio','checkbox','combobox'].includes(command.control));
+ if(command.op==='send-reviewed')assert(validID(command.stageId)&&validID(command.actionId));
  if(command.op==='stage')assert(command.stage&&typeof command.stage==='object'&&!Array.isArray(command.stage));
  return command;
 }
@@ -68,7 +71,7 @@ function appendPrivate(path,value){
  try{writeFileSync(fd,JSON.stringify(value)+'\n');fsyncSync(fd);}finally{closeSync(fd);}
 }
 /** Prefix validation rejects rewriting/truncation. Durable started records precede effects. */
-export function commandQueue({commandsPath,statePath,ackPath,execute}){
+export function commandQueue({commandsPath,statePath,ackPath,execute,shouldStop=()=>false}){
  createPrivateFile(commandsPath);createPrivateFile(ackPath);
  let state=existsSync(statePath)?JSON.parse(readPrivate(statePath)): {version:1,offset:0,prefixHash:hash(''),commands:{}};
  assert(state.version===1&&Number.isSafeInteger(state.offset)&&state.offset>=0&&state.commands&&typeof state.commands==='object');
@@ -77,6 +80,7 @@ export function commandQueue({commandsPath,statePath,ackPath,execute}){
   const data=readPrivate(commandsPath);assert(data.length>=state.offset&&hash(data.subarray(0,state.offset))===state.prefixHash,'COMMAND_PREFIX_CHANGED');
   let end;
   while((end=data.indexOf(10,state.offset))!==-1){
+   if(shouldStop())break;
    const raw=data.subarray(state.offset,end);assert(raw.length>0&&raw.length<=256*1024);
    const command=validateCommand(JSON.parse(raw.toString('utf8'))),digest=hash(raw),prior=Object.hasOwn(state.commands,command.id)?state.commands[command.id]:undefined;
    assert(!prior||prior.digest===digest,'COMMAND_ID_CHANGED');
@@ -94,6 +98,32 @@ export function commandQueue({commandsPath,statePath,ackPath,execute}){
  }};
 }
 
+/** Only exact identifiers enter this path. The bridge rechecks its own reviewed
+ * policy, prerequisites, nonce and budgets before signing/sending. Journal raw
+ * transactions/signatures are never returned, logged or passed to a browser. */
+export async function sendReviewed({command,journalPath,bridge}){
+ validateCommand(command);assert(command.op==='send-reviewed');
+ const journal=JSON.parse(readPrivate(journalPath));assert(Array.isArray(journal.stages));
+ const stages=journal.stages.filter(stage=>stage.id===command.stageId);assert(stages.length===1);
+ assert(Array.isArray(stages[0].transactions));
+ const actions=stages[0].transactions.filter(action=>action.id===command.actionId);assert(actions.length===1);
+ const action=actions[0];assert(/^0x[0-9a-f]{40}$/i.test(action.from));
+ assert(action.to===null||/^0x[0-9a-f]{40}$/i.test(action.to));
+ assert(typeof action.data==='string'&&/^0x(?:[0-9a-f]{2})*$/i.test(action.data));
+ assert(typeof action.valueWei==='string'&&/^(0|[1-9][0-9]*)$/.test(action.valueWei));
+ return bridge.request(action.from,{method:'eth_sendTransaction',params:[{from:action.from,to:action.to,data:action.data,value:'0x'+BigInt(action.valueWei).toString(16)}]});
+}
+export function installShutdownSignals(target,onStop){
+ let requested=false;
+ const stop=()=>{if(!requested){requested=true;onStop();}};
+ target.on('SIGINT',stop);target.on('SIGTERM',stop);
+ return ()=>{target.removeListener('SIGINT',stop);target.removeListener('SIGTERM',stop);};
+}
+export async function closeDriverResources({context,bridge,releaseLock,releaseSignals}){
+ try{await context?.close();}
+ finally{try{await bridge?.close();}finally{try{releaseLock();}finally{releaseSignals();}}}
+}
+
 export async function runBrowser(){
  process.umask(0o077);
  const root=resolve(dirname(fileURLToPath(import.meta.url)),'../..');
@@ -103,20 +133,26 @@ export async function runBrowser(){
  const token=randomUUID(),lock=resolve(directory,'driver.lock');
  const lockfd=openSync(lock,'wx',0o600);writeFileSync(lockfd,JSON.stringify({pid:process.pid,token}));fsyncSync(lockfd);
  let context,bridge,stopping=false;
+ const stop=()=>{stopping=true;},releaseSignals=installShutdownSignals(process,stop);
+ const journalPath=resolve(root,'.scratch/live-demo/wallet-journal.json');
  try{
   const [{chromium},{createPublicClient,http},{createLiveWallet,loadLiveAccounts}]=await Promise.all([import('@playwright/test'),import('viem'),import('./live-wallet.mjs')]);
+  if(stopping)return;
   const accounts=loadLiveAccounts(resolve(root,'.scratch/live-demo/accounts.json'));assert.deepEqual(Object.keys(accounts).sort(),[...ROLES].sort());
-  bridge=await createLiveWallet({client:createPublicClient({transport:http(rpc,{timeout:15000,retryCount:0})}),accounts,journalPath:resolve(root,'.scratch/live-demo/wallet-journal.json'),pins:config.pins});
+  bridge=await createLiveWallet({client:createPublicClient({transport:http(rpc,{timeout:15000,retryCount:0})}),accounts,journalPath,pins:config.pins});
+  if(stopping)return;
   context=await chromium.launchPersistentContext(privateDirectory(resolve(directory,'profile')),{headless:false,env:Object.fromEntries(['HOME','PATH','TMPDIR','LANG','LC_ALL','DISPLAY','XAUTHORITY','XDG_RUNTIME_DIR'].filter(key=>process.env[key]!==undefined).map(key=>[key,process.env[key]])),viewport:{width:1440,height:1000},args:['--remote-debugging-address=127.0.0.1','--remote-debugging-port=9225']});
+  if(stopping)return;
   context.setDefaultTimeout(15000);context.setDefaultNavigationTimeout(30000);
   const pages={};
   // Replace restored tabs without ever closing the last tab during startup.
   const restored=context.pages();
-  for(const role of ROLES){const page=await context.newPage();await bridge.install(page,{address:accounts[role].address,origin:ORIGIN});pages[role]=page;await page.goto(ORIGIN,{waitUntil:'domcontentloaded'});}
+  for(const role of ROLES){if(stopping)return;const page=await context.newPage();await bridge.install(page,{address:accounts[role].address,origin:ORIGIN});pages[role]=page;await page.goto(ORIGIN,{waitUntil:'domcontentloaded'});}
   for(const page of restored)await page.close();
   const out=privateDirectory(resolve(directory,'output'));
   const output=(command,extension)=>resolve(out,`${command.id}.${extension}`);
-  const queue=commandQueue({commandsPath:resolve(directory,'commands.jsonl'),statePath:resolve(directory,'command-state.json'),ackPath:resolve(directory,'acknowledgments.jsonl'),execute:async command=>{
+  const queue=commandQueue({commandsPath:resolve(directory,'commands.jsonl'),statePath:resolve(directory,'command-state.json'),ackPath:resolve(directory,'acknowledgments.jsonl'),shouldStop:()=>stopping,execute:async command=>{
+   if(command.op==='send-reviewed'){const hash=await sendReviewed({command,journalPath,bridge});assert(/^0x[0-9a-f]{64}$/i.test(hash));privateJSON(output(command,'json'),{stageId:command.stageId,actionId:command.actionId,hash});return;}
    if(command.op==='stage'){await bridge.appendReviewedStage(command.stage);return;}
    if(command.op==='journal'){privateJSON(output(command,'json'),bridge.publicJournal());return;}
    if(command.op==='stop'){stopping=true;return 'stop';}
@@ -131,12 +167,12 @@ export async function runBrowser(){
    if(command.op==='select')await field.selectOption(command.value);
    if(command.op==='check')await field.setChecked(command.checked);
   }});
-  const stop=()=>{stopping=true;};process.once('SIGINT',stop);process.once('SIGTERM',stop);context.on('close',stop);
+  context.on('close',stop);
+  if(stopping)return;
   process.stdout.write(JSON.stringify({status:'ready',cdp:'http://127.0.0.1:9225',tabs:ROLES,commands:'.scratch/live-demo/browser/commands.jsonl'})+'\n');
   while(!stopping){await queue.poll();if(!stopping)await new Promise(resolve=>setTimeout(resolve,500));}
  }finally{
-  await context?.close();await bridge?.close();closeSync(lockfd);
-  if(JSON.parse(readPrivate(lock)).token===token)unlinkSync(lock);
+  await closeDriverResources({context,bridge,releaseLock:()=>{try{closeSync(lockfd);}finally{if(JSON.parse(readPrivate(lock)).token===token)unlinkSync(lock);}},releaseSignals});
  }
 }
 
@@ -149,8 +185,27 @@ async function selfTest(){
  assert.throws(()=>validateCommand({id:'x',op:'click',role:'keeper',name:'Accept'}));
  assert.throws(()=>validateCommand({id:'x',op:'fill',role:'buyer',label:'Quantity',value:'1',stage:{}}));
  assert.equal(validateCommand({id:'x',op:'goto',role:'holder',path:'/#market/1'}).role,'holder');
+ const reviewedCommand={id:'send',op:'send-reviewed',stageId:'setup',actionId:'transfer'};
+ for(const field of ['tx','params','from','to','data','value','role','unknown'])assert.throws(()=>validateCommand({...reviewedCommand,[field]:'forbidden'}));
+ assert.throws(()=>validateCommand({...reviewedCommand,actionId:'../bad'}));
+ const signals=new EventEmitter();let stops=0;const release=installShutdownSignals(signals,()=>stops++);
+ signals.emit('SIGTERM');signals.emit('SIGINT');signals.emit('SIGTERM');assert.equal(stops,1);assert.equal(signals.listenerCount('SIGTERM'),1);
+ const closed=[];
+ await assert.rejects(closeDriverResources({context:{async close(){closed.push('context');signals.emit('SIGTERM');throw new Error('close failed');}},bridge:{async close(){closed.push('bridge');signals.emit('SIGINT');throw new Error('bridge failed');}},releaseLock:()=>closed.push('lock'),releaseSignals:()=>{closed.push('signals');release();}}));
+ assert.deepEqual(closed,['context','bridge','lock','signals']);assert.equal(stops,1);assert.equal(signals.listenerCount('SIGTERM'),0);
+
  const directory=mkdtempSync(resolve(realpathSync(tmpdir()),'usufruct-browser-test-'));chmodSync(directory,0o700);
  try{
+  const reviewedPath=resolve(directory,'reviewed.json');let calls=[];
+  const action={id:'transfer',from:'0x'+'11'.repeat(20),to:'0x'+'22'.repeat(20),data:'0x1234',valueWei:'16',gasLimit:'21000',usdcBudgetMicros:'0'};
+  const reviewed={stages:[{id:'setup',transactions:[action]}],transactions:[{raw:'PRIVATE_RAW'}]};privateJSON(reviewedPath,reviewed);
+  const stubBridge={request:async(address,request)=>{calls.push({address,request});return '0x'+'33'.repeat(32);}};
+  await sendReviewed({command:reviewedCommand,journalPath:reviewedPath,bridge:stubBridge});
+  assert.deepEqual(calls,[{address:action.from,request:{method:'eth_sendTransaction',params:[{from:action.from,to:action.to,data:'0x1234',value:'0x10'}]}}]);
+  for(const command of [{...reviewedCommand,stageId:'missing'},{...reviewedCommand,actionId:'missing'},{...reviewedCommand,tx:{to:action.to}}])await assert.rejects(sendReviewed({command,journalPath:reviewedPath,bridge:stubBridge}));assert.equal(calls.length,1);
+  reviewed.stages[0].transactions.push({...action});privateJSON(reviewedPath,reviewed);await assert.rejects(sendReviewed({command:reviewedCommand,journalPath:reviewedPath,bridge:stubBridge}));assert.equal(calls.length,1);
+  reviewed.stages[0].transactions=[{...action,to:null}];privateJSON(reviewedPath,reviewed);await sendReviewed({command:reviewedCommand,journalPath:reviewedPath,bridge:stubBridge});assert.equal(calls[1].request.params[0].to,null);
+  await assert.rejects(sendReviewed({command:reviewedCommand,journalPath:reviewedPath,bridge:{request:async()=>{throw new Error('BRIDGE_POLICY_REFUSAL');}}}));
   const paths={commandsPath:resolve(directory,'commands.jsonl'),statePath:resolve(directory,'state.json'),ackPath:resolve(directory,'ack.jsonl')};let count=0;
   const execute=async()=>{count++;};let queue=commandQueue({...paths,execute});
   const c={id:'once',op:'journal'};appendPrivate(paths.commandsPath,c);await queue.poll();assert.equal(count,1);
@@ -167,7 +222,7 @@ async function selfTest(){
   chmodSync(failurePaths.commandsPath,0o644);await assert.rejects(failing.poll());
   const stopPaths={commandsPath:resolve(directory,'stop-commands.jsonl'),statePath:resolve(directory,'stop-state.json'),ackPath:resolve(directory,'stop-ack.jsonl')};let stoppedCount=0;
   const stopping=commandQueue({...stopPaths,execute:async()=>{stoppedCount++;return 'stop';}});appendPrivate(stopPaths.commandsPath,{id:'stop',op:'stop'});appendPrivate(stopPaths.commandsPath,{id:'later',op:'journal'});await stopping.poll();assert.equal(stoppedCount,1);
-  console.log('PASS: offline schema/origin restrictions, private-file checks, durable deduplication, uncertain/failed-command refusal, sanitized errors, stop boundary and append-only prefix checks');
+  console.log('PASS: offline schema/origin restrictions, private-file checks, durable deduplication, uncertain/failed-command refusal, sanitized errors, stop boundary, repeated signals/nested cleanup, exact reviewed-ID sends and append-only prefix checks');
  }finally{rmSync(directory,{recursive:true,force:true});}
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
