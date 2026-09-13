@@ -23,8 +23,7 @@ function Bootstrap({ error }: { error?: string }) {
             <>
               <p role="alert">{error}</p>
               <p>
-                Onchain mode never substitutes fixtures for a missing deployment
-                or provider.
+                Your position data will appear once the connection is restored.
               </p>
               <button onClick={() => location.reload()}>
                 Retry connection
