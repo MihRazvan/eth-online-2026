@@ -5,6 +5,11 @@ import {KeeperStore,recoverDeadLock} from './store.mjs';
 import {CheckpointKeeper} from './worker.mjs';
 import {keeperConfig,fail,safeError} from './config.mjs';
 let store,stopping=false;
+const idleAbort=new AbortController();
+const stop=()=>{if(stopping)return;stopping=true;idleAbort.abort();};
+// Keep handling repeat signals while the current tick drains. A once-handler
+// restores Node's default termination on the second SIGTERM and skips finally.
+for(const signal of ['SIGINT','SIGTERM'])process.on(signal,stop);
 try{
  if(process.argv.slice(2).some(arg=>!['--once','--recover-dead-lock'].includes(arg)))fail('UNKNOWN_ARGUMENT');
  if(!process.env.KEEPER_CONFIG)fail('KEEPER_CONFIG_REQUIRED');
@@ -20,11 +25,11 @@ try{
   }
   delete process.env.KEEPER_PRIVATE_KEY;
   store=new KeeperStore(config.database);const keeper=new CheckpointKeeper(config,store,{account});
-  for(const signal of ['SIGINT','SIGTERM'])process.once(signal,()=>{stopping=true;});
   do{
    const status=await keeper.tick();console.log(JSON.stringify(status));
    if(process.argv.includes('--once')){if(status.status==='unavailable')process.exitCode=1;break;}
-   if(!stopping)await delay(config.intervalMs);
+   if(!stopping)try{await delay(config.intervalMs,undefined,{signal:idleAbort.signal});}
+   catch(error){if(error.name!=='AbortError'||!stopping)throw error;}
   }while(!stopping);
  }
-}catch(error){console.error(JSON.stringify({error:safeError(error)}));process.exitCode=1;}finally{store?.close();}
+}catch(error){console.error(JSON.stringify({error:safeError(error)}));process.exitCode=1;}finally{store?.close();for(const signal of ['SIGINT','SIGTERM'])process.removeListener(signal,stop);}
