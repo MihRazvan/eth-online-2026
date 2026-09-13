@@ -425,7 +425,8 @@ export function InformationPage({ page }: { page: "privacy" | "terms" }) {
             </div>
             <h2>YOUR BROWSER</h2>
             <p>
-              The app stores your color preference, pending listing terms and
+              A session flag keeps the introduction from replaying. The app
+              stores your color preference, pending listing terms and
               signatures, and transaction receipt records in local storage.
               Receipt records can include wallet addresses, contract addresses
               and transaction hashes. Clearing site data removes these local

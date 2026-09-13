@@ -824,19 +824,11 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
           <span className="fixture-indicator">
             {fixture ? "Deterministic fixtures" : "Onchain " + s.mode}
           </span>
-          <span>
-            {fixture ? "No live prices or transactions" : s.network}{" "}
-            <span className="desktop-only">
-              · {fixture ? "Source" : "Read at"} block {integer(s.sourceBlock)}
-            </span>
-          </span>
+          <span>{fixture ? "No live prices or transactions" : s.network} </span>
           {BigInt(s.blockNumber) - BigInt(s.sourceBlock) > 100n && (
             <strong className="lag">
-              Indexer lag:{" "}
-              {integer(
-                (BigInt(s.blockNumber) - BigInt(s.sourceBlock)).toString(),
-              )}{" "}
-              blocks
+              Data is behind the network. Refresh before reviewing a
+              transaction.
             </strong>
           )}
           {!fixture && (
@@ -2367,11 +2359,10 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                                   id={`sale-pause-${p.tokenId}`}
                                   className="inline-warning"
                                 >
-                                  NFT approval and sale acceptance are paused.
-                                  The project team must bring settlement
-                                  checkpointing and proof backup online and
-                                  verify them first. No wallet signature or
-                                  extra USDC can resolve this pause.
+                                  NFT approval and sale acceptance are paused
+                                  while the project team restores settlement
+                                  services. Check availability above before
+                                  trying again.
                                 </p>
                               )}
                               <div className="position-buttons">
@@ -2539,7 +2530,7 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
             )}
           </>
         ) : null}
-        {!home && !information && (
+        {fixture && !home && !information && (
           <section className="data-disclosure">
             <details>
               <summary>
@@ -2554,7 +2545,6 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                 Current block {integer(s.blockNumber)} ·{" "}
                 {fixture ? "Indexer source" : "RPC read block"}{" "}
                 {integer(s.sourceBlock)} · Network {s.network}
-                {!fixture && " · Graph provider not connected."}
               </p>
               {fixture && (
                 <div className="demo-controls">

@@ -2,6 +2,7 @@ import React from "react";
 import { createRoot } from "react-dom/client";
 import type { EIP1193Provider } from "viem";
 import { App } from "./App";
+import { IntroGate } from "./components/IntroGate";
 import { FixtureAdapter } from "./fixtureAdapter";
 import type { FeeStripAdapter } from "./types";
 import "./styles.css";
@@ -38,7 +39,11 @@ function Bootstrap({ error }: { error?: string }) {
   );
 }
 // Render before loading the adapter, manifest or any RPC state.
-root.render(<Bootstrap />);
+root.render(
+  <IntroGate>
+    <Bootstrap />
+  </IntroGate>,
+);
 
 async function start() {
   const mode = import.meta.env.VITE_DATA_MODE ?? "fixture";
@@ -64,11 +69,17 @@ async function start() {
       "Unknown VITE_DATA_MODE. Choose fixture, local or testnet.",
     );
   root.render(
-    <React.StrictMode>
-      <App adapter={adapter} />
-    </React.StrictMode>,
+    <IntroGate>
+      <React.StrictMode>
+        <App adapter={adapter} />
+      </React.StrictMode>
+    </IntroGate>,
   );
 }
 start().catch((error) =>
-  root.render(<Bootstrap error={(error as Error).message} />),
+  root.render(
+    <IntroGate>
+      <Bootstrap error={(error as Error).message} />
+    </IntroGate>,
+  ),
 );

@@ -268,7 +268,7 @@ test("indexer lag is visible and an empty position state explains eligibility", 
   await page.getByRole("button", { name: /3 · Funded offers/ }).click();
   await condition(page, "indexer-lag");
   await expect(
-    page.getByText("Indexer lag: 3,000 blocks", { exact: true }),
+    page.getByText("Data is behind the network. Refresh before reviewing a transaction.", { exact: true }),
   ).toBeVisible();
   await page.getByRole("button", { name: "1 · Choose a position", exact: true }).click();
   await page.getByLabel("Fixture condition").selectOption("no-positions");

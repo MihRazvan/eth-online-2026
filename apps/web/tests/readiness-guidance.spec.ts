@@ -46,7 +46,10 @@ test("service pause belongs to the project team; read-only retry cannot bypass w
   await page.route("**/api/operations", async (route) => { checks++; await route.fulfill({ json: body }); });
   await mount(page);
   const notice = page.getByRole("region", { name: "New-sale service status" });
-  await expect(notice).toContainText("Next step: project team");
+  await expect(notice).toContainText("The project team is restoring settlement services");
+  await expect(page.getByText("Service-check details", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("Network & data", { exact: true })).toHaveCount(0);
+  await expect(page.locator(".environment")).not.toContainText("Read at block");
   await expect(notice).toContainText("No wallet signature or extra USDC");
   const before = checks;
   await notice.getByRole("button", { name: "Check service again" }).click();
@@ -70,11 +73,11 @@ test("service pause belongs to the project team; read-only retry cannot bypass w
   await page.screenshot({ path: testInfo.outputPath("service-pause-mobile.png"), fullPage: true });
   body = readiness(true);
   await notice.getByRole("button", { name: "Check service again" }).click();
-  await expect(notice).toContainText("New-sale service check passed");
+  await expect(notice).not.toBeVisible();
   await expect(page.getByRole("button", { name: "1. Approve this NFT", exact: true })).toBeEnabled();
   await expect(page.getByRole("button", { name: "2. Review funded sale", exact: false })).toBeDisabled();
   body = readiness(true, Date.now() - 60001);
-  await notice.getByRole("button", { name: "Check service again" }).click();
+  await page.getByRole("button", { name: "Refresh chain state", exact: true }).click();
   await expect(notice).toContainText("New sales are paused");
   await expect(page.getByRole("button", { name: "1. Approve this NFT", exact: true })).toBeDisabled();
   await page.getByRole("link", { name: "Holdings", exact: true }).click();
