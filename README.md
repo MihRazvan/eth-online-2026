@@ -4,7 +4,7 @@
 
 **Sell one window of a Uniswap position’s USDC fees upfront. Keep the right to recover the same position.**
 
-[Live app](https://usufruct-mu.vercel.app) · [Project brief](PROJECT_BRIEF.md) · [Quickstart](docs/QUICKSTART.md) · [Architecture](docs/ARCHITECTURE.md) · [Demo walkthrough](docs/TEAMMATE_BRIEF.md) · [Docs](docs/README.md)
+[Live app](https://usufruct-mu.vercel.app) | [Project brief](PROJECT_BRIEF.md) | [Quickstart](docs/QUICKSTART.md) | [Architecture](docs/ARCHITECTURE.md) | [Demo walkthrough](https://youtu.be/VBQnQqMLmTY) | [Docs](docs/README.md) | [Slides](SLIDES.md)
 
 ## Problem first
 
@@ -24,6 +24,8 @@ usufruct turns one fixed earning window into transferable claims and settles its
 
 ## Built with
 
+<img width="1920" height="1080" alt="slide-4-stack" src="https://github.com/user-attachments/assets/6780e70a-3ab7-4192-8c46-92228b4ab82a" />
+
 | Integration | What it does | Implementation |
 | --- | --- | --- |
 | Uniswap v4 | Preserves and escrows a canonical position; collects its native fees | [FeeStrip](contracts/src/FeeStrip.sol), [developer feedback](FEEDBACK.md) |
@@ -42,10 +44,10 @@ pnpm dev
 
 Open **http://127.0.0.1:4174** for the explicitly labelled fixture preview. See [Quickstart](docs/QUICKSTART.md) for prerequisites, real local transactions and verification commands.
 
-The [live app](https://usufruct-mu.vercel.app) uses Ethereum Sepolia and test assets. Contracts are [deployed](deployments/sepolia.json). Series 1 has completed actual public funding, three human secondary purchases, NFT return, historical allocation and independent redemptions. [Public lifecycle evidence](docs/evidence/operations/live-series-one-lifecycle.md) records the amounts and remaining claims; test fees include controlled donations. Consult [release readiness](docs/JUDGE_READINESS.md) for current availability and [the submission packet](docs/submission.md) for scoped evidence.
+The [live app](https://usufruct-mu.vercel.app) uses Ethereum Sepolia and test assets. Contracts are [deployed](deployments/sepolia.json); local contract and browser lifecycles are verified. Public wallet sale-to-redemption acceptance remains a separate gate. Consult [release readiness](docs/JUDGE_READINESS.md) for current availability and [the submission packet](docs/submission.md) for scoped evidence.
 
 ## Prior work and attribution
 
-[ScopeLift Fixed Fee Swap](https://github.com/ScopeLift/fixed-fee-swap) is related prior work; fee/principal separation is not claimed as new. This implementation focuses on an individual canonical NFT, whole-period unpaid claims, an exact delayed endpoint, and NFT return independent of fee allocation.
+[ScopeLift Fixed Fee Swap](https://github.com/ScopeLift/fixed-fee-swap) is related prior work; fee/principal separation is not claimed as new. This implementation focuses on **an individual canonical NFT**, whole-period unpaid claims, an exact delayed endpoint, and NFT return independent of fee allocation.
 
 Powered by SwapVM — © Degensoft Ltd 2025. Upstream contracts, fonts and other imported material retain their notices; their audits do not cover this application. See [AI assistance](docs/AI_ASSISTANCE.md) and [MIT license](LICENSE). The application was formerly called FeeStrip; deployed contract names and signing domains retain that identity.
