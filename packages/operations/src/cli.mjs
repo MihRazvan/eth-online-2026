@@ -20,10 +20,13 @@ import {operationsServer} from './http.mjs';
 import {recoveryAcquirer} from './acquire.mjs';
 import {hostedAnalysisConfig,hostedStreamConfig} from './analysis.mjs';
 import {analysisHandler} from '../../data/src/http.mjs';
+import {childShutdown,drainServer} from './shutdown.mjs';
 
 let server,store,listingStore,child,streamChild,stopping=false,proof={ready:false,observedAt:0};
-const stop=()=>{stopping=true;child?.kill('SIGTERM');streamChild?.kill('SIGTERM');};
-for(const signal of ['SIGINT','SIGTERM'])process.once(signal,stop);
+const shutdown=childShutdown({children:()=>[child,streamChild]});
+const idleAbort=new AbortController();
+const stop=()=>{stopping=true;idleAbort.abort();shutdown.stop();};
+for(const signal of ['SIGINT','SIGTERM'])process.on(signal,stop);
 try{
  const config=hostedConfig();privateDirectory(config.directory);
  const analysis=hostedAnalysisConfig({...config});
@@ -54,11 +57,12 @@ try{
  const listingsHandler=createListingsHandler(createListingService({client:listingClient,scope:config.listings,store:listingStore}));
  const recovery=recoveryServer({store,scope:worker.scope});
  server=operationsServer({token:config.gatewayToken,listingsHandler,analysisHandler:analysis?analysisHandler(analysis):null,recoveryHandler:recovery.listeners('request')[0],status:()=>operationsStatus({config:config.retention,
-  keeperEnabled:config.keeper?.enabled,keeper:config.keeper?.enabled?readKeeperStatus(config.keeper.database):null,retention:retentionStatus(store,worker.scope),replication:replica?.publicStatus(),proof})});
+  keeperEnabled:!stopping&&config.keeper?.enabled,keeper:config.keeper?.enabled?readKeeperStatus(config.keeper.database):null,retention:retentionStatus(store,worker.scope),replication:replica?.publicStatus(),proof})});
  server.listen(config.port,'0.0.0.0');await once(server,'listening');
  console.log(JSON.stringify({status:'operations-listening',port:config.port,chainId:config.retention.chainId,feeStrip:config.retention.feeStrip}));
  do{
   const tick=await worker.tick();
+  if(stopping)break;
   // Test historical proof capability independently of whether a sale already exists.
   if(tick.status!=='observed')proof={ready:false,observedAt:Date.now()};
   else if(Date.now()-proof.observedAt>30000){
@@ -70,12 +74,13 @@ try{
     proof={ready:Date.now()/1000-Number(block.timestamp)<120,observedAt:Date.now()};
    }catch{proof={ready:false,observedAt:Date.now()};}
   }
+  if(stopping)break;
   if(replica)await replica.tick();
-  if(!stopping)await delay(4000);
+  if(!stopping)try{await delay(4000,undefined,{signal:idleAbort.signal});}
+  catch(error){if(error.name!=='AbortError'||!stopping)throw error;}
  }while(!stopping);
 }catch{console.error('{"error":"OPERATIONS_STARTUP_OR_LOOP_FAILED"}');process.exitCode=1;}
 finally{
- stop();if(server)await new Promise(r=>server.close(r));
- for(const processChild of [child,streamChild])if(processChild&&processChild.pid&&processChild.exitCode===null&&processChild.signalCode===null){const timer=setTimeout(()=>processChild.kill('SIGKILL'),10000);await once(processChild,'exit').catch(()=>{});clearTimeout(timer);}
+ stop();await Promise.all([drainServer(server),shutdown.drain()]);
  listingStore?.close();store?.close();
 }
