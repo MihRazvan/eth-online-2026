@@ -3,6 +3,7 @@
 | Topic | Documentation |
 | --- | --- |
 | Product and use cases | [Project brief](../PROJECT_BRIEF.md) |
+| Partner integrations and submission evidence | [Submission overview](submission.md) |
 | Run the app | [Quickstart](QUICKSTART.md) |
 | Contracts, services and trust boundaries | [Architecture](ARCHITECTURE.md) |
 | Fee claims, custody and settlement rules | [Protocol specification](SPECIFICATION.md) |

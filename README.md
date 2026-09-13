@@ -4,7 +4,7 @@
 
 **Sell one window of a Uniswap position’s USDC fees upfront. Keep the right to recover the same position.**
 
-[Live app](https://usufruct-mu.vercel.app) · [Project brief](PROJECT_BRIEF.md) · [Quickstart](docs/QUICKSTART.md) · [Architecture](docs/ARCHITECTURE.md) · [Docs](docs/README.md)
+[Live app](https://usufruct-mu.vercel.app) · [Project brief](PROJECT_BRIEF.md) · [Submission](docs/submission.md) · [Quickstart](docs/QUICKSTART.md) · [Architecture](docs/ARCHITECTURE.md) · [Docs](docs/README.md)
 
 ## Problem first
 
