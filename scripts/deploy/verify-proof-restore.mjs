@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /** Fresh local restoration from remote GETs only. No RPC witness fallback or remote mutation. */
-import {mkdtempSync} from 'node:fs';
+import {mkdtempSync,rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {parseArgs} from 'node:util';
@@ -53,12 +53,14 @@ async function main(){
  // The verifier needs RPC and bucket credentials only. Never pass signer secrets to its validator.
  for(const key of ['PRIVATE_KEY','KEEPER_PRIVATE_KEY','SUBSTREAMS_API_TOKEN','GRAPH_API_KEY'])delete process.env[key];
  const directory=mkdtempSync(join(tmpdir(),'usufruct-restore-check-'));
+ let store,remote,verified=false;
+ try{
  const config=hostedConfig({...process.env,OPERATIONS_DATA_DIR:directory,OPERATIONS_GATEWAY_TOKEN:'read-only-verifier-placeholder-token',KEEPER_ENABLED:'false',KEEPER_EXPECTED_SIGNER:undefined});
  if(!config.remote)throw new Error('REMOTE_CONFIGURATION_REQUIRED');
- const store=new RetentionStore(config.retention.database,{artifactRoots:config.retention.artifactRoots}),remote=new S3Remote(config.remote);
- try{
+ store=new RetentionStore(config.retention.database,{artifactRoots:config.retention.artifactRoots});remote=new S3Remote(config.remote);
   const result=await restoreProof({client:clientsFor(config.retention)[0],config:config.retention,store,remote,seriesId:values.series});
+  verified=true;
   console.log(JSON.stringify({checkedAt:new Date().toISOString(),...result,isolatedDirectory:directory},null,2));
- }finally{remote.close();store.close();}
+ }finally{remote?.close();store?.close();if(!verified)rmSync(directory,{recursive:true,force:true});}
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href)main().catch(()=>{console.error(JSON.stringify({error:'REMOTE_RESTORE_NOT_VERIFIED',scope:'No RPC witness fallback, remote write or public transaction was attempted.'}));process.exitCode=1;});

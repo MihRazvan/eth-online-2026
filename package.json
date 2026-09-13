@@ -10,7 +10,7 @@
   "scripts": {
     "dev": "pnpm --filter @feestrip/web dev",
     "build": "pnpm --filter @feestrip/web build",
-    "test": "node --test packages/core/test/*.test.mjs packages/data/test/*.test.mjs scripts/chain/proof.test.mjs scripts/graph/*.test.mjs",
+    "test": "node --test packages/core/test/*.test.mjs packages/data/test/*.test.mjs scripts/chain/proof.test.mjs scripts/graph/*.test.mjs packages/listings/test/*.test.mjs",
     "test:contracts": "forge test",
     "test:browser": "pnpm --filter @feestrip/web test",
     "check:handoff": "node scripts/check-handoff.mjs",
@@ -30,9 +30,10 @@
     "dev:recovery": "node packages/settlement/src/cli.mjs --serve",
     "local:retention-config": "node scripts/chain/retention-config.mjs",
     "build:vercel": "pnpm --filter @feestrip/web exec tsc --noEmit && node scripts/deploy/build-vercel.mjs",
-    "test:operations": "node --test packages/operations/test/*.test.mjs",
+    "test:operations": "node --test packages/operations/test/*.test.mjs scripts/deploy/verify-operations.test.mjs scripts/deploy/verify-proof-restore.test.mjs",
     "test:keeper": "node --test packages/keeper/test/*.test.mjs",
-    "dev:operations": "node packages/operations/src/cli.mjs"
+    "dev:operations": "node packages/operations/src/cli.mjs",
+    "dev:listings": "node packages/listings/src/local.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "3.1131.0",

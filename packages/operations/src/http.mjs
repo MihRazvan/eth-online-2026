@@ -1,12 +1,12 @@
 import {createServer} from 'node:http';
 import {timingSafeEqual} from 'node:crypto';
 
-export const apiPaths=new Set(['/api/operations','/api/recovery','/api/recovery/artifact','/api/analysis']);
+export const apiPaths=new Set(['/api/operations','/api/recovery','/api/recovery/artifact','/api/analysis','/api/listings']);
 export function validTarget(raw){
  if(typeof raw!=='string'||raw.length>1024||!raw.startsWith('/')||raw.startsWith('//'))return null;
  const url=new URL(raw,'http://localhost');
  if(!apiPaths.has(url.pathname))return null;
- const allowed=url.pathname==='/api/operations'?[]:url.pathname==='/api/analysis'?['seriesId','quantity','price','executionCost']:url.pathname.endsWith('/artifact')?['seriesId','digest']:['seriesId'];
+ const allowed=url.pathname==='/api/listings'?['listingId','cursor','limit','seller','tokenId']:url.pathname==='/api/operations'?[]:url.pathname==='/api/analysis'?['seriesId','quantity','price','executionCost']:url.pathname.endsWith('/artifact')?['seriesId','digest']:['seriesId'];
  for(const key of url.searchParams.keys())if(!allowed.includes(key)||url.searchParams.getAll(key).length!==1)return null;
  return url;
 }
@@ -27,18 +27,19 @@ function authorized(req,token){
  const expected=Buffer.from(`Bearer ${token}`),actual=Buffer.from(req.headers.authorization??'');
  return actual.length===expected.length&&timingSafeEqual(actual,expected);
 }
-/** The public surface is GET-only. No RPC forwarding, arbitrary upstreams or signer entry points. */
-export function operationsServer({status,recoveryHandler,token,analysisHandler=null,analysisOrigin=null,fetcher=fetch}){
+/** Financial/analysis routes are GET-only. Listings accept signed advertisements, never signer instructions. */
+export function operationsServer({status,recoveryHandler,token,analysisHandler=null,listingsHandler=null,analysisOrigin=null,fetcher=fetch}){
  if(typeof token!=='string'||token.length<32)throw new Error('GATEWAY_TOKEN_REQUIRED');
  let active=0;
  const server=createServer(async(req,res)=>{
   if(req.method==='GET'&&req.url==='/healthz')return json(res,200,{status:'running'});
   if(!authorized(req,token))return json(res,401,{error:'UNAUTHORIZED'});
   let url;try{url=validTarget(req.url);}catch{}
-  if(req.method!=='GET'||!url)return json(res,404,{error:'NOT_FOUND'});
+  if(!url||(req.method!=='GET'&&!(url.pathname==='/api/listings'&&req.method==='POST')))return json(res,404,{error:'NOT_FOUND'});
   if(active>=8)return json(res,429,{error:'SERVICE_BUSY'});
   active++;res.once('close',()=>{active--;});
   try{
+   if(url.pathname==='/api/listings')return listingsHandler?await listingsHandler(req,res):json(res,503,{error:'LISTING_SERVICE_UNAVAILABLE'});
    if(url.pathname==='/api/operations')return json(res,200,await status());
    if(url.pathname.startsWith('/api/recovery'))return await recoveryHandler(req,res);
    if(analysisHandler)return await analysisHandler(req,res);

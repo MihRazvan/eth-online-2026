@@ -34,7 +34,7 @@ function fixture(path=':memory:') {
     }
     throw new Error('unexpected method');
   }};
-  const store=new ListingStore(path,scope),service=createListingService({client,scope,store});
+  const store=new ListingStore(path,scope),service=createListingService({client,scope,store,now:()=>Number(state.timestamp)*1000});
   return {state,calls,client,store,service};
 }
 async function signed(value=terms,account=seller){return {listingId:listingId(value),terms:value,signature:await account.signTypedData(listingTypedData(value))};}
@@ -76,12 +76,14 @@ test('cancellation is seller-authenticated, durable and cannot be republished',a
     assert.throws(()=>new ListingStore(path,{...scope,chainId:1}),/STORE_SCOPE_MISMATCH/);
   }finally{f.store.close();rmSync(dir,{recursive:true,force:true});}
 });
-test('pre-publication cancellation prevents replay; unrelated signer cannot poison listing ID',async()=>{
+test('unknown listing cancellations cannot fill permanent storage',async()=>{
   const f=fixture();try {
-    const listing=await signed();await f.service.cancel(await cancelled(listing.listingId,other));
-    await f.service.publish(listing);
-    const second=await signed({...terms,nonce:hash('2')});await f.service.cancel(await cancelled(second.listingId));
-    await assert.rejects(f.service.publish(second),/LISTING_CANCELLED/);
+    const listing=await signed();
+    await assert.rejects(f.service.cancel(await cancelled(listing.listingId)),/LISTING_NOT_FOUND/);
+    await assert.rejects(f.service.cancel(await cancelled(listing.listingId,other)),/LISTING_NOT_FOUND/);
+    assert.equal(f.store.db.prepare('SELECT count(*) n FROM cancellations').get().n,0);
+    await f.service.publish(listing);await f.service.cancel(await cancelled(listing.listingId));
+    await assert.rejects(f.service.publish(listing),/LISTING_CANCELLED/);
   }finally{f.store.close();}
 });
 test('same seller nonce cannot silently replace signed terms',async()=>{
@@ -94,7 +96,10 @@ test('cancel signatures bind the exact listing and cannot be substituted',async(
   const f=fixture();try {
     const listing=await signed();await f.service.publish(listing);
     const cancellation=await cancelled(listing.listingId);
-    await assert.rejects(f.service.cancel({...cancellation,listingId:hash('f')}),/INVALID_SIGNATURE/);
+    const other=await signed({...terms,nonce:hash('e')});await f.service.publish(other);
+    await assert.rejects(f.service.cancel({...cancellation,listingId:other.listingId}),/INVALID_SIGNATURE/);
+    assert.equal((await f.service.detail(other.listingId)).listing.status,'available');
+    await assert.rejects(f.service.cancel({...cancellation,listingId:hash('f')}),/LISTING_NOT_FOUND/);
     await assert.rejects(f.service.cancel({...cancellation,chainId:1}),/WRONG_SCOPE/);
     assert.equal((await f.service.detail(listing.listingId)).listing.status,'available');
   }finally{f.store.close();}
@@ -161,4 +166,22 @@ test('HTTP signed actions, malformed/oversized bodies and safe upstream failures
     f.state.unavailable=true;const response=await fetch(`${origin}/api/listings`);assert.equal(response.status,503);
     assert.ok(!(await response.text()).includes('private upstream detail'));
   }finally{server.closeAllConnections();await new Promise(resolve=>server.close(resolve));f.store.close();}
+});
+
+test('cancellation during the final canonical check wins over an available read',async()=>{
+  const f=fixture();try{
+    const listing=await signed();await f.service.publish(listing);
+    const cancellation=await cancelled(listing.listingId),original=f.client.request.bind(f.client);
+    f.client.request=async input=>{const result=await original(input);if(input.method==='eth_getBlockByNumber'&&input.params[0]!=='latest')f.store.cancel(cancellation);return result;};
+    assert.equal((await f.service.detail(listing.listingId)).listing.status,'cancelled');
+    assert.equal((await f.service.list()).listings[0].status,'cancelled');
+  }finally{f.store.close();}
+});
+test('stale canonical heads and nonresponsive RPCs cannot advertise available listings',async()=>{
+  const f=fixture();try{
+    const stale=createListingService({client:f.client,scope,store:f.store,now:()=>1121000});
+    await assert.rejects(stale.list(),/STALE_CHAIN_HEAD/);
+    const stuck=createListingService({client:{request:()=>new Promise(()=>{})},scope,store:f.store,timeoutMs:15});
+    const start=Date.now();await assert.rejects(stuck.list(),/SERVICE_DEADLINE/);assert.ok(Date.now()-start<500);
+  }finally{f.store.close();}
 });

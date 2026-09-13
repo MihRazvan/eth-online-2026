@@ -5,6 +5,7 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN npm install --global pnpm@12.3.4 && pnpm install --prod --frozen-lockfile --ignore-scripts
 COPY scripts/proof/requirements.txt /app/scripts/proof/requirements.txt
 RUN python3 -m venv /opt/proof && /opt/proof/bin/pip install --no-cache-dir -r scripts/proof/requirements.txt
+COPY packages/listings/src packages/listings/src
 COPY packages/operations/src packages/operations/src
 COPY packages/settlement/src packages/settlement/src
 COPY packages/keeper/src packages/keeper/src

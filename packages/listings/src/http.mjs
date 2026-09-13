@@ -1,10 +1,20 @@
 const json=(res,status,value)=>{res.writeHead(status,{'content-type':'application/json','cache-control':'no-store','x-content-type-options':'nosniff'});res.end(JSON.stringify(value));};
 const inputErrors=new Set(['INVALID_FIELDS','INVALID_SCOPE','INVALID_TERMS','WRONG_SCOPE','INVALID_CANCELLATION','INVALID_SIGNATURE','EOA_SIGNATURE_REQUIRED','LISTING_ID_MISMATCH','INVALID_LISTING_ID','INVALID_QUERY','EXPIRED','CLOSING_SOON','TERMS_TOO_DISTANT','OWNER_CHANGED','POSITION_CHANGED','NOT_LISTING_SELLER','INVALID_BODY']);
 const conflictErrors=new Set(['LISTING_CANCELLED','NONCE_ALREADY_USED','LISTING_CAPACITY_REACHED']);
-async function body(req) {
+export async function readListingBody(req) {
   if(!req.headers['content-type']?.startsWith('application/json')||Number(req.headers['content-length'])>16384)throw new Error('INVALID_BODY');
-  const chunks=[];let bytes=0;for await(const chunk of req){bytes+=chunk.length;if(bytes>16384)throw new Error('INVALID_BODY');chunks.push(chunk);}
-  try{return JSON.parse(Buffer.concat(chunks).toString('utf8'));}catch{throw new Error('INVALID_BODY');}
+  if(req.body!==undefined){
+    const text=typeof req.body==='string'?req.body:Buffer.isBuffer(req.body)?req.body.toString('utf8'):JSON.stringify(req.body);
+    if(Buffer.byteLength(text)>16384)throw new Error('INVALID_BODY');
+    try{return JSON.parse(text);}catch{throw new Error('INVALID_BODY');}
+  }
+  const chunks=[];let bytes=0;
+  const timer=setTimeout(()=>req.destroy(new Error('BODY_TIMEOUT')),5000);
+  try {
+    for await(const chunk of req){bytes+=chunk.length;if(bytes>16384)throw new Error('INVALID_BODY');chunks.push(chunk);}
+    try{return JSON.parse(Buffer.concat(chunks).toString('utf8'));}catch{throw new Error('INVALID_BODY');}
+  }finally{clearTimeout(timer);}
+
 }
 /** Public, bounded signed-intent handler; no keeper token or signing key is exposed. */
 export function createListingsHandler(service) {
@@ -25,7 +35,7 @@ export function createListingsHandler(service) {
       }
       if(req.method!=='POST')return json(res,405,{error:'METHOD_NOT_ALLOWED',message:'Use GET or signed POST.'});
       if(url.search)throw new Error('INVALID_QUERY');
-      const value=await body(req);
+      const value=await readListingBody(req);
       if(!value||typeof value!=='object'||Array.isArray(value)||Object.keys(value).length!==2)throw new Error('INVALID_BODY');
       if(value.operation==='publish'&&Object.hasOwn(value,'listing'))return json(res,200,await service.publish(value.listing));
       if(value.operation==='cancel'&&Object.hasOwn(value,'cancellation'))return json(res,200,await service.cancel(value.cancellation));

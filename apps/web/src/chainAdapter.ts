@@ -1,3 +1,7 @@
+import { pendingListing, pendingListingTerms, savePendingListing, clearPendingListing } from "./listingJournal";
+import { listingId, listingTypedData, cancellationTypedData, validateTerms } from "../../../packages/listings/src/shared.mjs";
+import { readListingDirectory, readSellerListing, publishSellerListing, cancelSellerListing, assertListingFunding } from "./listings";
+import type { SellerListingTerms } from "./listingTypes";
 import { serializePublicTransaction, transactionIdentity } from "./transactionIdentity";
 import { guardsSubmission, MAX_RECEIPT_GUARDS, readReceipts, saveReceipt } from "./receipts";
 import { readOperations } from "./operations";
@@ -800,6 +804,7 @@ export class ChainAdapter implements FeeStripAdapter {
     const d = this.deployment,
       block = await this.client.getBlock();
     const bn = block.number;
+    const directory = readListingDirectory(this.listingScope());
     const [nextSeries, nextOffer] = await Promise.all([
       this.read<bigint>(d.feeStrip, feeStripAbi, "nextSeriesId", [], bn),
       this.read<bigint>(d.feeStrip, feeStripAbi, "nextOfferId", [], bn),
@@ -1068,6 +1073,10 @@ export class ChainAdapter implements FeeStripAdapter {
       timestamp: block.timestamp.toString(),
       sourceBlock: bn.toString(),
       feeStrip: d.feeStrip,
+      positionManager: d.positionManager,
+      usdc: d.usdc,
+      listingDirectory: await directory,
+      pendingListingDrafts: pendingListingTerms(d.chainId, d.feeStrip, wallet.address),
       markets,
       positions: positions.filter((p): p is Position => !!p),
       saleReadiness: this.mode === "testnet" ? await readOperations(d) : undefined,
@@ -1576,6 +1585,26 @@ export class ChainAdapter implements FeeStripAdapter {
       };
     }
   }
+  async readListing(id: string) { return readSellerListing(id, this.listingScope()); }
+  private listingScope() {
+    const { chainId, feeStrip, positionManager, usdc } = this.deployment;
+    return { chainId, feeStrip, positionManager, usdc };
+  }
+  private async validateListingPosition(terms: SellerListingTerms, account: Address) {
+    validateTerms(terms, this.listingScope());
+    if (!same(terms.seller, account)) throw new Error("The reviewed listing belongs to a different seller.");
+    const block = await this.client.getBlock();
+    const [owner, commitment, sellerCode] = await Promise.all([
+      this.read<Address>(this.deployment.positionManager, NFT_ABI, "ownerOf", [BigInt(terms.tokenId)], block.number),
+      this.read<Hex>(this.deployment.feeStrip, feeStripAbi, "positionCommitment", [BigInt(terms.tokenId)], block.number),
+      this.client.getCode({ address: account, blockNumber: block.number }),
+    ]);
+    if (sellerCode && sellerCode !== "0x") throw new Error("Listing signatures currently support standard externally owned wallets. Smart accounts and delegated accounts are not supported yet.");
+    if (!same(owner, account) || commitment.toLowerCase() !== terms.positionCommitment.toLowerCase()) throw new Error("The NFT owner, pool, range or liquidity changed. Review fresh listing terms before signing.");
+    if (BigInt(terms.endBlock) <= block.number + 32n || BigInt(terms.deadlineTimestamp) <= block.timestamp + 60n) throw new Error("Too little time remains. Review a new endpoint and acceptance deadline.");
+    const canonical = await this.client.getBlock({ blockNumber: block.number });
+    if (canonical.hash !== block.hash) throw new Error("The chain changed during review. Refresh before publishing.");
+  }
   async execute(action: Action): Promise<ActionResult> {
     if (this.activeAction) throw new Error("Another wallet action is still pending.");
     this.activeAction = action;
@@ -1595,7 +1624,39 @@ export class ChainAdapter implements FeeStripAdapter {
     try {
       await this.checkReceiptGuards(account);
       if (this.mode === "testnet" && (action.type === "fundOffer" || action.type === "acceptOffer")) { const readiness = await readOperations(d); if (!readiness.ready) throw new Error(readiness.reason); }
-      if (action.type === "approvePosition") {
+      if (action.type === "publishListing") {
+        const directory = await readListingDirectory(this.listingScope());
+        if (directory.status !== "available") throw new Error(directory.reason);
+        await this.validateListingPosition(action.terms, account);
+        const { wallet } = await this.signer(account);
+        const id = listingId(action.terms), pending = pendingListing(id);
+        let signature = pending?.signature;
+        if (!signature) {
+          savePendingListing(action.terms);
+          this.progress({ stage: "signature", label: "Sign listing terms · no NFT transfer or sale", account });
+          signature = await wallet.signTypedData({ ...listingTypedData(action.terms), account });
+          savePendingListing(action.terms, signature);
+        }
+        await this.signer(account);
+        await this.validateListingPosition(action.terms, account);
+        const listing = await publishSellerListing(action.terms, signature, this.listingScope());
+        if (listing.status !== "available") throw new Error("The listing was saved but is no longer available. Check its status; no sale has started.");
+        clearPendingListing(listing.listingId);
+        this.progress({ stage: "confirmed", label: "Listing published · awaiting buyer funding and your acceptance", account });
+        return { mode: this.mode, listingId: listing.listingId, description: "Signed listing published. The NFT stays in your wallet. A buyer funds an offer, then you approve and accept its exact terms to start the sale." };
+      } else if (action.type === "cancelListing") {
+        const record = await readSellerListing(action.listingId, this.listingScope());
+        if (!same(record.terms.seller, account)) throw new Error("Only the listing seller can withdraw it.");
+        const cancellation = { chainId: d.chainId, feeStrip: d.feeStrip, seller: account, listingId: action.listingId };
+        const { wallet } = await this.signer(account);
+        this.progress({ stage: "signature", label: "Sign listing withdrawal · existing offers stay unchanged", account });
+        const signature = await wallet.signTypedData({ ...cancellationTypedData(cancellation), account });
+        await this.signer(account);
+        await cancelSellerListing({ ...cancellation, signature }, this.listingScope());
+        clearPendingListing(action.listingId);
+        this.progress({ stage: "confirmed", label: "Listing withdrawn", account });
+        return { mode: this.mode, description: "Listing withdrawn. Existing funded offers remain onchain; each buyer can cancel their unaccepted offer to recover USDC." };
+      } else if (action.type === "approvePosition") {
         if (
           !same(
             await this.read<Address>(d.positionManager, NFT_ABI, "ownerOf", [
@@ -1614,6 +1675,8 @@ export class ChainAdapter implements FeeStripAdapter {
           ]),
         );
       } else if (action.type === "fundOffer") {
+        const verifyListing = async () => { if (action.listingId) assertListingFunding(await readSellerListing(action.listingId, this.listingScope()), action); };
+        await verifyListing();
         const seller = await this.read<Address>(
             d.positionManager,
             NFT_ABI,
@@ -1654,6 +1717,7 @@ export class ChainAdapter implements FeeStripAdapter {
         const afterApproval = await this.client.getBlock();
         checkRemainingTime(afterApproval.number, afterApproval.timestamp);
         if (this.mode === "testnet") { const readiness = await readOperations(d); if (!readiness.ready) throw new Error(readiness.reason + " Any confirmed USDC allowance remains in place."); }
+        await verifyListing();
         if (!same(seller, await this.read<Address>(d.positionManager, NFT_ABI, "ownerOf", [BigInt(action.tokenId)]))) throw new Error("NFT ownership changed after approval. Review the current seller; the USDC allowance remains in place.");
         hashes.push(
           await this.write(account, d.feeStrip, feeStripAbi, "fundOffer", [

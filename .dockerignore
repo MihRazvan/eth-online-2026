@@ -3,6 +3,9 @@
 !pnpm-lock.yaml
 !pnpm-workspace.yaml
 !packages/
+!packages/listings/
+!packages/listings/src/
+!packages/listings/src/**
 !packages/operations/
 !packages/operations/src/
 !packages/operations/src/**

@@ -1,3 +1,4 @@
+import type { ListingDirectory, SellerListing, SellerListingTerms } from "./listingTypes";
 export type DataMode = "fixture" | "local" | "testnet";
 export type SeriesPhase =
   | "active"
@@ -138,6 +139,10 @@ export interface FundedOffer {
   expired: boolean;
 }
 export interface Snapshot {
+  listingDirectory?: ListingDirectory;
+  pendingListingDrafts?: SellerListingTerms[];
+  positionManager?: `0x${string}`;
+  usdc?: `0x${string}`;
   saleReadiness?: { ready: boolean; reason: string };
   positionDiscoveryNotice?: string;
   mode: DataMode;
@@ -156,6 +161,8 @@ export interface Snapshot {
   scenario: Scenario;
 }
 export type Action = { reviewedAccount?: string } & (
+  | { type: "publishListing"; terms: SellerListingTerms }
+  | { type: "cancelListing"; listingId: `0x${string}` }
   | {
       type: "dockQuote";
       strategyHash: string;
@@ -174,6 +181,7 @@ export type Action = { reviewedAccount?: string } & (
   | { type: "cancelOffer"; offerId: string }
   | {
       type: "fundOffer";
+      listingId?: `0x${string}`;
       tokenId: string;
       paymentMicros: string;
       seller?: string;
@@ -238,6 +246,7 @@ export interface TransactionProgress {
   action?: Action;
 }
 export interface ActionResult {
+  listingId?: `0x${string}`;
   mode: DataMode;
   description: string;
   transactionHash?: `0x${string}`;
@@ -254,6 +263,7 @@ export interface FeeStripAdapter {
   subscribeProgress?(listener: (progress: TransactionProgress) => void): () => void;
   subscribeWallet?(listener: () => void): () => void;
   switchNetwork?(): Promise<void>;
+  readListing?(listingId: string): Promise<SellerListing>;
   readRecovery?(seriesId: string): Promise<RecoveryResult>;
   downloadRecoveryArtifact?(seriesId: string): Promise<RecoveryDownload>;
   readAnalysis?(

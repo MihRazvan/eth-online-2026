@@ -1,7 +1,8 @@
 import { defineConfig } from "@playwright/test";
 const webPort = Number(process.env.FEESTRIP_TEST_WEB_PORT ?? 4175);
+const listingsPort = Number(process.env.FEESTRIP_TEST_LISTINGS_PORT ?? 8791);
 const recoveryPort = Number(process.env.FEESTRIP_TEST_RECOVERY_PORT ?? 8788);
-for (const port of [webPort, recoveryPort]) {
+for (const port of [webPort, recoveryPort, listingsPort]) {
   if (!Number.isInteger(port) || port < 1024 || port > 65535)
     throw new Error("Browser test ports must be integers between 1024 and 65535.");
 }
@@ -29,6 +30,7 @@ export default defineConfig({
     env: {
       VITE_DATA_MODE: "local", VITE_ENABLE_TEST_WALLET: "true",
       FEESTRIP_RECOVERY_ORIGIN: `http://127.0.0.1:${recoveryPort}`,
+      FEESTRIP_LISTINGS_ORIGIN: `http://127.0.0.1:${listingsPort}`,
     },
   },
 });

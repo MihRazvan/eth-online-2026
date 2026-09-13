@@ -6,26 +6,34 @@ const signatureShape=value=>typeof value==='string'&&/^0x[0-9a-fA-F]{130}$/.test
 const publicScope=scope=>({chainId:scope.chainId,feeStrip:scope.feeStrip,positionManager:scope.positionManager,usdc:scope.usdc,intent:LISTING_INTENT,signatureSupport:'EOA_ONLY',custody:'NONE',activation:'SELLER_ACCEPTS_FUNDED_OFFER'});
 
 /** client exposes viem PublicClient.request. Every canonical read uses EIP-1898. */
-export function createListingService({client,scope,store}) {
+export function createListingService({client,scope,store,timeoutMs=10000,now=Date.now}) {
   validateScope(scope);
   scope=structuredClone(scope);
-  async function request(method,params){return client.request({method,params});}
   async function context() {
+    const deadline=now()+timeoutMs;
+    async function request(method,params) {
+      const left=deadline-now();if(left<=0)throw new Error('SERVICE_DEADLINE');
+      let timer;
+      try{return await Promise.race([client.request({method,params}),new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error('SERVICE_DEADLINE')),left);})]);}
+      finally{clearTimeout(timer);}
+    }
     if(BigInt(await request('eth_chainId',[]))!==BigInt(scope.chainId))throw new Error('RPC_CHAIN_MISMATCH');
     const block=await request('eth_getBlockByNumber',['latest',false]);
     if(!block||!/^0x[0-9a-fA-F]{64}$/.test(block.hash)||!/^0x[0-9a-f]+$/i.test(block.number)||!/^0x[0-9a-f]+$/i.test(block.timestamp))throw new Error('RPC_BLOCK_UNAVAILABLE');
+    const age=BigInt(Math.floor(now()/1000))-BigInt(block.timestamp);
+    if(age>120n||age < -30n)throw new Error('STALE_CHAIN_HEAD');
     const reference={blockHash:block.hash,requireCanonical:true};
     const read=async(address,functionName,args=[])=>decodeFunctionResult({abi,functionName,data:await request('eth_call',[{to:address,data:encodeFunctionData({abi,functionName,args})},reference])});
     const [posm,cash]=await Promise.all([read(scope.feeStrip,'positionManager'),read(scope.feeStrip,'usdc')]);
     if(!sameAddress(posm,scope.positionManager)||!sameAddress(cash,scope.usdc))throw new Error('RPC_DEPLOYMENT_MISMATCH');
-    return {block,reference,read};
+    return {block,reference,read,request};
   }
   async function signature(seller,signed,data,ctx) {
     if(!signatureShape(signed))throw new Error('INVALID_SIGNATURE');
     let recovered;try{recovered=await recoverTypedDataAddress({...data,signature:signed});}catch{throw new Error('INVALID_SIGNATURE');}
     if(!sameAddress(recovered,seller))throw new Error('INVALID_SIGNATURE');
     // ERC-1271 and EIP-7702 accounts are deliberately not advertised as supported.
-    if(await request('eth_getCode',[seller,ctx.reference])!=='0x')throw new Error('EOA_SIGNATURE_REQUIRED');
+    if(await ctx.request('eth_getCode',[seller,ctx.reference])!=='0x')throw new Error('EOA_SIGNATURE_REQUIRED');
   }
   async function position(terms,ctx,{publishing=false}={}) {
     validateTiming(terms,ctx.block,{publishing});
@@ -36,7 +44,7 @@ export function createListingService({client,scope,store}) {
     if(commitment.toLowerCase()!==terms.positionCommitment.toLowerCase())throw new Error('POSITION_CHANGED');
   }
   async function canonical(ctx) {
-    const block=await request('eth_getBlockByNumber',[ctx.block.number,false]);
+    const block=await ctx.request('eth_getBlockByNumber',[ctx.block.number,false]);
     if(block?.hash?.toLowerCase()!==ctx.block.hash.toLowerCase())throw new Error('RPC_REORG');
   }
   function envelope(listing,ctx,status='available',reason=null) {
@@ -50,9 +58,13 @@ export function createListingService({client,scope,store}) {
       await position(listing.terms,ctx);
       return envelope(listing,ctx);
     }catch(error){
+      if(error.message==='SERVICE_DEADLINE')throw error;
       const reason=['EXPIRED','CLOSING_SOON','OWNER_CHANGED','POSITION_CHANGED','EOA_SIGNATURE_REQUIRED','INVALID_SIGNATURE'].includes(error.message)?error.message:'POSITION_UNAVAILABLE';
       return envelope(listing,ctx,reason==='EXPIRED'?'expired':reason==='POSITION_UNAVAILABLE'?'unavailable':'stale',reason);
     }
+  }
+  function currentCancellation(observed,ctx) {
+    return store.cancelled(observed.listingId,observed.terms.seller)?envelope(observed,ctx,'cancelled','LISTING_CANCELLED'):observed;
   }
   return {
     scope:publicScope(scope),
@@ -71,7 +83,8 @@ export function createListingService({client,scope,store}) {
       exactKeys(cancellation,['chainId','feeStrip','seller','listingId','signature']);
       const {signature:signed,...terms}=cancellation;validateCancellation(terms,scope);
       const known=store.get(terms.listingId);
-      if(known&&!sameAddress(known.terms.seller,terms.seller))throw new Error('NOT_LISTING_SELLER');
+      if(!known)throw new Error('LISTING_NOT_FOUND');
+      if(!sameAddress(known.terms.seller,terms.seller))throw new Error('NOT_LISTING_SELLER');
       const ctx=await context();await signature(terms.seller,signed,cancellationTypedData(terms),ctx);await canonical(ctx);
       store.cancel(cancellation);
       return {status:'available',scope:publicScope(scope),listingId:terms.listingId.toLowerCase(),cancelled:true,note:'Listing withdrawn. Existing onchain funded offers remain unchanged.'};
@@ -80,13 +93,16 @@ export function createListingService({client,scope,store}) {
       if(typeof id!=='string'||!/^0x[0-9a-fA-F]{64}$/.test(id))throw new Error('INVALID_LISTING_ID');
       const listing=store.get(id);if(!listing)throw new Error('LISTING_NOT_FOUND');
       const ctx=await context(),observed=await observe(listing,ctx);await canonical(ctx);
-      return {status:'available',scope:publicScope(scope),listing:observed};
+      return {status:'available',scope:publicScope(scope),listing:currentCancellation(observed,ctx)};
     },
     async list(query={}) {
       const {cursor='',limit=10,seller,tokenId}=query;
       if(!Number.isInteger(limit)||limit<1||limit>20||(cursor!==''&&!/^0x[0-9a-fA-F]{64}$/.test(cursor))||(seller!==undefined&&!/^0x[0-9a-fA-F]{40}$/.test(seller))||(tokenId!==undefined&&!/^[1-9][0-9]{0,77}$/.test(tokenId)))throw new Error('INVALID_QUERY');
       const ctx=await context(),rows=store.list({cursor,limit,seller,tokenId}),hasMore=rows.length>limit;
-      const listings=[];for(const row of rows.slice(0,limit))listings.push(await observe(row,ctx));await canonical(ctx);
+      const listings=[],selected=rows.slice(0,limit);
+      for(let i=0;i<selected.length;i+=4)listings.push(...await Promise.all(selected.slice(i,i+4).map(row=>observe(row,ctx))));
+      await canonical(ctx);
+      for(let i=0;i<listings.length;i++)listings[i]=currentCancellation(listings[i],ctx);
       return {status:'available',scope:publicScope(scope),listings,nextCursor:hasMore?listings.at(-1).listingId:null};
     },
   };

@@ -1,3 +1,7 @@
+import {createPublicClient,http} from 'viem';
+import {ListingStore} from '../../listings/src/store.mjs';
+import {createListingService} from '../../listings/src/service.mjs';
+import {createListingsHandler} from '../../listings/src/http.mjs';
 import {spawn} from 'node:child_process';
 import {once} from 'node:events';
 import {setTimeout as delay} from 'node:timers/promises';
@@ -17,7 +21,7 @@ import {recoveryAcquirer} from './acquire.mjs';
 import {hostedAnalysisConfig,hostedStreamConfig} from './analysis.mjs';
 import {analysisHandler} from '../../data/src/http.mjs';
 
-let server,store,child,streamChild,stopping=false,proof={ready:false,observedAt:0};
+let server,store,listingStore,child,streamChild,stopping=false,proof={ready:false,observedAt:0};
 const stop=()=>{stopping=true;child?.kill('SIGTERM');streamChild?.kill('SIGTERM');};
 for(const signal of ['SIGINT','SIGTERM'])process.once(signal,stop);
 try{
@@ -45,8 +49,11 @@ try{
  let replica;
  const worker=new RetentionWorker(config.retention,store,{acquireWitness:recoveryAcquirer({store,scope:()=>worker.scope,config:config.retention,replica:()=>replica})});
  if(config.remote)replica=new OffhostReplica({store,scope:worker.scope,remote:new S3Remote(config.remote)});
+ listingStore=new ListingStore(resolve(config.directory,'listings.sqlite'),config.listings);
+ const listingClient=createPublicClient({transport:http(config.retention.rpcUrls[0],{timeout:4000,retryCount:0})});
+ const listingsHandler=createListingsHandler(createListingService({client:listingClient,scope:config.listings,store:listingStore}));
  const recovery=recoveryServer({store,scope:worker.scope});
- server=operationsServer({token:config.gatewayToken,analysisHandler:analysis?analysisHandler(analysis):null,recoveryHandler:recovery.listeners('request')[0],status:()=>operationsStatus({config:config.retention,
+ server=operationsServer({token:config.gatewayToken,listingsHandler,analysisHandler:analysis?analysisHandler(analysis):null,recoveryHandler:recovery.listeners('request')[0],status:()=>operationsStatus({config:config.retention,
   keeper:config.keeper?readKeeperStatus(config.keeper.database):null,retention:retentionStatus(store,worker.scope),replication:replica?.publicStatus(),proof})});
  server.listen(config.port,'0.0.0.0');await once(server,'listening');
  console.log(JSON.stringify({status:'operations-listening',port:config.port,chainId:config.retention.chainId,feeStrip:config.retention.feeStrip}));
@@ -70,5 +77,5 @@ try{
 finally{
  stop();if(server)await new Promise(r=>server.close(r));
  for(const processChild of [child,streamChild])if(processChild&&processChild.pid&&processChild.exitCode===null&&processChild.signalCode===null){const timer=setTimeout(()=>processChild.kill('SIGKILL'),10000);await once(processChild,'exit').catch(()=>{});clearTimeout(timer);}
- store?.close();
+ listingStore?.close();store?.close();
 }

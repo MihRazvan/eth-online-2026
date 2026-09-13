@@ -226,6 +226,7 @@ export class FixtureAdapter implements FeeStripAdapter {
       throw new Error(
         "Transaction reverted. No sale, transfer, or allocation was applied. Refresh state before retrying.",
       );
+    if (action.type === "publishListing" || action.type === "cancelListing") throw new Error("Fixture mode cannot publish a real signed listing. Use the isolated local-chain listing rehearsal.");
     const market =
       "seriesId" in action
         ? s.markets.find((m) => m.id === action.seriesId)

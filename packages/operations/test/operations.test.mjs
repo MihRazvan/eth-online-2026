@@ -108,3 +108,27 @@ test('history catch-up requires a separate explicit opt-in and uses the pinned l
  assert(!JSON.stringify(stream).includes('private'));assert(stream.initialization[stream.pools[0]].kind==='swap');
  assert.throws(()=>hostedStreamConfig({analysis,env:{GRAPH_STREAM_ENABLED:'yes'}}),/INVALID/);
 });
+
+test('only signed-listing route permits POST and leaves preservation gate closed',async t=>{
+ let listingCalls=0;
+ const origin=await listening(operationsServer({token,status:()=>operationsStatus({...good(),keeper:null}),recoveryHandler:()=>{},listingsHandler:(_req,res)=>{listingCalls++;res.writeHead(200,{'content-type':'application/json'});res.end('{"status":"available"}');}}),t);
+ const headers={authorization:`Bearer ${token}`,'content-type':'application/json'};
+ assert.equal((await fetch(origin+'/api/listings',{method:'POST',headers,body:'{}'})).status,200);
+ assert.equal((await fetch(origin+'/api/listings',{method:'POST',body:'{}'})).status,401);
+ assert.equal((await fetch(origin+'/api/operations',{method:'POST',headers,body:'{}'})).status,404);
+ assert.equal((await fetch(origin+'/api/listings?listingId=a&listingId=b',{headers})).status,404);
+ assert.equal(listingCalls,1);
+ assert.equal((await(await fetch(origin+'/api/operations',{headers})).json()).readyForNewSales,false);
+});
+test('listing proxy relays bounded intent bytes without cookies or user-controlled credentials',async t=>{
+ const {listingsProxy}=await import('../../../scripts/deploy/listings-proxy.mjs');
+ const calls=[],env={OPERATIONS_ORIGIN:'https://operations.example',OPERATIONS_GATEWAY_TOKEN:token};
+ const origin=await listening(createServer(listingsProxy({env,fetcher:async(url,options)=>{calls.push({url:String(url),options});return Response.json({status:'available'});}})),t);
+ const body=JSON.stringify({operation:'publish',listing:{signature:'public-signature'}});
+ assert.equal((await fetch(origin+'/api/listings',{method:'POST',headers:{'content-type':'application/json',cookie:'private=value',authorization:'Bearer attacker'},body})).status,200);
+ assert.equal(calls[0].url,'https://operations.example/api/listings');assert.equal(calls[0].options.body,body);
+ assert.deepEqual(calls[0].options.headers,{authorization:`Bearer ${token}`,'content-type':'application/json'});
+ for(const target of ['/api/sign','/api/operations','/api/listings?rpc=https://attacker.example'])assert.equal((await fetch(origin+target,{method:'POST',headers:{'content-type':'application/json'},body})).status,404);
+ assert.equal((await fetch(origin+'/api/listings',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({operation:'publish',listing:'x'.repeat(17000)})})).status,400);
+ assert.equal(calls.length,1);
+});

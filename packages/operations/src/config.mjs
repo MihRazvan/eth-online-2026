@@ -44,5 +44,5 @@ export function hostedConfig(env=process.env){
   maxTxCostWei:env.KEEPER_MAX_TX_COST_WEI??'2400000000000000',dailyBudgetWei:env.KEEPER_DAILY_BUDGET_WEI??'10000000000000000',minBalanceWei:env.KEEPER_MIN_BALANCE_WEI??'1000000000000000',intervalMs:4000}:null;
  const remote=env.PROOF_S3_ENDPOINT?{endpoint:env.PROOF_S3_ENDPOINT,bucket:env.PROOF_S3_BUCKET,region:env.PROOF_S3_REGION??'auto',
   accessKeyId:env.PROOF_S3_ACCESS_KEY_ID,secretAccessKey:env.PROOF_S3_SECRET_ACCESS_KEY,forcePathStyle:env.PROOF_S3_PATH_STYLE==='true'}:null;
- return {directory,port,retention,keeper,remote,gatewayToken:env.OPERATIONS_GATEWAY_TOKEN};
+ return {directory,port,retention,keeper,remote,listings:{chainId:deployment.chainId,feeStrip:deployment.feeStrip,positionManager:deployment.positionManager,usdc:deployment.usdc},gatewayToken:env.OPERATIONS_GATEWAY_TOKEN};
 }
