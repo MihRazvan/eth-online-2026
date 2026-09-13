@@ -445,6 +445,8 @@ h3 {
   left: -0.02em;
   width: 62%;
   background: var(--sel);
+  transform-origin: left;
+  animation: selection-reveal 1.05s cubic-bezier(0.16, 0.84, 0.24, 1) 0.25s both;
 }
 .selword em {
   position: relative;
@@ -465,6 +467,23 @@ h3 {
   background: var(--sel);
   color: var(--selink);
   padding: 0 5px;
+}
+.hero .hero-claim,
+.hero .cta {
+  animation: hero-reveal 0.7s ease 0.55s both;
+}
+[inert] .hero .hl,
+[inert] .hero .hero-claim,
+[inert] .hero .cta {
+  animation-play-state: paused;
+}
+@keyframes selection-reveal {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+@keyframes hero-reveal {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 .cta {
   display: flex;
@@ -539,16 +558,41 @@ h3 {
   align-items: baseline;
   padding: 18px 0;
   border-bottom: 1px solid var(--rule);
+  transition: border-color 0.2s ease;
 }
 .prow h2 {
   font-size: clamp(32px, 6.4vw, 58px);
   letter-spacing: -0.02em;
   line-height: 0.95;
   display: inline-block;
+  position: relative;
+  isolation: isolate;
+  transition: color 0.18s ease;
 }
-.prow:hover h2 {
+.prow h2::before {
+  content: "";
+  position: absolute;
+  inset: 10% -8px 8%;
   background: var(--sel);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.3s cubic-bezier(0.16, 0.84, 0.24, 1);
+  z-index: -1;
+  pointer-events: none;
+}
+.prow:focus-within h2::before {
+  transform: scaleX(1);
+}
+.prow:focus-within h2 {
   color: var(--selink);
+}
+.prow:focus-within {
+  border-bottom-color: var(--sel);
+}
+@media (hover: hover) and (pointer: fine) {
+  .prow:hover h2::before { transform: scaleX(1); }
+  .prow:hover h2 { color: var(--selink); }
+  .prow:hover { border-bottom-color: var(--sel); }
 }
 .prow p {
   margin: 8px 0 0;
@@ -620,6 +664,11 @@ h3 {
   padding: 15px 18px 18px;
   border-bottom: 1px solid var(--rule);
   border-right: 1px solid var(--rule);
+  transition: background-color 0.18s ease;
+}
+.definitions dt,
+.definitions dd {
+  transition: color 0.18s ease;
 }
 .definitions dt {
   font-family: Anton, sans-serif;
@@ -638,6 +687,12 @@ h3 {
 .definitions > div:hover dt,
 .definitions > div:hover dd {
   color: var(--selink);
+}
+.landing :is(.btn, .button, button),
+.main-nav nav a,
+.titlebar button,
+.back-link {
+  transition: color 0.18s ease, background-color 0.18s ease, border-color 0.18s ease;
 }
 .landing-note {
   border: 1px solid var(--sel);
