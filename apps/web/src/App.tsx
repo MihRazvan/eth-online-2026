@@ -1,10 +1,27 @@
+import type { SellerListing } from "./listingTypes";
+import {
+  ListingForm,
+  ListingRows,
+  ListingDetail,
+  PendingListingDrafts,
+} from "./components/ListingControls";
+import {
+  Chrome,
+  Landing,
+  InformationPage,
+  MarketRow,
+  Stencil,
+  PrintStrip,
+  WindowClock,
+  ClaimSelection,
+} from "./components/Stencil";
 import { ReplacementReceipt } from "./components/ReplacementReceipt";
 import { SaleServiceNotice } from "./components/SaleServiceNotice";
 import { OfferForm } from "./components/OfferForm";
 import { parsePositionRoute, positionRoute } from "./offerTerms";
 import { readReceipts, saveReceipt } from "./receipts";
 import type { TransactionProgress } from "./types";
-import { Fruit, FruitBand, CabinetPreview, Ticket } from "./components/Orchard";
+import { Ticket } from "./components/Orchard";
 import { RecoveryPanel } from "./components/RecoveryPanel";
 import { useEffect, useRef, useState } from "react";
 import type {
@@ -74,7 +91,7 @@ function Pair({
 }) {
   return (
     <span className="pair">
-      <Fruit pair={market.pair} small />
+      <Stencil seed={market.tokenId} className="small" />
       <span>
         <b>{market.pair}</b>
         <small>
@@ -256,9 +273,17 @@ interface Review {
   warning: string;
   button: string;
 }
+function currentRoute() {
+  const raw = location.hash.slice(1);
+  if (!raw || raw === "/" || raw === "landing" || raw === "home") return "home";
+  if (raw === "holdings" || raw === "/holdings") return "positions";
+  if (raw === "/positions") return "market";
+  return raw.startsWith("/") ? raw.slice(1) : raw;
+}
 export function App({ adapter }: { adapter: FeeStripAdapter }) {
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null),
-    [route, setRoute] = useState(location.hash.slice(1) || "market"),
+    [snapshotVersion, setSnapshotVersion] = useState(0),
+    [route, setRoute] = useState(currentRoute),
     [filter, setFilter] = useState("all"),
     [search, setSearch] = useState(""),
     [quantity, setQuantity] = useState("1000"),
@@ -268,6 +293,14 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
     [error, setError] = useState(""),
     [funding, setFunding] = useState(false),
     [pinToken, setPinToken] = useState<string | null>(null),
+    [pinStep, setPinStep] = useState(1),
+    [listingLookup, setListingLookup] = useState<{
+      id: string;
+      listing?: SellerListing;
+      error?: string;
+      loading?: boolean;
+      version?: number;
+    }>({ id: "" }),
     [positionLookup, setPositionLookup] = useState(""),
     [findingPosition, setFindingPosition] = useState(false),
     [offerSelection, setOfferSelection] = useState<string | null>(null),
@@ -275,53 +308,155 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
     [receipts, setReceipts] = useState(readReceipts),
     [scenarioIncome, setScenarioIncome] = useState("840"),
     [makerQuoteSeries, setMakerQuoteSeries] = useState<string | null>(null);
+  const [theme, setTheme] = useState(() => {
+    try {
+      return localStorage.getItem("usufruct-theme") === "light"
+        ? "light"
+        : "dark";
+    } catch {
+      return "dark";
+    }
+  });
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    try {
+      localStorage.setItem("usufruct-theme", theme);
+    } catch {}
+  }, [theme]);
+  const toggleTheme = () =>
+    setTheme((value) => (value === "dark" ? "light" : "dark"));
+  useEffect(() => {
+    if (!route.startsWith("listing/") || !adapter.readListing) return;
+    const id = route.slice(8);
+    let active = true;
+    setListingLookup({ id, loading: true, version: snapshotVersion });
+    adapter
+      .readListing(id)
+      .then((listing) => {
+        if (active) setListingLookup({ id, listing, version: snapshotVersion });
+      })
+      .catch((error) => {
+        if (active)
+          setListingLookup({
+            id,
+            error: (error as Error).message,
+            version: snapshotVersion,
+          });
+      });
+    return () => {
+      active = false;
+    };
+  }, [adapter, route, snapshotVersion]);
   const dialog = useRef<HTMLDialogElement>(null),
     lastFocus = useRef<HTMLElement | null>(null);
-  const refreshVersion = useRef(0), paused = useRef(false);
+  const refreshVersion = useRef(0),
+    paused = useRef(false);
   paused.current = busy || !!review;
   const refresh = async () => {
     const version = ++refreshVersion.current;
     const next = await adapter.load();
-    if (version === refreshVersion.current) setSnapshot(next);
+    if (version === refreshVersion.current) {
+      setSnapshot(next);
+      setSnapshotVersion((value) => value + 1);
+    }
     return next;
   };
-  useEffect(() => adapter.subscribeProgress?.((next) => { setProgress(next); if (next.hash) setReceipts(saveReceipt(next)); }), [adapter]);
+  useEffect(
+    () =>
+      adapter.subscribeProgress?.((next) => {
+        setProgress(next);
+        if (next.hash) setReceipts(saveReceipt(next));
+      }),
+    [adapter],
+  );
   useEffect(() => {
-    let active = true, running = false;
+    let active = true,
+      running = false;
     const tick = async () => {
-      if (!active || running || document.visibilityState !== "visible" || paused.current) return;
+      if (
+        !active ||
+        running ||
+        document.visibilityState !== "visible" ||
+        paused.current
+      )
+        return;
       running = true;
-      try { await refresh(); } catch { /* Preserve the last snapshot; action preflight always re-reads chain state. */ }
-      finally { running = false; }
+      try {
+        await refresh();
+      } catch {
+        /* Preserve the last snapshot; action preflight always re-reads chain state. */
+      } finally {
+        running = false;
+      }
     };
-    const walletChanged = () => { ++refreshVersion.current; setError("Wallet or network changed. Close any open review and review again for the current account."); void refresh().catch(() => {}); };
+    const walletChanged = () => {
+      ++refreshVersion.current;
+      setError(
+        "Wallet or network changed. Close any open review and review again for the current account.",
+      );
+      void refresh().catch(() => {});
+    };
     const unsubscribe = adapter.subscribeWallet?.(walletChanged);
     const interval = window.setInterval(tick, 15000);
     document.addEventListener("visibilitychange", tick);
     window.addEventListener("focus", tick);
-    return () => { active = false; clearInterval(interval); unsubscribe?.(); document.removeEventListener("visibilitychange", tick); window.removeEventListener("focus", tick); };
+    return () => {
+      active = false;
+      clearInterval(interval);
+      unsubscribe?.();
+      document.removeEventListener("visibilitychange", tick);
+      window.removeEventListener("focus", tick);
+    };
   }, [adapter]);
   useEffect(() => {
     const target = parsePositionRoute(route);
     if (!target || !adapter.findPosition) return;
     let active = true;
-    setPinToken(target.tokenId); setOfferSelection(target.offerId ?? null);
+    setPinStep(target.offerId ? 3 : 2);
+    setPinToken(target.tokenId);
+    setOfferSelection(target.offerId ?? null);
     setFindingPosition(true);
-    adapter.findPosition(target.tokenId).then(() => active ? refresh() : undefined).catch((error) => { if (active) setError((error as Error).message); }).finally(() => { if (active) setFindingPosition(false); });
-    return () => { active = false; };
+    adapter
+      .findPosition(target.tokenId)
+      .then(() => (active ? refresh() : undefined))
+      .catch((error) => {
+        if (active) setError((error as Error).message);
+      })
+      .finally(() => {
+        if (active) setFindingPosition(false);
+      });
+    return () => {
+      active = false;
+    };
   }, [adapter, route]);
   useEffect(() => {
     if (!adapter.readTransaction || !snapshot?.wallet.address) return;
     let active = true;
-    const pending = receipts.filter((row) => row.stage === "pending" && row.chainId === snapshot.chainId && row.feeStrip.toLowerCase() === snapshot.feeStrip?.toLowerCase() && row.account.toLowerCase() === snapshot.wallet.address?.toLowerCase());
-    Promise.all(pending.map(async (row) => { const stage = await adapter.readTransaction!(row.hash!); if (active && stage !== "pending") setReceipts(saveReceipt({ ...row, stage })); })).catch(() => {});
-    return () => { active = false; };
+    const pending = receipts.filter(
+      (row) =>
+        row.stage === "pending" &&
+        row.chainId === snapshot.chainId &&
+        row.feeStrip.toLowerCase() === snapshot.feeStrip?.toLowerCase() &&
+        row.account.toLowerCase() === snapshot.wallet.address?.toLowerCase(),
+    );
+    Promise.all(
+      pending.map(async (row) => {
+        const stage = await adapter.readTransaction!(row.hash!);
+        if (active && stage !== "pending")
+          setReceipts(saveReceipt({ ...row, stage }));
+      }),
+    ).catch(() => {});
+    return () => {
+      active = false;
+    };
   }, [adapter, snapshot]);
   useEffect(() => {
     let active = true;
-    refresh().catch((e) => { if (active) setError(String(e)); });
+    refresh().catch((e) => {
+      if (active) setError(String(e));
+    });
     const change = () => {
-      setRoute(location.hash.slice(1) || "market");
+      setRoute(currentRoute());
       setError("");
       setMessage("");
       window.scrollTo(0, 0);
@@ -353,14 +488,30 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
   };
   const copyLink = async (hash: string) => {
     const url = location.origin + location.pathname + hash;
-    try { await navigator.clipboard.writeText(url); setMessage("Link copied. The other wallet can open the exact position or funded offer."); }
-    catch { setMessage("Copy this link: " + url); }
+    try {
+      await navigator.clipboard.writeText(url);
+      setMessage(
+        "Link copied. The other wallet can open the exact position or funded offer.",
+      );
+    } catch {
+      setMessage("Copy this link: " + url);
+    }
   };
   const begin = (r: Review) => {
     setError("");
     setMessage("");
-    if (receipts.some((row) => row.stage === "pending" && row.chainId === snapshot?.chainId && row.feeStrip.toLowerCase() === snapshot?.feeStrip?.toLowerCase() && row.account.toLowerCase() === snapshot?.wallet.address?.toLowerCase())) {
-      setError("A broadcast transaction is still unresolved. Check Saved transaction receipts and your wallet, then refresh before starting another action. Do not repeat the payment.");
+    if (
+      receipts.some(
+        (row) =>
+          row.stage === "pending" &&
+          row.chainId === snapshot?.chainId &&
+          row.feeStrip.toLowerCase() === snapshot?.feeStrip?.toLowerCase() &&
+          row.account.toLowerCase() === snapshot?.wallet.address?.toLowerCase(),
+      )
+    ) {
+      setError(
+        "A broadcast transaction is still unresolved. Check Saved transaction receipts and your wallet, then refresh before starting another action. Do not repeat the payment.",
+      );
       return;
     }
     setProgress(null);
@@ -376,6 +527,11 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
     try {
       const result = await adapter.execute(review.action);
       setReview(null);
+      if (review.action.type === "publishListing" && result.listingId) {
+        history.pushState(null, "", "#listing/" + result.listingId);
+        setRoute("listing/" + result.listingId);
+        window.scrollTo(0, 0);
+      }
       if (review.action.type === "acceptOffer") {
         // Keep the confirmed receipt visible when opening the new holding.
         // A hashchange would clear it as part of ordinary navigation.
@@ -388,21 +544,62 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
           ? `${result.description} Transaction: ${result.transactionHash}`
           : result.description,
       );
-      try { await refresh(); } catch { setError(`${result.transactionHash ? "Transaction confirmed" : "Action completed"}, but the latest state could not be loaded. Refresh chain state before starting another action; do not repeat the completed action.`); }
+      try {
+        await refresh();
+      } catch {
+        setError(
+          `${result.transactionHash ? "Transaction confirmed" : "Action completed"}, but the latest state could not be loaded. Refresh chain state before starting another action; do not repeat the completed action.`,
+        );
+      }
     } catch (e) {
       setError((e as Error).message);
     } finally {
       setBusy(false);
     }
   };
-  if (!snapshot)
+  if (!snapshot) {
+    const fixture = adapter instanceof FixtureAdapter;
+    const intro = route === "home";
+    const info = route === "privacy" || route === "terms";
     return (
-      <main className="loading">
-        <h1>Opening usufruct</h1>
-        <p role="status">Loading market and chain state…</p>
-        {error && <p role="alert">{error}</p>}
-      </main>
+      <div className={"app " + (intro ? "onlanding" : "")}>
+        <Chrome
+          route={route}
+          theme={theme}
+          onTheme={toggleTheme}
+          onConnect={connect}
+          walletLabel={fixture ? "Use fixture wallet" : "Connect wallet"}
+        />
+        <main id="main-content">
+          {intro ? (
+            <Landing
+              fixture={fixture}
+              network={
+                adapter.mode === "local"
+                  ? "Local development chain"
+                  : "Ethereum Sepolia"
+              }
+              connected={false}
+              onConnect={connect}
+            />
+          ) : info ? (
+            <InformationPage page={route as "privacy" | "terms"} />
+          ) : (
+            <section className="loading-state">
+              <Stencil seed="loading" className="loading-stencil" animate />
+              <h1>OPENING THE SHEET</h1>
+              <p role="status">Reading market and chain state…</p>
+            </section>
+          )}
+          {error && (
+            <p className="inline-warning" role="alert">
+              {error}
+            </p>
+          )}
+        </main>
+      </div>
     );
+  }
   const s = snapshot,
     fixture = adapter instanceof FixtureAdapter,
     connected = s.wallet.connected,
@@ -411,14 +608,46 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
       s.markets.find((m) => m.id === route.replace("market/", "")) ??
       s.markets[0],
     detail = route.startsWith("market/"),
+    listingPage = route.startsWith("listing/"),
+    home = route === "home",
+    information = route === "privacy" || route === "terms",
     positions = route === "positions",
     pin = route === "pin" || route.startsWith("pin/"),
     held = s.wallet.claims[selected?.id ?? ""] ?? "0";
+  const listingReadCurrent =
+    listingLookup.id === route.slice(8) &&
+    listingLookup.version === snapshotVersion;
+  const listingReading =
+    !!adapter.readListing && (!listingReadCurrent || !!listingLookup.loading);
+  const currentListing = adapter.readListing
+    ? listingReadCurrent && !listingLookup.loading && !listingLookup.error
+      ? listingLookup.listing
+      : undefined
+    : s.listingDirectory?.listings.find(
+        (row) => row.listingId === route.slice(8),
+      );
   const pinCandidates = s.positions.filter((p) => !p.seriesId);
-  const rawPinPosition = pinCandidates.find((p) => p.tokenId === pinToken) ?? (parsePositionRoute(route) ? undefined : pinCandidates[0]);
-  const pinPosition = rawPinPosition && offerSelection ? { ...rawPinPosition, offer: rawPinPosition.offers?.find((offer) => offer.id === offerSelection) } : rawPinPosition;
-  const linkedMarket = parsePositionRoute(route) ? s.markets.find((market) => market.tokenId === parsePositionRoute(route)!.tokenId) : undefined;
-  const accountChanged = !!review?.action.reviewedAccount && review.action.reviewedAccount.toLowerCase() !== s.wallet.address?.toLowerCase();
+  const rawPinPosition =
+    pinCandidates.find((p) => p.tokenId === pinToken) ??
+    (parsePositionRoute(route) ? undefined : pinCandidates[0]);
+  const pinPosition =
+    rawPinPosition && offerSelection
+      ? {
+          ...rawPinPosition,
+          offer: rawPinPosition.offers?.find(
+            (offer) => offer.id === offerSelection,
+          ),
+        }
+      : rawPinPosition;
+  const linkedMarket = parsePositionRoute(route)
+    ? s.markets.find(
+        (market) => market.tokenId === parsePositionRoute(route)!.tokenId,
+      )
+    : undefined;
+  const accountChanged =
+    !!review?.action.reviewedAccount &&
+    review.action.reviewedAccount.toLowerCase() !==
+      s.wallet.address?.toLowerCase();
   const salesPaused = s.mode === "testnet" && !s.saleReadiness?.ready;
   const noGas = !fixture && connected && s.wallet.ethBalanceWei === "0";
   const visiblePositions = pin
@@ -543,53 +772,33 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
     });
   };
   return (
-    <div className="app">
+    <div
+      className={
+        "app " +
+        (home ? "onlanding" : "") +
+        (pin ? " pin-stage-" + pinStep : "")
+      }
+    >
       <a className="skip-link" href="#main-content">
         Skip to content
       </a>
-      <header>
-        <a className="brand" href="#market" aria-label="usufruct orchard">
-          usufruct
-        </a>
-        <nav aria-label="Main navigation">
-          <a
-            className={!positions && !pin ? "selected" : ""}
-            aria-current={!positions && !pin ? "page" : undefined}
-            href="#market"
-          >
-            Orchard
-          </a>
-          <a
-            className={pin ? "selected" : ""}
-            aria-current={pin ? "page" : undefined}
-            href="#pin"
-          >
-            Pin a tree
-          </a>
-          <a
-            className={positions ? "selected" : ""}
-            aria-current={positions ? "page" : undefined}
-            href="#positions"
-          >
-            My cabinet
-          </a>
-        </nav>
-        <span className="network-label">
-          {s.mode === "fixture" ? "Design sandbox" : s.network}
-        </span>
-        <button className="wallet-button" onClick={connect}>
-          <Icon name="wallet" size={16} />
-          {connected
+      <Chrome
+        route={route}
+        theme={theme}
+        onTheme={toggleTheme}
+        onConnect={connect}
+        walletLabel={
+          connected
             ? fixture
               ? "Fixture wallet"
-              : s.wallet.address?.slice(0, 6) +
+              : s.wallet.address!.slice(0, 6) +
                 "…" +
-                s.wallet.address?.slice(-4)
+                s.wallet.address!.slice(-4)
             : fixture
               ? "Use fixture wallet"
-              : "Connect wallet"}
-        </button>
-      </header>
+              : "Connect wallet"
+        }
+      />
       <main id="main-content">
         <div className="environment">
           <span className="fixture-indicator">
@@ -660,56 +869,122 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
             </button>
           </div>
         )}
-        {s.mode === "testnet" && <SaleServiceNotice readiness={s.saleReadiness} refresh={refresh} disabled={busy || !!review} />}
-        {!detail && !positions && !pin ? (
+        {!home && !information && s.mode === "testnet" && (
+          <SaleServiceNotice
+            readiness={s.saleReadiness}
+            refresh={refresh}
+            disabled={busy || !!review}
+          />
+        )}
+        {home && (
+          <Landing
+            fixture={fixture}
+            network={s.network}
+            connected={connected}
+            onConnect={connect}
+          />
+        )}
+        {information && <InformationPage page={route as "privacy" | "terms"} />}
+        {listingPage && (
           <>
-            <section className="intro orchard-intro">
-              <div>
-                <h1>The orchard</h1>
+            <a className="back-link" href="#market">
+              ← All positions
+            </a>
+            {currentListing ? (
+              (() => {
+                const listing = currentListing;
+                return (
+                  <div className="listing-layout">
+                    <div>
+                      <Stencil
+                        seed={listing.terms.tokenId}
+                        fill={
+                          Number(
+                            (BigInt(listing.terms.buyerQuantity) * 10000n) /
+                              BigInt(listing.terms.originalSupply),
+                          ) / 10000
+                        }
+                      />
+                      <PrintStrip label="signed advertisement / custody checked separately" />
+                    </div>
+                    <div>
+                      <ListingDetail
+                        listing={listing}
+                        snapshot={s}
+                        disabled={busy || !!review || wrongNetwork}
+                        onReview={begin}
+                        onError={setError}
+                      />
+                      {!connected && (
+                        <button className="primary" onClick={connect}>
+                          {fixture ? "Use fixture wallet" : "Connect wallet"}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()
+            ) : (
+              <section className="empty">
+                <h2>
+                  {listingLookup.loading
+                    ? "Reading listing"
+                    : "Listing unavailable"}
+                </h2>
                 <p>
-                  Buy a share of a Uniswap position’s USDC fees for one fixed
-                  period.
-                  <br /> Every claim carries its unpaid income for that whole
-                  period.
+                  {listingLookup.error ??
+                    s.listingDirectory?.reason ??
+                    "This listing is not in the current directory. Refresh its source before funding."}
                 </p>
-              </div>
-              <div className="orchard-note">
-                <span>the income, not the tree.</span>
-                <small>
-                  Original NFT & fee claims
-                  <br /> are separate rights.
-                </small>
+                <button
+                  onClick={() =>
+                    refresh().catch((error) => setError(error.message))
+                  }
+                >
+                  Refresh listing state
+                </button>
+              </section>
+            )}
+          </>
+        )}
+        {route === "market" ? (
+          <>
+            <section className="pagehead market-pagehead">
+              <h1 className="display">MARKET</h1>
+              <div className="tele">
+                {s.network}
+                <br />
+                {s.markets.length} issued windows
               </div>
             </section>
-            <details className="orchard-guide">
-              <summary>New to usufruct? Start here.</summary>
-              <p>
-                A liquidity provider can sell a share of one position’s future USDC fees.
-                Buyers pay upfront and receive tradable fee claims. You don’t need an LP
-                position to buy a claim.
-              </p>
-              <ol>
-                <li><h3>Agree on a period</h3><p>
-                  The seller accepts a funded offer. The original NFT stays in escrow,
-                  with its range and liquidity fixed for the agreed earning window.
-                </p></li>
-                <li><h3>Own a share of the fees</h3><p>
-                  A claim carries its fraction of all unpaid USDC income from that window,
-                  including fees earned before you bought it. Income and resale are not guaranteed.
-                </p></li>
-                <li><h3>Collect when ready</h3><p>
-                  After the window, fees are collected and the holder of the NFT return right can recover it.
-                  Claim holders redeem after the exact allocation is verified.
-                </p></li>
-              </ol>
-              <p className="fine">
-                {fixture
-                  ? "This preview uses simulated balances and transactions."
-                  : s.mode === "local"
-                    ? "This application runs on a local development chain with test wallets and assets. Browsing requires no wallet."
-                  : "This application runs on Ethereum Sepolia. Transacting requires a compatible wallet, Sepolia ETH for gas and test USDC for purchases. Browsing requires no wallet."}
-              </p>
-            </details>
+            <p className="lede">
+              Buy a share of one position’s unpaid USDC fees for one exact
+              window. The claims carry the whole period’s unpaid income; the
+              original NFT return right stays separate.
+            </p>
+            <section className="seller-listings">
+              <div className="section-top">
+                <h2>Seller listings</h2>
+                <span className="tele">Signed terms · no custody yet</span>
+              </div>
+              {s.listingDirectory?.listings.length ? (
+                <ListingRows
+                  listings={s.listingDirectory.listings}
+                  art={(tokenId) => <Stencil seed={tokenId} />}
+                />
+              ) : (
+                <div className="listing-empty">
+                  <p>
+                    {s.listingDirectory?.status === "available"
+                      ? "No seller listings yet. Publish exact terms for a buyer to fund."
+                      : "The listing directory is unavailable. Issued fee claims below still come from chain state."}
+                  </p>
+                  <a className="button ghost" href="#pin">
+                    Pin a seed
+                  </a>
+                </div>
+              )}
+            </section>
             <section className="market">
               <div className="section-top">
                 <h2>
@@ -742,79 +1017,17 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                   />
                 </div>
               </div>
-              <div className="orchard-legend" aria-hidden="true">
-                <span>
-                  <i className="fruit-dot filled" /> offered share
-                </span>
-                <span>
-                  <Ticket /> cabinet record
-                </span>
-                <span>
-                  <i className="fruit-dot" /> unavailable share
-                </span>
-              </div>
-              <p className="glyph-key">
-                Each row is one fee period. Ten marks represent original Q; a
-                pale mark is a partial share. Color identifies the position, not
-                earned income.
+              <p className="fine inventory-key">
+                Stencil fill shows executable claims as a fraction of original
+                Q. Unavailable inventory is not evidence of a sale.
               </p>
-              <div className="table orchard-table">
+              <div className="table stencil-rows">
                 {filtered.map((m) => (
-                  <a
-                    className="market-row orchard-row"
-                    href={"#market/" + m.id}
+                  <MarketRow
                     key={m.id}
-                    aria-label={`Open ${m.pair} NFT ${m.tokenId}`}
-                  >
-                    <div className="orchard-position">
-                      <h3>
-                        {m.pair} <span>{m.feeTier}</span>
-                      </h3>
-                      <small>
-                        #{m.tokenId} · Uniswap v4
-                        <br />{" "}
-                        {m.inRange
-                          ? "In range"
-                          : "Out of range · income may be zero"}
-                      </small>
-                      <span className="orchard-state">
-                        {m.phase === "active"
-                          ? "One fixed fee period"
-                          : m.phase === "matured"
-                            ? "Period ended · capture pending"
-                            : m.phase === "captured"
-                              ? "Fees captured · allocation pending"
-                              : m.phase === "closed"
-                                ? "Closed by recombination"
-                                : "Allocation verified"}
-                      </span>
-                    </div>
-                    <div className="orchard-inventory">
-                      <FruitBand market={m} />
-                      <p>
-                        Through <b>block {integer(m.endBlock)}</b>
-                        <small>{m.endDate} · estimated date</small>
-                      </p>
-                    </div>
-                    <div className="orchard-price">
-                      <strong>
-                        {BigInt(m.availableClaims) === 0n
-                          ? "No executable quote"
-                          : money(m.askMicros, 3) + " USDC"}
-                      </strong>
-                      <span>
-                        {BigInt(m.availableClaims) > 0n
-                          ? "per fee claim"
-                          : "Availability can change"}
-                      </span>
-                      <small>
-                        Original Q: {formatClaims(m.originalSupply)}
-                        <br /> 1 claim ={" "}
-                        {sharePercent(CLAIM_UNIT.toString(), m.originalSupply)}%
-                      </small>
-                      <span className="read-specimen">Read the terms ↗</span>
-                    </div>
-                  </a>
+                    market={m}
+                    held={connected ? (s.wallet.claims[m.id] ?? "0") : "0"}
+                  />
                 ))}
               </div>
               {filtered.length === 0 && (
@@ -846,33 +1059,35 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                 </div>
               )}
             </section>
-            <CabinetPreview
-              markets={s.markets}
-              claims={s.wallet.claims}
-              connected={connected}
-              onConnect={connect}
-            />
-            <section className="orchard-colophon">
-              <p>
-                A tree is the original position NFT. The fruit is its fee claims
-                for <b>one agreed window</b>, not monthly strips.
-              </p>
-              <a href="#pin">Have a position? Pin a tree ↗</a>
-            </section>
+            <PrintStrip label="fixed original Q / native USDC / one window" />
           </>
         ) : null}
         {detail && selected ? (
           <>
             <a className="back-link" href="#market">
-              <Icon name="back" size={15} /> Back to the orchard
+              <Icon name="back" size={15} /> All positions
             </a>
             <div className="detail-heading">
+              <div className="detail-stencil">
+                <Stencil
+                  seed={selected.tokenId}
+                  fill={
+                    BigInt(selected.originalSupply) > 0n
+                      ? Number(
+                          (BigInt(selected.availableClaims) * 10000n) /
+                            BigInt(selected.originalSupply),
+                        ) / 10000
+                      : 0
+                  }
+                />
+                <span className="tele">
+                  NFT {selected.tokenId} · executable fraction of Q
+                </span>
+              </div>
               <div>
                 <Pair market={selected} />
-                <h1>
-                  The fruit of
-                  <br /> <span>this position.</span>
-                </h1>
+                <h1>NFT {selected.tokenId}</h1>
+                <p className="tele">One window · issued fee claims</p>
               </div>
               <div className="term-label">
                 <span>
@@ -898,7 +1113,7 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                 />
                 <section className="instrument">
                   <div className="section-top">
-                    <h2>The original tree</h2>
+                    <h2>The original position</h2>
                     <span className="nft-tag">
                       Original NFT #{selected.tokenId}
                     </span>
@@ -1057,6 +1272,12 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                 </section>
               </div>
               <aside className="trade-panel">
+                <WindowClock market={selected} block={s.blockNumber} />
+                <ClaimSelection
+                  market={selected}
+                  quantity={quantityBase}
+                  onChange={setQuantity}
+                />
                 <div className="trade-header">
                   <h2>Buy fee claims</h2>
                   <span>Powered by SwapVM</span>
@@ -1210,18 +1431,21 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
             </div>
           </>
         ) : null}
+        {(positions || pin) && (
+          <PendingListingDrafts snapshot={s} onReview={begin} />
+        )}
         {positions || pin ? (
           <>
             <section className="positions-intro">
               <div>
-                <h1>{pin ? "Pin a tree" : "My cabinet"}</h1>
+                <h1>{pin ? "PIN A SEED" : "HOLDINGS"}</h1>
                 <p>
                   {pin
-                    ? "Receive USDC upfront for a share of your position’s future USDC fees."
+                    ? "Publish one exact window of your position’s future USDC fees."
                     : "Your fee claims, position return rights and open offers."}
                   <br />{" "}
                   {pin
-                    ? "Your NFT stays in escrow until the period ends and fees are captured."
+                    ? "Listing leaves the NFT in your wallet. Only accepting a funded offer starts escrow."
                     : "Keep the original window in view. Harvest only after allocation is verified."}
                 </p>
               </div>
@@ -1233,30 +1457,196 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                   : "one window. separate rights."}
               </span>
             </section>
-        {connected && !fixture && (positions || pin) && <section className="wallet-prerequisites" aria-label="Wallet prerequisites">
-          <h2>Your wallet</h2>
-          <p>{money(s.wallet.usdcBalanceMicros, 6)} test USDC · {s.wallet.ethBalanceWei === undefined ? "ETH balance unavailable" : (Number(s.wallet.ethBalanceWei) / 1e18).toPrecision(5) + " ETH for gas"}.</p>
-          {s.mode === "testnet" && <p className="fine"><a href="https://faucet.circle.com/" target="_blank" rel="noreferrer">Get test USDC from Circle</a> (choose Ethereum Sepolia) · <a href="https://ethereum.org/en/developers/docs/networks/#sepolia" target="_blank" rel="noreferrer">Find a Sepolia ETH faucet</a>. Faucet availability and limits can vary.</p>}
-          {noGas && <p className="inline-warning">Add Sepolia ETH before signing. USDC cannot pay Ethereum transaction fees.</p>}
-          <p className="fine">Use {s.mode === "local" ? "the local development chain and its test tokens" : "Ethereum Sepolia and its authentic test USDC"}. Check your wallet’s network and receive both test assets before funding. Every transaction estimates gas before requesting a signature; proof allocation may cost substantially more than approval or funding.</p>
-        </section>}
-        {connected && !fixture && (positions || pin) && receipts.some((row) => row.chainId === s.chainId && row.feeStrip.toLowerCase() === s.feeStrip?.toLowerCase() && row.account.toLowerCase() === s.wallet.address?.toLowerCase()) && <details className="transaction-receipts">
-          <summary>Saved transaction receipts</summary>
-          <p className="fine">Stored on this browser for this account and deployment. Chain state controls available actions. Confirmed allowances remain if a later signature was rejected.</p>
-          {receipts.filter((row) => row.chainId === s.chainId && row.feeStrip.toLowerCase() === s.feeStrip?.toLowerCase() && row.account.toLowerCase() === s.wallet.address?.toLowerCase()).map((row) => <article key={row.hash} className="receipt-row">
-            <b>{row.label} · {row.stage}</b>
-            {s.chainId === 11155111 ? <a href={"https://sepolia.etherscan.io/tx/" + row.hash} target="_blank" rel="noreferrer">View transaction</a> : <code>{row.hash}</code>}
-            {row.replacementHash && <small>Replacement: {s.chainId === 11155111 ? <a href={"https://sepolia.etherscan.io/tx/" + row.replacementHash} target="_blank" rel="noreferrer">view transaction</a> : <code>{row.replacementHash}</code>}. {row.stage === "replaced" ? "Its chain confirmation is checked again before another signature. Public replacements must be finalized." : "The original submission remains guarded. Check the replacement receipt again before another action."}</small>}
-            {row.offerId && row.action?.type === "fundOffer" && <a href={positionRoute(row.action.tokenId, row.offerId)}>Share offer #{row.offerId} with the seller</a>}
-            <ReplacementReceipt original={row} adapter={adapter} onResolved={async (rows) => {
-              for (const next of rows) setReceipts(saveReceipt(next));
-              setMessage("The original transaction was superseded. Its replacement is recorded; check the refreshed offer or holding before another action.");
-              try { await refresh(); } catch { setError("Replacement verified, but the latest state could not be loaded. Refresh before reviewing another action."); }
-            }} />
-            {row.label === "Token allowance" && <small>Allowance only permits spending. It does not fund or activate a sale, and can remain after cancellation.</small>}
-            {row.action?.type === "fundOffer" && row.offerId && row.stage === "confirmed" && <small>This receipt confirms escrow funding, not issued claims. Check the offer’s current state. After acceptance, open My cabinet to find your claims and publish a sell quote.</small>}
-          </article>)}
-        </details>}
+            {pin && (
+              <nav className="pin-steps" aria-label="Pin workflow">
+                <button
+                  className={pinStep === 1 ? "on" : ""}
+                  onClick={() => setPinStep(1)}
+                >
+                  1 · Choose a position
+                </button>
+                <button
+                  className={pinStep === 2 ? "on" : ""}
+                  disabled={!pinPosition}
+                  onClick={() => setPinStep(2)}
+                >
+                  2 · Set your listing
+                </button>
+                <button
+                  className={pinStep === 3 ? "on" : ""}
+                  disabled={!pinPosition}
+                  onClick={() => setPinStep(3)}
+                >
+                  3 · Funded offers{" "}
+                  {pinPosition?.offers?.length ?? (pinPosition?.offer ? 1 : 0)}
+                </button>
+              </nav>
+            )}
+
+            {connected && !fixture && (positions || pin) && (
+              <section
+                className="wallet-prerequisites"
+                aria-label="Wallet prerequisites"
+              >
+                <h2>Your wallet</h2>
+                <p>
+                  {money(s.wallet.usdcBalanceMicros, 6)} test USDC ·{" "}
+                  {s.wallet.ethBalanceWei === undefined
+                    ? "ETH balance unavailable"
+                    : (Number(s.wallet.ethBalanceWei) / 1e18).toPrecision(5) +
+                      " ETH for gas"}
+                  .
+                </p>
+                {s.mode === "testnet" && (
+                  <p className="fine">
+                    <a
+                      href="https://faucet.circle.com/"
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Get test USDC from Circle
+                    </a>{" "}
+                    (choose Ethereum Sepolia) ·{" "}
+                    <a
+                      href="https://ethereum.org/en/developers/docs/networks/#sepolia"
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Find a Sepolia ETH faucet
+                    </a>
+                    . Faucet availability and limits can vary.
+                  </p>
+                )}
+                {noGas && (
+                  <p className="inline-warning">
+                    Add ETH before onchain transactions. Listing signatures do
+                    not require gas. USDC cannot pay Ethereum transaction fees.
+                  </p>
+                )}
+                <p className="fine">
+                  Use{" "}
+                  {s.mode === "local"
+                    ? "the local development chain and its test tokens"
+                    : "Ethereum Sepolia and its authentic test USDC"}
+                  . Check your wallet’s network and receive both test assets
+                  before funding. Every transaction estimates gas before
+                  requesting a signature; proof allocation may cost
+                  substantially more than approval or funding.
+                </p>
+              </section>
+            )}
+            {connected &&
+              !fixture &&
+              (positions || pin) &&
+              receipts.some(
+                (row) =>
+                  row.chainId === s.chainId &&
+                  row.feeStrip.toLowerCase() === s.feeStrip?.toLowerCase() &&
+                  row.account.toLowerCase() === s.wallet.address?.toLowerCase(),
+              ) && (
+                <details className="transaction-receipts">
+                  <summary>Saved transaction receipts</summary>
+                  <p className="fine">
+                    Stored on this browser for this account and deployment.
+                    Chain state controls available actions. Confirmed allowances
+                    remain if a later signature was rejected.
+                  </p>
+                  {receipts
+                    .filter(
+                      (row) =>
+                        row.chainId === s.chainId &&
+                        row.feeStrip.toLowerCase() ===
+                          s.feeStrip?.toLowerCase() &&
+                        row.account.toLowerCase() ===
+                          s.wallet.address?.toLowerCase(),
+                    )
+                    .map((row) => (
+                      <article key={row.hash} className="receipt-row">
+                        <b>
+                          {row.label} · {row.stage}
+                        </b>
+                        {s.chainId === 11155111 ? (
+                          <a
+                            href={"https://sepolia.etherscan.io/tx/" + row.hash}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            View transaction
+                          </a>
+                        ) : (
+                          <code>{row.hash}</code>
+                        )}
+                        {row.replacementHash && (
+                          <small>
+                            Replacement:{" "}
+                            {s.chainId === 11155111 ? (
+                              <a
+                                href={
+                                  "https://sepolia.etherscan.io/tx/" +
+                                  row.replacementHash
+                                }
+                                target="_blank"
+                                rel="noreferrer"
+                              >
+                                view transaction
+                              </a>
+                            ) : (
+                              <code>{row.replacementHash}</code>
+                            )}
+                            .{" "}
+                            {row.stage === "replaced"
+                              ? "Its chain confirmation is checked again before another signature. Public replacements must be finalized."
+                              : "The original submission remains guarded. Check the replacement receipt again before another action."}
+                          </small>
+                        )}
+                        {row.offerId && row.action?.type === "fundOffer" && (
+                          <a
+                            href={positionRoute(
+                              row.action.tokenId,
+                              row.offerId,
+                            )}
+                          >
+                            Share offer #{row.offerId} with the seller
+                          </a>
+                        )}
+                        <ReplacementReceipt
+                          original={row}
+                          adapter={adapter}
+                          onResolved={async (rows) => {
+                            for (const next of rows)
+                              setReceipts(saveReceipt(next));
+                            setMessage(
+                              "The original transaction was superseded. Its replacement is recorded; check the refreshed offer or holding before another action.",
+                            );
+                            try {
+                              await refresh();
+                            } catch {
+                              setError(
+                                "Replacement verified, but the latest state could not be loaded. Refresh before reviewing another action.",
+                              );
+                            }
+                          }}
+                        />
+                        {row.label === "Token allowance" && (
+                          <small>
+                            Allowance only permits spending. It does not fund or
+                            activate a sale, and can remain after cancellation.
+                          </small>
+                        )}
+                        {row.action?.type === "fundOffer" &&
+                          row.offerId &&
+                          row.stage === "confirmed" && (
+                            <small>
+                              This receipt confirms escrow funding, not issued
+                              claims. Check the offer’s current state. After
+                              acceptance, open Holdings to find your claims and
+                              publish a sell quote.
+                            </small>
+                          )}
+                      </article>
+                    ))}
+                </details>
+              )}
             {!connected && !pin ? (
               <div className="connect-state">
                 <Icon name="wallet" size={36} />
@@ -1275,15 +1665,24 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                   <section className="claim-holdings">
                     <div className="section-top">
                       <h2>
-                        Your fruit <small>fee claims</small>
+                        Your claims <small>fee claims</small>
                       </h2>
                       <span className="source-tag">Native USDC income</span>
                     </div>
-                    {!s.markets.some((market) => s.wallet.claims[market.id] !== undefined) && <div className="empty-claims">
-                      <h3>No fee claims yet</h3>
-                      <p>Funded offers are escrowed payments, not claims. Claims arrive only after the seller accepts an offer.</p>
-                      <a href="#market">Browse the Orchard for issued claims <Icon /></a>
-                    </div>}
+                    {!s.markets.some(
+                      (market) => s.wallet.claims[market.id] !== undefined,
+                    ) && (
+                      <div className="empty-claims">
+                        <h3>No fee claims yet</h3>
+                        <p>
+                          Funded offers are escrowed payments, not claims.
+                          Claims arrive only after the seller accepts an offer.
+                        </p>
+                        <a href="#market">
+                          Browse the Orchard for issued claims <Icon />
+                        </a>
+                      </div>
+                    )}
                     {s.markets
                       .filter((m) => s.wallet.claims[m.id] !== undefined)
                       .map((m) => (
@@ -1391,7 +1790,25 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                             <b>
                               Offer #{offer.id} · NFT #{offer.tokenId}
                             </b>
-                            {!fixture && <div className="offer-share-links"><a href={positionRoute(offer.tokenId, offer.id)}>Open seller review link</a><button className="text-button" onClick={() => copyLink(positionRoute(offer.tokenId, offer.id))}>Copy offer link</button></div>}
+                            {!fixture && (
+                              <div className="offer-share-links">
+                                <a
+                                  href={positionRoute(offer.tokenId, offer.id)}
+                                >
+                                  Open seller review link
+                                </a>
+                                <button
+                                  className="text-button"
+                                  onClick={() =>
+                                    copyLink(
+                                      positionRoute(offer.tokenId, offer.id),
+                                    )
+                                  }
+                                >
+                                  Copy offer link
+                                </button>
+                              </div>
+                            )}
                             <small>
                               {offer.expired
                                 ? "Expired · funds recoverable"
@@ -1440,6 +1857,33 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                   </section>
                 )}
                 {positions && (
+                  <section className="owned-listings">
+                    <div className="section-top">
+                      <h2>Your listings</h2>
+                      <span className="tele">Advertisements · not escrow</span>
+                    </div>
+                    {s.listingDirectory?.listings.some(
+                      (row) =>
+                        row.terms.seller.toLowerCase() ===
+                        s.wallet.address?.toLowerCase(),
+                    ) ? (
+                      <ListingRows
+                        listings={s.listingDirectory.listings.filter(
+                          (row) =>
+                            row.terms.seller.toLowerCase() ===
+                            s.wallet.address?.toLowerCase(),
+                        )}
+                        art={(tokenId) => <Stencil seed={tokenId} />}
+                      />
+                    ) : (
+                      <p className="fine">
+                        No seller listings found for this wallet in the current
+                        directory.
+                      </p>
+                    )}
+                  </section>
+                )}
+                {positions && (
                   <MakerStrategies
                     strategies={s.strategies.filter(
                       (q) =>
@@ -1456,44 +1900,91 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                     <div className="pin-step-heading">
                       <i>i.</i>
                       <div>
-                        <h2>Choose a tree</h2>
+                        <h2>Choose a position</h2>
                         <p>
-                          A tree is one canonical Uniswap position. Its USDC fee
-                          leg is the fruit.
+                          A seed is one canonical Uniswap position. Review its
+                          exact fee window before accepting a sale.
                         </p>
                       </div>
                     </div>
                     {adapter.findPosition && (
-                      <form className="position-lookup" onSubmit={async (event) => {
-                        event.preventDefault();
-                        setFindingPosition(true);
-                        setError("");
-                        setMessage("");
-                        try {
-                          const id = await adapter.findPosition!(positionLookup);
-                          const next = await refresh();
-                          if (!next.positions.some((position) => position.tokenId === id) && !next.markets.some((market) => market.tokenId === id))
-                            throw new Error("Position details could not be loaded. Check the NFT ID and try again.");
-                          setPinToken(id);
-                          location.hash = positionRoute(id);
-                          setMessage(`Found position #${id}. Finding a position does not approve or transfer it.`);
-                        } catch (error) {
-                          setError((error as Error).message);
-                        } finally { setFindingPosition(false); }
-                      }}>
-                        <label htmlFor="position-lookup">NFT ID or Uniswap link</label>
+                      <form
+                        className="position-lookup"
+                        onSubmit={async (event) => {
+                          event.preventDefault();
+                          setFindingPosition(true);
+                          setError("");
+                          setMessage("");
+                          try {
+                            const id =
+                              await adapter.findPosition!(positionLookup);
+                            const next = await refresh();
+                            if (
+                              !next.positions.some(
+                                (position) => position.tokenId === id,
+                              ) &&
+                              !next.markets.some(
+                                (market) => market.tokenId === id,
+                              )
+                            )
+                              throw new Error(
+                                "Position details could not be loaded. Check the NFT ID and try again.",
+                              );
+                            setPinToken(id);
+                            location.hash = positionRoute(id);
+                            setMessage(
+                              `Found position #${id}. Finding a position does not approve or transfer it.`,
+                            );
+                          } catch (error) {
+                            setError((error as Error).message);
+                          } finally {
+                            setFindingPosition(false);
+                          }
+                        }}
+                      >
+                        <label htmlFor="position-lookup">
+                          NFT ID or Uniswap link
+                        </label>
                         <div className="position-lookup-fields">
-                          <input id="position-lookup" value={positionLookup} onChange={(event) => setPositionLookup(event.target.value)}
-                            placeholder="39220 or a Sepolia v4 position link" maxLength={300} required disabled={findingPosition || wrongNetwork} />
-                          <button type="submit" disabled={findingPosition || wrongNetwork || !positionLookup.trim()}>
+                          <input
+                            id="position-lookup"
+                            value={positionLookup}
+                            onChange={(event) =>
+                              setPositionLookup(event.target.value)
+                            }
+                            placeholder="39220 or a Sepolia v4 position link"
+                            maxLength={300}
+                            required
+                            disabled={findingPosition || wrongNetwork}
+                          />
+                          <button
+                            type="submit"
+                            disabled={
+                              findingPosition ||
+                              wrongNetwork ||
+                              !positionLookup.trim()
+                            }
+                          >
                             {findingPosition ? "Finding…" : "Find position"}
                           </button>
                         </div>
                         <p>{s.positionDiscoveryNotice}</p>
                       </form>
                     )}
-                    {linkedMarket && <p className="inline-warning">This position has an activated sale. <a href={"#market/" + linkedMarket.id}>View its issued fee claims</a>. Buyers can publish a sell quote from My cabinet.</p>}
-                    {findingPosition && <p className="fine">Loading the linked canonical position…</p>}
+                    {linkedMarket && (
+                      <p className="inline-warning">
+                        This position has an activated sale.{" "}
+                        <a href={"#market/" + linkedMarket.id}>
+                          View its issued fee claims
+                        </a>
+                        . Buyers can publish a sell quote from Holdings.
+                      </p>
+                    )}
+                    {findingPosition && (
+                      <p className="fine">
+                        Loading the linked canonical position…
+                      </p>
+                    )}
                     <fieldset className="tree-options">
                       <legend className="sr-only">
                         Choose a position to pin
@@ -1512,12 +2003,15 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                             name="pin-position"
                             checked={pinPosition?.tokenId === p.tokenId}
                             onChange={() => {
+                              setPinStep(2);
                               setPinToken(p.tokenId);
                               setOfferSelection(null);
-                              if (!fixture) location.hash = positionRoute(p.tokenId);
+                              if (!fixture)
+                                location.hash = positionRoute(p.tokenId);
                               setFunding(false);
                             }}
                           />
+                          <Stencil seed={p.tokenId} />
                           <span>
                             <b>{p.pair}</b>{" "}
                             {p.feeTier ?? "Fee tier unavailable"}{" "}
@@ -1547,20 +2041,8 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                     (pin ? "pin-workflow" : "cabinet-positions")
                   }
                 >
-                  {pin && (
-                    <div className="pin-step-heading">
-                      <i>ii.</i>
-                      <div>
-                        <h2>Read the harvest terms</h2>
-                        <p>
-                          Fee claims share one exact earning period. The
-                          original quantity Q stays fixed.
-                        </p>
-                      </div>
-                    </div>
-                  )}
                   <div className="section-top">
-                    <h2>{pin ? "Selected position" : "Your pinned trees"}</h2>
+                    <h2>{pin ? "Selected position" : "Your seeds"}</h2>
                     <span className="source-tag address">
                       {fixture ? "Fixture wallet" : s.wallet.address}
                     </span>
@@ -1571,14 +2053,14 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                       <h3>
                         {pin
                           ? "No supported positions to pin"
-                          : "No pinned trees in this wallet"}
+                          : "No escrowed seeds in this wallet"}
                       </h3>
                       <p>
                         Only validated, nonempty, hookless canonical Uniswap v4
                         NFTs containing authentic USDC can be sold.
                       </p>
                       <a className="text-link" href={pin ? "#market" : "#pin"}>
-                        {pin ? "Explore the orchard ↗" : "Pin a tree ↗"}
+                        {pin ? "Explore the orchard ↗" : "Pin a seed ↗"}
                       </a>
                     </div>
                   ) : (
@@ -1616,7 +2098,11 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                                 changes, fee collection, or withdrawal during
                                 the active term.
                               </p>
-                              {!connected && <button className="primary" onClick={connect}>Connect wallet to fund or manage this position</button>}
+                              {!connected && (
+                                <button className="primary" onClick={connect}>
+                                  Connect wallet to fund or manage this position
+                                </button>
+                              )}
                               <div className="position-buttons">
                                 <a
                                   className="button"
@@ -1695,6 +2181,7 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                                       <br /> One agreed earning window.
                                     </p>
                                     <div className="specimen-seal">
+                                      <Stencil seed={p.tokenId} />
                                       <Ticket />
                                       <span>
                                         Original NFT #{p.tokenId}
@@ -1702,7 +2189,7 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                                       </span>
                                     </div>
                                   </div>
-                                  <h3>What is pinned</h3>
+                                  <h3>What acceptance freezes</h3>
                                   <p className="fine">
                                     Freeze this exact NFT, its range and
                                     liquidity. Pre-activation fees are cleared
@@ -1716,21 +2203,121 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                                   </div>
                                 </div>
                                 <div>
-                                  {!fixture && <p className="fine"><a href={positionRoute(p.tokenId)}>Position link</a> · <button className="text-button" onClick={() => copyLink(positionRoute(p.tokenId))}>Copy position link</button>. Owner: <span className="address">{p.owner}</span></p>}
-                                  {(p.offers?.length ?? 0) > 0 && <label>Funded offer to review<select aria-label="Funded offer to review" value={p.offer?.id ?? ""} onChange={(event) => { setOfferSelection(event.target.value); location.hash = positionRoute(p.tokenId, event.target.value); }}>
-                                    {!p.offer && <option value="">Choose an available offer</option>}
-                                    {p.offers!.map((offer) => <option key={offer.id} value={offer.id}>#{offer.id} · {money(offer.fundedMicros, 6)} USDC · {formatClaims(offer.claims)} claims</option>)}
-                                  </select></label>}
-                                  <FundedOffer position={p} fixture={fixture} />
-                                  {!!p.unavailableOffersCount && <p className="fine">{p.unavailableOffersCount} unaccepted offer(s) have expired or no longer match this position’s current owner, pool, range or liquidity. Buyers can cancel them from My cabinet to recover their exact funding.</p>}
-                                  {!p.offer && <p className="fine">This version starts with a funded buyer offer. NFT approval does not publish a listing. Copy the position link and share it with a separate buyer; they fund an offer, then you approve and accept its exact terms here. Expired or consumed offers cannot be accepted.</p>}
+                                  {p.ownedByWallet !== false && (
+                                    <ListingForm
+                                      position={p}
+                                      snapshot={s}
+                                      disabled={
+                                        busy || !!review || wrongNetwork
+                                      }
+                                      onReview={begin}
+                                      onError={setError}
+                                    />
+                                  )}
+                                  <div className="funded-review">
+                                    {!fixture && (
+                                      <p className="fine">
+                                        <a href={positionRoute(p.tokenId)}>
+                                          Position link
+                                        </a>{" "}
+                                        ·{" "}
+                                        <button
+                                          className="text-button"
+                                          onClick={() =>
+                                            copyLink(positionRoute(p.tokenId))
+                                          }
+                                        >
+                                          Copy position link
+                                        </button>
+                                        . Owner:{" "}
+                                        <span className="address">
+                                          {p.owner}
+                                        </span>
+                                      </p>
+                                    )}
+                                    {(p.offers?.length ?? 0) > 0 && (
+                                      <label>
+                                        Funded offer to review
+                                        <select
+                                          aria-label="Funded offer to review"
+                                          value={p.offer?.id ?? ""}
+                                          onChange={(event) => {
+                                            setOfferSelection(
+                                              event.target.value,
+                                            );
+                                            location.hash = positionRoute(
+                                              p.tokenId,
+                                              event.target.value,
+                                            );
+                                          }}
+                                        >
+                                          {!p.offer && (
+                                            <option value="">
+                                              Choose an available offer
+                                            </option>
+                                          )}
+                                          {p.offers!.map((offer) => (
+                                            <option
+                                              key={offer.id}
+                                              value={offer.id}
+                                            >
+                                              #{offer.id} ·{" "}
+                                              {money(offer.fundedMicros, 6)}{" "}
+                                              USDC ·{" "}
+                                              {formatClaims(offer.claims)}{" "}
+                                              claims
+                                            </option>
+                                          ))}
+                                        </select>
+                                      </label>
+                                    )}
+                                    <FundedOffer
+                                      position={p}
+                                      fixture={fixture}
+                                    />
+                                    {!!p.unavailableOffersCount && (
+                                      <p className="fine">
+                                        {p.unavailableOffersCount} unaccepted
+                                        offer(s) have expired or no longer match
+                                        this position’s current owner, pool,
+                                        range or liquidity. Buyers can cancel
+                                        them from Holdings to recover their
+                                        exact funding.
+                                      </p>
+                                    )}
+                                    {!p.offer && (
+                                      <p className="fine">
+                                        Publish your exact listing or share the
+                                        position link. A separate buyer funds an
+                                        offer, then you approve and accept its
+                                        exact terms here. Expired or consumed
+                                        offers cannot be accepted.
+                                      </p>
+                                    )}
+                                  </div>
                                 </div>
                               </div>
+                              {pin && pinStep === 2 && (
+                                <div className="actions">
+                                  <button
+                                    className="btn ghost"
+                                    onClick={() => setPinStep(1)}
+                                  >
+                                    ← Choose another position
+                                  </button>
+                                  <button
+                                    className="btn"
+                                    onClick={() => setPinStep(3)}
+                                  >
+                                    Review funded offers →
+                                  </button>
+                                </div>
+                              )}
                               {pin && (
                                 <div className="pin-step-heading pin-sign">
                                   <i>iii.</i>
                                   <div>
-                                    <h2>Sign and pin</h2>
+                                    <h2>Accept a funded offer</h2>
                                     <p>
                                       Approval grants permission. Only accepting
                                       the exact funded offer starts the sale.
@@ -1738,11 +2325,26 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                                   </div>
                                 </div>
                               )}
-                              {salesPaused && <p id={`sale-pause-${p.tokenId}`} className="inline-warning">NFT approval and sale acceptance are paused. The project team must bring settlement checkpointing and proof backup online and verify them first. No wallet signature or extra USDC can resolve this pause.</p>}
+                              {salesPaused && (
+                                <p
+                                  id={`sale-pause-${p.tokenId}`}
+                                  className="inline-warning"
+                                >
+                                  NFT approval and sale acceptance are paused.
+                                  The project team must bring settlement
+                                  checkpointing and proof backup online and
+                                  verify them first. No wallet signature or
+                                  extra USDC can resolve this pause.
+                                </p>
+                              )}
                               <div className="position-buttons">
                                 <button
                                   className={p.approved ? "" : "primary"}
-                                  aria-describedby={salesPaused ? `sale-pause-${p.tokenId}` : undefined}
+                                  aria-describedby={
+                                    salesPaused
+                                      ? `sale-pause-${p.tokenId}`
+                                      : undefined
+                                  }
                                   onClick={() =>
                                     begin({
                                       title: "Approve NFT transfer",
@@ -1763,7 +2365,10 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                                     })
                                   }
                                   disabled={
-                                    !connected || noGas || salesPaused || p.approved ||
+                                    !connected ||
+                                    noGas ||
+                                    salesPaused ||
+                                    p.approved ||
                                     p.ownedByWallet === false ||
                                     wrongNetwork
                                   }
@@ -1778,9 +2383,16 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                                 </button>
                                 <button
                                   className={p.approved ? "primary" : ""}
-                                  aria-describedby={salesPaused ? `sale-pause-${p.tokenId}` : undefined}
+                                  aria-describedby={
+                                    salesPaused
+                                      ? `sale-pause-${p.tokenId}`
+                                      : undefined
+                                  }
                                   disabled={
-                                    !connected || noGas || salesPaused || !p.approved ||
+                                    !connected ||
+                                    noGas ||
+                                    salesPaused ||
+                                    !p.approved ||
                                     !p.offer ||
                                     wrongNetwork ||
                                     p.ownedByWallet === false
@@ -1795,7 +2407,15 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                                           offerId: p.offer.id,
                                           minimumProceedsMicros:
                                             p.offer.fundedMicros,
-                                          expectedTerms: { buyer: p.offer.maker, claims: p.offer.claims, originalSupply: p.offer.originalSupply, endBlock: p.offer.endBlock, deadlineTimestamp: p.offer.deadlineTimestamp },
+                                          expectedTerms: {
+                                            buyer: p.offer.maker,
+                                            claims: p.offer.claims,
+                                            originalSupply:
+                                              p.offer.originalSupply,
+                                            endBlock: p.offer.endBlock,
+                                            deadlineTimestamp:
+                                              p.offer.deadlineTimestamp,
+                                          },
                                         },
                                         lines: [
                                           ["Original NFT", "#" + p.tokenId],
@@ -1849,9 +2469,27 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                                   Fund an offer
                                 </button>
                               </div>
-                              {p.ownedByWallet === true && <p className="fine">You own this NFT. Share its position link with a separate buyer so their USDC funds the offer. Return here to approve and accept.</p>}
+                              {p.ownedByWallet === true && (
+                                <p className="fine">
+                                  You own this NFT. Share its position link with
+                                  a separate buyer so their USDC funds the
+                                  offer. Return here to approve and accept.
+                                </p>
+                              )}
                               {funding && (
-                                <OfferForm key={p.tokenId} position={p} snapshot={s} disabled={!connected || wrongNetwork || noGas || salesPaused} onReview={begin} onError={setError} />
+                                <OfferForm
+                                  key={p.tokenId}
+                                  position={p}
+                                  snapshot={s}
+                                  disabled={
+                                    !connected ||
+                                    wrongNetwork ||
+                                    noGas ||
+                                    salesPaused
+                                  }
+                                  onReview={begin}
+                                  onError={setError}
+                                />
                               )}
                             </>
                           )}
@@ -1864,83 +2502,90 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
             )}
           </>
         ) : null}
-        <section className="data-disclosure">
-          <details>
-            <summary>{fixture ? "Data sources & demo controls" : "Network & data"}</summary>
-            <p className="fine">
-              {fixture
-                ? "All positions, prices, balances and history shown here are deterministic fixtures. They are design and browser-test evidence only. No public-chain sale, Aqua execution, historical proof, or live Graph composition is implied."
-                : "Onchain state authorizes actions. Graph analytics are contextual and may lag; verified receipt state must take precedence."}
-            </p>
-            <p className="fine">
-              Current block {integer(s.blockNumber)} ·{" "}
-              {fixture ? "Indexer source" : "RPC read block"}{" "}
-              {integer(s.sourceBlock)} · Network {s.network}
-              {!fixture && " · Graph provider not connected."}
-            </p>
-            {fixture && (
-              <div className="demo-controls">
-                <label htmlFor="scenario">
-                  Fixture condition
-                  <select
-                    id="scenario"
-                    value={s.scenario}
-                    onChange={async (e) => {
-                      adapter.setScenario(e.target.value as Scenario);
-                      setError("");
+        {!home && !information && (
+          <section className="data-disclosure">
+            <details>
+              <summary>
+                {fixture ? "Data sources & demo controls" : "Network & data"}
+              </summary>
+              <p className="fine">
+                {fixture
+                  ? "All positions, prices, balances and history shown here are deterministic fixtures. They are design and browser-test evidence only. No public-chain sale, Aqua execution, historical proof, or live Graph composition is implied."
+                  : "Onchain state authorizes actions. Graph analytics are contextual and may lag; verified receipt state must take precedence."}
+              </p>
+              <p className="fine">
+                Current block {integer(s.blockNumber)} ·{" "}
+                {fixture ? "Indexer source" : "RPC read block"}{" "}
+                {integer(s.sourceBlock)} · Network {s.network}
+                {!fixture && " · Graph provider not connected."}
+              </p>
+              {fixture && (
+                <div className="demo-controls">
+                  <label htmlFor="scenario">
+                    Fixture condition
+                    <select
+                      id="scenario"
+                      value={s.scenario}
+                      onChange={async (e) => {
+                        adapter.setScenario(e.target.value as Scenario);
+                        setError("");
+                        await refresh();
+                      }}
+                    >
+                      {[
+                        ["normal", "Normal"],
+                        ["wrong-network", "Wrong network"],
+                        ["rejected-signature", "Rejected signature"],
+                        ["insufficient-funds", "Insufficient funds"],
+                        ["no-quotes", "No quotes"],
+                        ["stale-quote", "Expired quote"],
+                        ["transaction-failure", "Reverted transaction"],
+                        ["indexer-lag", "Indexer lag"],
+                        ["no-positions", "No supported positions"],
+                      ].map(([v, t]) => (
+                        <option value={v} key={v}>
+                          {t}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <button
+                    onClick={async () => {
+                      adapter.reset();
                       await refresh();
+                      setError("");
+                      setMessage("");
+                      location.hash = "market";
                     }}
                   >
-                    {[
-                      ["normal", "Normal"],
-                      ["wrong-network", "Wrong network"],
-                      ["rejected-signature", "Rejected signature"],
-                      ["insufficient-funds", "Insufficient funds"],
-                      ["no-quotes", "No quotes"],
-                      ["stale-quote", "Expired quote"],
-                      ["transaction-failure", "Reverted transaction"],
-                      ["indexer-lag", "Indexer lag"],
-                      ["no-positions", "No supported positions"],
-                    ].map(([v, t]) => (
-                      <option value={v} key={v}>
-                        {t}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <button
-                  onClick={async () => {
-                    adapter.reset();
-                    await refresh();
-                    setError("");
-                    setMessage("");
-                    location.hash = "market";
-                  }}
-                >
-                  Reset fixtures
-                </button>
-              </div>
-            )}
-          </details>
-        </section>
+                    Reset fixtures
+                  </button>
+                </div>
+              )}
+            </details>
+          </section>
+        )}
       </main>
       <footer>
-        <span>
-          usufruct · Uniswap v4 positions · Trading powered by SwapVM
-          <br /> <span>{fixture ? "Interactive preview · simulated assets" : s.mode === "local" ? "Local development chain · test assets only" : "Ethereum Sepolia · test assets only"}</span>
+        <span className="tele">
+          usufruct ·{" "}
+          {fixture
+            ? "deterministic fixture preview"
+            : s.network + " · test assets"}
+          <br />
+          Trading powered by SwapVM
         </span>
-        <span>
-          Variable income. No guaranteed return.
-          <br />{" "}
+        <nav aria-label="Information">
+          <a href="#privacy">Privacy</a>
+          <a href="#terms">Terms</a>
           <a
             href="https://github.com/MihRazvan/eth-online-2026#prior-work-and-attribution"
             target="_blank"
             rel="noreferrer"
           >
-            Source &amp; credits{" "}
-            <Icon name="external" size={10} />
+            Source & credits ↗
           </a>
-        </span>
+        </nav>
       </footer>
       <dialog
         ref={dialog}
@@ -1972,7 +2617,12 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
       >
         <div className="dialog-header">
           <span className="source-tag">
-            {fixture ? "Fixture transaction review" : "Transaction review"}
+            {fixture
+              ? "Fixture transaction review"
+              : review?.action.type === "publishListing" ||
+                  review?.action.type === "cancelListing"
+                ? "Listing signature review"
+                : "Transaction review"}
           </span>
           <button
             aria-label="Close transaction review"
@@ -2009,21 +2659,57 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
             ) : (
               <button
                 className="primary wide"
-                disabled={busy || wrongNetwork || accountChanged || noGas || progress?.stage === "pending"}
+                disabled={
+                  busy ||
+                  wrongNetwork ||
+                  accountChanged ||
+                  (noGas &&
+                    review.action.type !== "publishListing" &&
+                    review.action.type !== "cancelListing") ||
+                  progress?.stage === "pending"
+                }
                 onClick={submit}
               >
                 {busy ? "Awaiting confirmation…" : review.button}
                 <Icon />
               </button>
             )}
-            {accountChanged && <p className="inline-warning">The connected account differs from this review. Close and review again.</p>}
-            {progress && <p className="fine" aria-live="polite">{progress.label}: {progress.stage === "signature" ? "review and sign in your wallet" : progress.stage === "pending" ? "submitted; waiting for chain confirmation" : progress.stage === "estimating" ? "checking execution and gas" : progress.stage}.
-              {progress.maximumFeeWei && <> Estimated gas ceiling: {(Number(progress.maximumFeeWei) / 1e18).toPrecision(4)} ETH. Wallet fees can vary.</>}
-            </p>}
+            {accountChanged && (
+              <p className="inline-warning">
+                The connected account differs from this review. Close and review
+                again.
+              </p>
+            )}
+            {progress && (
+              <p className="fine" aria-live="polite">
+                {progress.label}:{" "}
+                {progress.stage === "signature"
+                  ? "review and sign in your wallet"
+                  : progress.stage === "pending"
+                    ? "submitted; waiting for chain confirmation"
+                    : progress.stage === "estimating"
+                      ? "checking execution and gas"
+                      : progress.stage}
+                .
+                {progress.maximumFeeWei && (
+                  <>
+                    {" "}
+                    Estimated gas ceiling:{" "}
+                    {(Number(progress.maximumFeeWei) / 1e18).toPrecision(
+                      4,
+                    )}{" "}
+                    ETH. Wallet fees can vary.
+                  </>
+                )}
+              </p>
+            )}
             <p className="fine dialog-note">
               {fixture
                 ? "Fixture only. No wallet signature, token transfer, or transaction hash is produced."
-                : "Review the same terms in your wallet. A transaction can fail or be replaced before confirmation."}
+                : review?.action.type === "publishListing" ||
+                    review?.action.type === "cancelListing"
+                  ? "This wallet signature updates an advertisement. It does not submit a transaction, approve tokens or transfer the NFT."
+                  : "Review the same terms in your wallet. A transaction can fail or be replaced before confirmation."}
             </p>
           </>
         )}
@@ -2303,39 +2989,60 @@ function AnalysisPanel({
         price,
         executionCost,
       );
-      if (revision === requestRevision.current) setSaved({ key, result: value });
+      if (revision === requestRevision.current)
+        setSaved({ key, result: value });
     } catch {
-      if (revision === requestRevision.current) setSaved({
-        key,
-        result: {
-          status: "unavailable",
-          reason: "Verified analysis could not be loaded.",
-        },
-      });
+      if (revision === requestRevision.current)
+        setSaved({
+          key,
+          result: {
+            status: "unavailable",
+            reason: "Verified analysis could not be loaded.",
+          },
+        });
     } finally {
       if (revision === requestRevision.current) setLoading("");
     }
   };
   const available =
-    hasQuote && inputsReady && !checking && result?.status === "available" ? result.analysis : undefined;
-  const hasLagBreakdown = available?.indexingLagBlocks !== undefined && available?.finalityLagBlocks !== undefined;
-  const stateTitle = !adapter.readAnalysis ? "Analysis is not configured"
-    : !hasQuote ? "Waiting for an executable quote"
-    : !inputsReady ? "Check the comparison inputs"
-    : checking ? "Checking the analysis sources"
-    : result?.status === "unavailable" ? "Source comparison unavailable"
-    : !available ? "Source comparison not requested"
-    : available.stale ? "Source comparison is behind the chain"
-    : "Source comparison loaded";
-  const stateDescription = !adapter.readAnalysis ? "This page has no analysis connection. Purchase terms and contract recovery information remain separate."
-    : !hasQuote ? "A maker needs to publish an executable ask before its purchase break-even can be compared. You can still inspect this claim’s terms and recovery information."
-    : !inputsReady ? "Enter a positive claim quantity in Claims to buy and a valid, nonnegative USDC execution cost below."
-    : checking ? "Comparing Substreams activity and Subgraph instrument data at a common source block. This check needs no wallet signature."
-    : result?.status === "unavailable" ? "The project’s analysis service could not provide a usable comparison. Retry this read-only check or share the details below with the project team."
-    : !available ? "Load the sources for the selected quantity and price. A wallet connection is not required."
-    : available.stale ? "This is an older source snapshot. Refresh the comparison before using it to assess a purchase."
-    : available.sourceFinalized && hasLagBreakdown ? "Fresh against finalized history. The delay from the chain tip includes Ethereum finality; additional indexing lag is shown separately. This snapshot does not predict future fees."
-    : "This snapshot describes the selected purchase and observed history. It does not predict future fees.";
+    hasQuote && inputsReady && !checking && result?.status === "available"
+      ? result.analysis
+      : undefined;
+  const hasLagBreakdown =
+    available?.indexingLagBlocks !== undefined &&
+    available?.finalityLagBlocks !== undefined;
+  const stateTitle = !adapter.readAnalysis
+    ? "Analysis is not configured"
+    : !hasQuote
+      ? "Waiting for an executable quote"
+      : !inputsReady
+        ? "Check the comparison inputs"
+        : checking
+          ? "Checking the analysis sources"
+          : result?.status === "unavailable"
+            ? "Source comparison unavailable"
+            : !available
+              ? "Source comparison not requested"
+              : available.stale
+                ? "Source comparison is behind the chain"
+                : "Source comparison loaded";
+  const stateDescription = !adapter.readAnalysis
+    ? "This page has no analysis connection. Purchase terms and contract recovery information remain separate."
+    : !hasQuote
+      ? "A maker needs to publish an executable ask before its purchase break-even can be compared. You can still inspect this claim’s terms and recovery information."
+      : !inputsReady
+        ? "Enter a positive claim quantity in Claims to buy and a valid, nonnegative USDC execution cost below."
+        : checking
+          ? "Comparing Substreams activity and Subgraph instrument data at a common source block. This check needs no wallet signature."
+          : result?.status === "unavailable"
+            ? "The project’s analysis service could not provide a usable comparison. Retry this read-only check or share the details below with the project team."
+            : !available
+              ? "Load the sources for the selected quantity and price. A wallet connection is not required."
+              : available.stale
+                ? "This is an older source snapshot. Refresh the comparison before using it to assess a purchase."
+                : available.sourceFinalized && hasLagBreakdown
+                  ? "Fresh against finalized history. The delay from the chain tip includes Ethereum finality; additional indexing lag is shown separately. This snapshot does not predict future fees."
+                  : "This snapshot describes the selected purchase and observed history. It does not predict future fees.";
   return (
     <section className="history-section sourced-analysis">
       <div className="section-top">
@@ -2343,7 +3050,8 @@ function AnalysisPanel({
         <span className="source-tag">Substreams + Subgraph</span>
       </div>
       <div className="analysis-availability" role="status" aria-live="polite">
-        <b>{stateTitle}</b><p>{stateDescription}</p>
+        <b>{stateTitle}</b>
+        <p>{stateDescription}</p>
       </div>
       <p className="fine">
         Request a common-block comparison from the configured sources. It
@@ -2361,24 +3069,26 @@ function AnalysisPanel({
         </label>
         <button
           disabled={
-            !adapter.readAnalysis ||
-            !hasQuote ||
-            !inputsReady ||
-            checking
+            !adapter.readAnalysis || !hasQuote || !inputsReady || checking
           }
           onClick={load}
         >
           {checking
             ? "Loading verified sources…"
-            : result ? "Refresh sourced analysis" : "Load sourced analysis"}
+            : result
+              ? "Refresh sourced analysis"
+              : "Load sourced analysis"}
         </button>
       </div>
-      {hasQuote && inputsReady && !checking && result?.status === "unavailable" && (
-        <details className="analysis-unavailable-details">
-          <summary>Why this comparison is unavailable</summary>
-          <p className="fine">{result.reason}</p>
-        </details>
-      )}
+      {hasQuote &&
+        inputsReady &&
+        !checking &&
+        result?.status === "unavailable" && (
+          <details className="analysis-unavailable-details">
+            <summary>Why this comparison is unavailable</summary>
+            <p className="fine">{result.reason}</p>
+          </details>
+        )}
       {available && (
         <>
           <p className="source-tag">
@@ -2417,22 +3127,32 @@ function AnalysisPanel({
               <dd>{available.sourceBlock.toLocaleString("en-US")}</dd>
             </div>
             <div>
-              <dt>{hasLagBreakdown ? "Total lag from chain tip" : "Source lag"}</dt>
+              <dt>
+                {hasLagBreakdown ? "Total lag from chain tip" : "Source lag"}
+              </dt>
               <dd>
                 {available.lagBlocks} blocks
                 {available.stale ? " · stale" : ""}
               </dd>
             </div>
-            {hasLagBreakdown && <>
-              <div>
-                <dt>Finality delay</dt>
-                <dd>{available.finalityLagBlocks} blocks <small>· expected wait for finality</small></dd>
-              </div>
-              <div>
-                <dt>Additional indexing lag</dt>
-                <dd>{available.indexingLagBlocks} blocks behind {available.sourceFinalized ? "finalized" : "chain"} head</dd>
-              </div>
-            </>}
+            {hasLagBreakdown && (
+              <>
+                <div>
+                  <dt>Finality delay</dt>
+                  <dd>
+                    {available.finalityLagBlocks} blocks{" "}
+                    <small>· expected wait for finality</small>
+                  </dd>
+                </div>
+                <div>
+                  <dt>Additional indexing lag</dt>
+                  <dd>
+                    {available.indexingLagBlocks} blocks behind{" "}
+                    {available.sourceFinalized ? "finalized" : "chain"} head
+                  </dd>
+                </div>
+              </>
+            )}
           </dl>
           <p className="fine">
             Block hash <code>{available.sourceHash}</code>
