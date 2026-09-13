@@ -502,12 +502,23 @@ export class ChainAdapter implements FeeStripAdapter {
       testActor?: string;
     } = {},
   ) {
-    const response = await fetch(url, { cache: "no-store" });
-    if (!response.ok)
-      throw new Error(
-        "Deployment configuration unavailable. Local/testnet mode cannot fall back to fixtures.",
-      );
-    const config = (await response.json()) as Deployment;
+    // The same deadline covers response headers and the complete JSON body.
+    const signal = AbortSignal.timeout(10000);
+    let config: Deployment;
+    try {
+      const response = await fetch(url, { cache: "no-store", signal });
+      if (!response.ok)
+        throw new Error(
+          "Deployment configuration unavailable. Local/testnet mode cannot fall back to fixtures.",
+        );
+      config = (await response.json()) as Deployment;
+    } catch (error) {
+      if (signal.aborted)
+        throw new Error(
+          "Network configuration took longer than 10 seconds. Retry connection.",
+        );
+      throw error;
+    }
     if (
       !["local", "testnet"].includes(config.mode) ||
       !Number.isSafeInteger(config.chainId) ||

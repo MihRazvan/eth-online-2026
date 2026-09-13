@@ -7,6 +7,40 @@ import type { FeeStripAdapter } from "./types";
 import "./styles.css";
 import "./fonts.css";
 const root = createRoot(document.getElementById("root")!);
+function Bootstrap({ error }: { error?: string }) {
+  return (
+    <div className="app">
+      <div className="titlebar">
+        <span className="path">usufruct.exe — /</span>
+      </div>
+      <main id="main-content">
+        <section className="loading-state" aria-busy={!error}>
+          <p className="tele">usufruct · network configuration</p>
+          <h1 className="display">
+            {error ? "Chain connection unavailable" : "USUFRUCT"}
+          </h1>
+          {error ? (
+            <>
+              <p role="alert">{error}</p>
+              <p>
+                Onchain mode never substitutes fixtures for a missing deployment
+                or provider.
+              </p>
+              <button onClick={() => location.reload()}>
+                Retry connection
+              </button>
+            </>
+          ) : (
+            <p role="status">Loading network configuration…</p>
+          )}
+        </section>
+      </main>
+    </div>
+  );
+}
+// Render before loading the adapter, manifest or any RPC state.
+root.render(<Bootstrap />);
+
 async function start() {
   const mode = import.meta.env.VITE_DATA_MODE ?? "fixture";
   let adapter: FeeStripAdapter;
@@ -37,15 +71,5 @@ async function start() {
   );
 }
 start().catch((error) =>
-  root.render(
-    <main className="loading">
-      <h1>Chain connection unavailable</h1>
-      <p role="alert">{(error as Error).message}</p>
-      <p>
-        Onchain mode never substitutes fixtures for a missing deployment or
-        provider.
-      </p>
-      <button onClick={() => location.reload()}>Retry connection</button>
-    </main>,
-  ),
+  root.render(<Bootstrap error={(error as Error).message} />),
 );
