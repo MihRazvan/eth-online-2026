@@ -1,0 +1,201 @@
+{
+  "schemaVersion": 1,
+  "checkedAt": "2026-09-13T14:49:07.581Z",
+  "scope": "Independent read-only chain confirmation of the lead-operated production-interface10Q buy/redeem repeat. No public transaction sent by the reviewer.",
+  "interfaceRun": {
+    "origin": "https://usufruct-mu.vercel.app",
+    "sourceCommit": "5c468190ffd94e7c39facb1032bd0836d47348fa",
+    "attribution": "The lead reports executing these actions through the freshly deployed interface; this evidence independently verifies their canonical transactions and resulting accounting."
+  },
+  "chainId": 11155111,
+  "seriesId": "1",
+  "tokenId": "39216",
+  "contracts": {
+    "feeStrip": "0xd84eE56b24841c887c73e8b9079A01c28b1B3E8E",
+    "claim": "0x3f4Cd0787E83C05fDa83E24D7016E57438dce644",
+    "usdc": "0x1c7d4b196cb0c7b01d743fbc6116a902379c7238",
+    "swapRouter": "0x1ef56bd27fa3c0795954b4dace7836696dfc3830",
+    "aqua": "0x5be8474a6c74a51c35dd3b27cab93774d0fe73ee"
+  },
+  "roles": {
+    "makerBuyer": "0xe11543861dba1D526520069f775eb53aB9BB8866",
+    "controlledHolder": "0x72fF16Ab9Dcdfa176a962A0b1f4B627256995418"
+  },
+  "observation": {
+    "blockNumber": "11696574",
+    "blockHash": "0x4a9a41d6a9c1bae2a85ca6116fa89e0e8c28195258455b08886d4414a05c65ea",
+    "finalizedBlock": "11696491",
+    "finalizedHash": "0x75e548e5904a215a65066104b624f28ba7ef27967bd9392547c1b9f1b24df0bf",
+    "allRecordedReceiptsFinalized": false,
+    "receiptAndSnapshotHashesMatchIndependentPublicNode": true
+  },
+  "receipts": [
+    {
+      "action": "controlled-holder-buy-10",
+      "hash": "0x239f863f30530277460a0ef8f05f03724196cf0f6cecc9767c894fb27a93b909",
+      "blockNumber": "11696540",
+      "blockHash": "0x139c5a30ba52b84aab869dfed01542e2e66654c4e839fbb969392e1a2867058b",
+      "timestamp": "1789310520",
+      "status": "success",
+      "from": "0x72ff16ab9dcdfa176a962a0b1f4b627256995418",
+      "to": "0x1ef56bd27fa3c0795954b4dace7836696dfc3830",
+      "gasUsed": "183348",
+      "effectiveGasPriceWei": "1054373020",
+      "gasCostWei": "193317184470960",
+      "transfers": [
+        {
+          "token": "USDC",
+          "from": "0x72fF16Ab9Dcdfa176a962A0b1f4B627256995418",
+          "to": "0x1EF56bd27fA3c0795954B4dAcE7836696dfc3830",
+          "amount": "500",
+          "logIndex": 297
+        },
+        {
+          "token": "USDC",
+          "from": "0x1EF56bd27fA3c0795954B4dAcE7836696dfc3830",
+          "to": "0xe11543861dba1D526520069f775eb53aB9BB8866",
+          "amount": "500",
+          "logIndex": 299
+        },
+        {
+          "token": "FeeClaim",
+          "from": "0xe11543861dba1D526520069f775eb53aB9BB8866",
+          "to": "0x72fF16Ab9Dcdfa176a962A0b1f4B627256995418",
+          "amount": "10000000000000000000",
+          "logIndex": 301
+        }
+      ],
+      "events": []
+    },
+    {
+      "action": "controlled-holder-redeem-10",
+      "hash": "0xd82bf3a5625e43d8e5018024cc546b87c84ebf8cbe4469ad3dc3d45452bdeb50",
+      "blockNumber": "11696552",
+      "blockHash": "0x6d11da33dec2866fdf4084d31d1b9e7fca8f6da49b4846360762065694daa706",
+      "timestamp": "1789310664",
+      "status": "success",
+      "from": "0x72ff16ab9dcdfa176a962a0b1f4b627256995418",
+      "to": "0xd84ee56b24841c887c73e8b9079a01c28b1b3e8e",
+      "gasUsed": "90000",
+      "effectiveGasPriceWei": "1105640829",
+      "gasCostWei": "99507674610000",
+      "transfers": [
+        {
+          "token": "FeeClaim",
+          "from": "0x72fF16Ab9Dcdfa176a962A0b1f4B627256995418",
+          "to": "0x0000000000000000000000000000000000000000",
+          "amount": "10000000000000000000",
+          "logIndex": 212
+        },
+        {
+          "token": "USDC",
+          "from": "0xd84eE56b24841c887c73e8b9079A01c28b1B3E8E",
+          "to": "0x72fF16Ab9Dcdfa176a962A0b1f4B627256995418",
+          "amount": "999",
+          "logIndex": 213
+        }
+      ],
+      "events": [
+        {
+          "name": "Redeemed",
+          "args": {
+            "seriesId": "1",
+            "holder": "0x72fF16Ab9Dcdfa176a962A0b1f4B627256995418",
+            "recipient": "0x72fF16Ab9Dcdfa176a962A0b1f4B627256995418",
+            "quantity": "10000000000000000000",
+            "usdcAmount": "999"
+          }
+        }
+      ]
+    }
+  ],
+  "redemption": {
+    "seriesId": "1",
+    "holder": "0x72fF16Ab9Dcdfa176a962A0b1f4B627256995418",
+    "recipient": "0x72fF16Ab9Dcdfa176a962A0b1f4B627256995418",
+    "quantity": "10000000000000000000",
+    "usdcAmount": "999"
+  },
+  "balances": {
+    "holderUsdcBefore": "250000",
+    "holderUsdcAfter": "250499",
+    "holderNetUsdcBeforeGas": "499",
+    "holderClaims": "0",
+    "buyerClaims": "990000000000000000000",
+    "buyerUsdc": "450499"
+  },
+  "current": {
+    "originalQ": "10000000000000000000000",
+    "soldUSDC": "999999",
+    "capturedUSDC": "1499999",
+    "redeemedQuantity": "9010000000000000000000",
+    "paidClaims": "900996",
+    "residualUSDC": "0",
+    "totalSupply": "990000000000000000000",
+    "reservedUSDC": "99003",
+    "escrowUSDC": "99003",
+    "oneFinalBurnPayoutMicros": "98999",
+    "dustIfOneFinalBurn": "4"
+  },
+  "quoteInvalidation": {
+    "purchasedStrategyHash": "0x1f2b06adf4aa4c17b39ff965f20ecc8f671168c87fed6400b741a3c22f4243a9",
+    "marketStateAtPurchase": "0x1fd72fad359bf8fc422e48f51717d04d645a69a939d54532b2151c8a10ee2e23",
+    "marketStateAfterRedemption": "0x0654de41a74f9de30a02b69950e63c9e556fb63ba38ef769a63ba41eb17c02bb",
+    "oldOrderReadOnlySimulationRevertedStaleSeries": true,
+    "reason": "Redemption changes claim totalSupply and therefore FeeStrip.marketState. Remaining virtual inventory does not make the old state-bound order fillable.",
+    "renewal": "Fresh990Q/49500-micro maker order was subsequently published and independently verified; quote and inventory are observed only at the renewal snapshot below."
+  },
+  "gas": {
+    "totalCostWei": "292824859080960",
+    "method": "Actual gasUsed * effectiveGasPrice for these two transactions only"
+  },
+  "conservation": "1499999 captured = 900996 paid claims + 500000 withdrawn residual + 99003 retained reserve",
+  "references": {
+    "priorCheckpoint": "live-series-one-lifecycle.json",
+    "nativeOracle": "live-series-one-native-oracle.json",
+    "restoration": "live-series-one-restore.json"
+  },
+  "limitations": [
+    "Prior30-transaction evidence remains unchanged; this is a later separate checkpoint.",
+    "Controlled1USDC pre-N donation generated the demonstrated claim payout; this is not organic revenue or a future-return forecast.",
+    "A single990Q final redemption pays98999micros and leaves4micros segregated dust. Additional splitting can increase dust. Outstanding reserve is a live claim liability, not available residual.",
+    "New judge trades, maker quote renewal and unrelated wallet transactions after the snapshot require fresh accounting."
+  ],
+  "renewal": {
+    "checkedAt": "2026-09-13T14:51:28.428Z",
+    "provider": "https://ethereum-sepolia-rpc.publicnode.com",
+    "receipt": {
+      "hash": "0x9ccafb84b0c67dbfd575f206399938de7dc17c0e47472c33b44888bf7fe2150d",
+      "blockNumber": "11696566",
+      "blockHash": "0x09abcbfbf0302eb3c2786af4233f824ec25450abf0d8cbff3f663930e7750d2b",
+      "status": "success",
+      "from": "0xe11543861dba1d526520069f775eb53ab9bb8866",
+      "to": "0x5be8474a6c74a51c35dd3b27cab93774d0fe73ee",
+      "gasUsed": "87735",
+      "effectiveGasPriceWei": "1058161566",
+      "gasCostWei": "92837804993010"
+    },
+    "snapshot": {
+      "blockNumber": "11696587",
+      "blockHash": "0x94ea536231ac9ba79740efa7209767b01f02a59bb748b9408c130cc612c97f67",
+      "timestamp": "1789311084"
+    },
+    "strategyHash": "0x2b62f098e32a7e528eda44961cba1341b9981ebc065078f9b990b28dac530583",
+    "marketState": "0x0654de41a74f9de30a02b69950e63c9e556fb63ba38ef769a63ba41eb17c02bb",
+    "maker": "0xe11543861dba1D526520069f775eb53aB9BB8866",
+    "claimUnits": "990000000000000000000",
+    "usdcUnits": "49500",
+    "expiry": "1789915500",
+    "makerClaimBalance": "990000000000000000000",
+    "makerClaimAllowanceToAqua": "990000000000000000000",
+    "aquaClaims": "990000000000000000000",
+    "aquaUSDC": "0",
+    "canonicalBuildOrderMatchesFrozenStrategy": true,
+    "readOnlyQuote": {
+      "amountIn": "49500",
+      "amountOut": "990000000000000000000",
+      "strategyHash": "0x2b62f098e32a7e528eda44961cba1341b9981ebc065078f9b990b28dac530583"
+    },
+    "limitation": "Quote observation is not a trade or guarantee of future fill. A subsequent claim burn changes marketState and requires another renewal."
+  }
+}
