@@ -16,16 +16,19 @@ The name describes the separation between an asset and the right to enjoy its in
 
 ## What works today
 
-At this **13 September implementation checkpoint**, the supplied stencil redesign and seller-first signed listing flow are implemented and verified locally. Railway source `9d089b1` deployed successfully with the reviewed keeper and Graph services enabled. At 12:28 UTC, public `/api/operations` passed protocol, keeper, retention and off-host replication checks, and deployment pins independently matched. The keeper held 0.01 Sepolia ETH with nonce 0; `nextSeriesId=1` confirmed no activated series. These are live service probes, not a completed public financial lifecycle or restored series proof.
+The actual public **series 1** is now funded, traded, captured and allocated. Its original NFT returned before allocation. Hosted checkpointing, remote proof restoration and a real Graph buyer join are verified. **The teammate’s 1,000-claim redemption paid 0.099999 USDC. Remaining wallet/residual reconciliation and a repeatable fresh judge session remain open.**
 
-| Ready | Still required before an unattended public demo |
+| Verified on Sepolia | Still required |
 | --- | --- |
-| Supplied stencil frontend, light/dark themes, wallet discovery and persistent signed seller listings; 78 hermetic browser checks | Verify an actual series endpoint checkpoint and authenticated remote restoration; normal hosted restart already passes |
-| Reviewed replacement contracts deployed on Sepolia; Graph Studio v0.2.0 indexes their address | Complete a real public sale → trade → capture → NFT return → allocation → redemption |
-| Both actual local-chain settlement variants, including gasless seller publication, database restart and second-wallet funding/acceptance | Prepare real demo inventory, fresh executable quotes and funded participant wallets; complete unaided human acceptance |
-| Railway service, 500 MB private persistent volume and private proof bucket provisioned; dedicated keeper funded with 0.01 Sepolia ETH | Confirm continuous Substreams operation and show its actual live instrument join; coordinate primary/fallback operators |
+| NFT 39216 accepted at 11696226;0.25 test USDC paid for 2500 of 10000 original claims; fixed N11696317 | Teammate redemption is confirmed; finish other wallet redemptions, residual withdrawal and exact balances/dust |
+| Teammate wallet 0x746b…4C6d bought 189+63+748 claims through Aqua:1,000 total | Maintain real unredeemed maker inventory and a fresh executable quote for judges |
+| Actual capture 1.499999 USDC; same NFT returned at 11696393 while allocation was pending; allocation now records 0.999999 sold /0.500000 residual | Actual allocation used 4,396,570 gas; teammate redemption 122,011 gas. Complete remaining payout/cost evidence |
+| Dedicated keeper saved N at N+2; finalized proof restored into a fresh local DB using 2 remote GETs and no RPC witness fallback | Name primary/fallback human operators and keep obligations running after submission |
+| Hosted Studio + Substreams join for real series 1 at 11696247; 22/22 observed blocks covered and in range | Show useful buyer context in the human demo; partial history and donations cannot be presented as a yield forecast |
 
-**The public site is not yet a complete live demo.** A disabled sale while preservation is unavailable is intentional. Do not bypass that gate, switch the public page to fixtures, or describe local receipts as Sepolia transactions. The user delegated provider choice and hosting setup is complete; no further hosting approval is pending. The normal hosted restart and subsequent public readiness checks pass; actual series endpoint/restoration evidence and the human financial rehearsal remain open. See [automated stencil/listing evidence](design/STENCIL_VERIFICATION.md) for the exact local verification scope.
+The public self-test used the configured seller and a constrained Node-held browser wallet for initial funding; teammate purchases are separate real wallet activity. This does not establish a completed unaided participant study. The tested pool is **USDC/WETH**, and its activity includes **controlled funded donations**, not organic demand. The native collection comparison runs on an isolated fork of actual N and exactly matches 999999 USDC micros. It is not another public capture.
+
+Evidence: [actual keeper/remote restore](evidence/operations/live-series-one-restore.json), [live Graph join](evidence/operations/live-series-one-graph.md), [native oracle](evidence/operations/live-series-one-native-oracle.md), [public transaction links](evidence/sponsors.md). The Railway service, 500 MB volume and private proof bucket are operated, normal restart passes, and no additional hosting approval is pending. New sales still require fresh readiness; a paused service is an actionable prerequisite, not permission to bypass the gate.
 
 **Publishing can work while sales are paused.** With the real listing service available, the NFT owner can sign and publish or withdraw a nonbinding listing without ETH for gas. This currently supports standard EOA wallets. Funding, NFT approval and acceptance still require their actual transaction prerequisites and preservation readiness. A published listing does not mean the NFT is escrowed or that its income is guaranteed.
 
@@ -68,24 +71,25 @@ For the seller-first rehearsal: **Pin a seed → select NFT → set listing shar
 
 ## The judge demo: 3–4 minutes, using prepared real states
 
-Do a full rehearsal first. A new earning window cannot honestly turn into an immediate payout during the presentation. Prepare **three separately identified examples**, with links and IDs recorded:
+Series 1 is the real end-to-end example. Its earlier earning and proof-pending states are recorded states of that same series. **Do not describe them as three simultaneously available examples.** To show several states live, prepare separately identified series with their own receipts and operational coverage.
 
-| Example | Preparation | What it proves on screen |
+| Example | Current status | What it proves |
 | --- | --- | --- |
-| A — earning | An accepted sale, with claims and a usable quote | The position is locked intact; fee exposure is a separate tradeable asset |
-| B — captured, not allocated | Cutoff passed, actual fees captured, original NFT already returned; endpoint proof safely preserved | NFT recovery does not depend on waiting for cash allocation |
-| C — allocated | Nonzero verified reserve, unredeemed maker inventory and a fresh executable sell quote | A judge can buy a small claim and redeem real test USDC now |
+| A — earning | Series 1 has passedN; use its clearly labelled earlier recording, or prepare another actual series | Fixed custody and range while fee claims trade |
+| B — captured, not allocated | Series 1 passed through this state: NFT returned at 11696393; its receipt remains evidence | NFT recovery does not wait for fee allocation |
+| C — allocated | Series 1 allocation observed at the lead’s11696450 readback; teammate redemption confirmed; fresh judge inventory and remaining payouts still need verification | Teammate payout proves independent redemption; a fresh buyer still needs current unredeemed inventory and an executable ask |
 
-These examples do **not** exist on the current public deployment yet. Use their actual measured states once prepared. Keep enough C inventory for another judge, and renew quotes after state changes/redemptions.
+A new earning window cannot become an instant payout in a presentation. Refresh quotes after allocation/redemption and disclose prepared inventory. Never use an earlier balance snapshot as proof that another judge can buy now.
 
 | Time | Frontend action | What to say |
 | --- | --- | --- |
-| 0:00–0:25 | Open Market without connecting a wallet | “This is a market for a fixed period of Uniswap USDC fees. The LP gets cash upfront; buyers get the income rights.” |
-| 0:25–1:05 | Open A; show original NFT, period, sold fraction and its funded-sale receipt / owner’s pinned position | “The buyer funded exact terms, and the LP accepted. The same position is now locked for this period.” Explain approval versus acceptance. |
-| 1:05–2:10 | Open C; connect the buyer; **Review purchase → Confirm claim purchase**; open **Holdings** | “This is a separate, already-allocated period, prepared so you can test a payout today. Your claims carry its unpaid income.” Show actual token balances and receipt. |
-| 2:10–2:50 | For Example C: **Holdings → Read claim & recovery → Redeem … claims → Confirm transaction** | “The contract pays the holder directly. The seller’s wallet is not needed.” Show the USDC increase and consumed claim balance. |
-| 2:50–3:30 | Open B and its recovery information; show the NFT-return receipt | “The LP already recovered the NFT. The fee reserve stays protected while allocation is pending.” Point to proof status and, when available, **Download proof JSON**. |
-| 3:30–4:00 | Summarize the integrations and open source/evidence links if useful | “Uniswap supplies the position and fees; Aqua/SwapVM trades the claims; authenticated historical state settles the fixed endpoint.” Show Graph buyer context only after its live join works. |
+| 0:00–0:25 | Open Market without a wallet | “An LP can sell a fixed period of Uniswap USDC fees for cash today, while keeping the right to recover the position.” |
+| 0:25–1:05 | Show series 1’s recorded publication/funding/acceptance and receipt | “A separate buyer funded exact terms. Acceptance paid 0.25 test USDC and issued 2500 of 10,000 claims. Approval alone did not create the sale.” |
+| 1:05–1:45 | Actual teammate Aqua purchases and holdings | “The claims carry the whole period’s unpaid income, including accrual before the purchase.” Show real transfers; do not call the session unaided unless that was observed. |
+| 1:45–2:25 | Capture and NFT-return receipts, allocation state | “Collection received 1.499999 USDC. The NFT returned before allocation. The authenticated endpoint separates 0.999999 sold income from 0.500000later residual.” Disclose controlled donations. |
+| 2:25–3:00 | Confirmed teammate redemption | “Each holder is paid by the contract using the original denominator.” Show the actual 0.099999 USDC payment for 1,000 claims and its receipt; do not imply a completed unaided study. |
+| 3:00–3:40 | Current Graph buyer context and proof recovery | “Studio instrument state and Substreams pool history agree at a common finalized block. This is underwriting context; settlement comes from the contract’s authenticated proof.” Explain partial coverage. |
+| 3:40–4:00 | Current available judge action and source links | Offer a verified fresh quote/redeem path only if it is executable. Keep source pins, costs and prototype limits available. |
 
 For a **live seller creation demo**, show gasless publication from the owner, discovery/funding from a separate buyer, then seller approval/acceptance. Allow extra time for those transactions. A separately prepared unaccepted funded offer can shorten the presentation only if that preparation is disclosed. Otherwise use A’s real recorded creation flow, clearly identified as a recording. Wallet confirmations vary; do not disguise waiting, prepared approvals or a switch between series.
 
@@ -93,10 +97,10 @@ If the public prerequisites are not ready, give a **clearly labelled local-chain
 
 ## What each integration should demonstrate
 
-| Integration | Show | Do not claim yet |
+| Integration | Show | Evidence boundary |
 | --- | --- | --- |
-| Uniswap | An existing canonical v4 position, fixed custody/range, native USDC fees and return of the same NFT | A completed public nonzero lifecycle until its receipts exist |
-| 1inch Aqua / SwapVM | Maker publication plus an actual secondary claim/USDC trade, balance changes and quote recovery | That a static order card or deployed router alone proves the integration |
-| The Graph | Once ready: Subgraph instrument state joined with live Substreams activity/range history, source blocks and useful buyer context | That the currently deployed Subgraph alone completes the live composition; or that analytics authorize payouts |
+| Uniswap | Canonical NFT 39216, fixed period/range, actual fees, return-before-allocation and public allocation | Independent native N comparison is fork-only; holder payout receipts remain a separate step |
+| 1inch Aqua / SwapVM | Three actual teammate purchases with FeeClaim/USDC transfers; current maker quote | Source-pinned fresh Aqua deployment and custom dispatcher are disclosed; quote inventory is not guaranteed |
+| The Graph | Actual Studio/Substreams joined buyer context, source freshness and observed coverage | The recorded 22/22 blocks are partial-period history, not exact fee attribution, organic demand or settlement authority |
 
 Keep [sponsor evidence](evidence/sponsors.md), [AI/upstream attribution](AI_ASSISTANCE.md) and the [release checklist](JUDGE_READINESS.md) beside the demo recording. Retain ScopeLift credit in the repository. Describe the project as a tested prototype, not audited or production-safe software.

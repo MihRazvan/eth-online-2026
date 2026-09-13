@@ -1,152 +1,92 @@
 # usufruct judge readiness checklist
 
-The release target is a judge who understands the proposition without an explanation from the team, can make a small real Sepolia purchase, and can complete a redemption path. The seller journey must also work between separate wallets for a position that was never manually added to our deployment configuration. A complete public recording must connect every lifecycle step for one actual series.
+Updated 13 September 2026 after endpoint restoration and the public allocation observation. ETHOnline 2026 **Classic** is user-confirmed. Deadline: **today, 19:00 Bucharest / 16:00 UTC**. This checklist separates implementation, actual Sepolia evidence, and unfinished human work. [Submission packet](submission.md), [teammate brief](TEAMMATE_BRIEF.md), [exact test flow](DEMO_TEST_RUNBOOK.md).
 
-This is the execution checklist for the next release. The [bounty research](research/bounty-readiness.md) explains the architectural decisions; [STATUS](STATUS.md) records implementation evidence. Updated 13 September 2026 against source `9d089b1`. Checked implementation items have automated verification; they do not establish public participant acceptance. J09/J10 and J12/J19 remain open until their operational and public financial evidence exists.
+## Current release decision
 
-## Current gap owners — 13 September, 13:10 UTC
+**The public product has a real funded series, secondary trades, captured fees, returned NFT, operated checkpoint, restored remote proof, and live Graph composition. Public allocation and the teammate’s 1,000-claim redemption are confirmed; remaining wallet payouts and residual reconciliation remain open.** An unattended buy-and-redeem judge session is not yet verified.
 
-| Gap | Codex lead owns | Team owns | Current evidence |
+Series **1** uses canonical NFT **39216**, original **Q = 10,000 claims**, activation **11696226** and fixed endpoint **N = 11696317**. The seller received **0.25 test USDC** for 2,500 claims. A teammate bought **189 + 63 + 748 = 1,000 claims** through three actual Aqua trades. These transfers supersede the earlier plan to give an agent-controlled secondary wallet 1,000 claims. Do not reuse planned wallet balances as actual payout evidence.
+
+The later public capture received **1.499999 USDC**. The same NFT returned at block **11696393**, while allocation was still false. The independently authenticated endpoint amount is **0.999999 USDC**; native collection on an isolated fork of the real endpoint agrees exactly. The remaining **0.500000 USDC** is the expected post-endpoint residual, now recorded by public allocation. Test activity includes **controlled funded donations**, not demonstrated organic demand. [Native oracle and scope](evidence/operations/live-series-one-native-oracle.md).
+
+Allocation transaction [0xf5cb…0101](https://sepolia.etherscan.io/tx/0xf5cbfa5deb0b7ecd05d59a06daec73ca6c9a5def7dc50aea10fc904abcc50101) was observed successful at the lead’s block 11696450 readback. The teammate then redeemed 1,000 claims for 0.099999 USDC at block 11696463. [Redemption receipt](https://sepolia.etherscan.io/tx/0x3ac55ef51fee55243983065ab343e41d9b1dd57b72f02a4d0f3340822f028a3e). Actual allocation gas was 4,396,570; this redemption used 122,011. These receipts are confirmed canonical observations, not a finality claim. Remaining wallets and residual withdrawal are still open.
+
+At N+2 the dedicated keeper saved the correct hash. N and its receipt finalized; the proof was restored from two remote GETs into a fresh local database and two verified copies, with no RPC witness fallback or hosted reset. [Actual restoration](evidence/operations/live-series-one-restore.json). Hosted restart also passed. [Restart](evidence/operations/hosted-restart.json), [operator runbook](deployment-operations.md).
+
+The Graph now has a **live nonempty-series join**: Studio instrument state and hosted Substreams history agreed at finalized block **11696247**. The observed earning interval covered **22/22 known blocks**, all in range, with zero indexing lag relative to finalized history. This snapshot is partial-period context, not complete endpoint coverage or fee attribution. [Live Graph evidence](evidence/operations/live-series-one-graph.md).
+
+## What happens next, and who owns it
+
+| Priority | Codex lead owns | Team owns | Done when |
 | --- | --- | --- | --- |
-| Stable hosting | Shutdown repair, normal restart, journals/proof storage, resource monitoring | Primary/fallback human operator availability | Restart and fresh public readiness pass; actual series checkpoint/restoration still pending |
-| Finished product | Reference intro, clean normal screens, desktop/mobile UX and recovery | Final visual feedback | Intro and removal of internal diagnostics implemented;87hermetic browser checks |
-| Full live lifecycle | Bounded Sepolia self-test, actual transactions, activity, proof restoration and payout reconciliation | Signatures only for participant-controlled wallets | Existing configured wallet and isolated buyer/holder prepared; live sale not yet executed |
-| Repeatable judge experience | Real mature inventory, executable quotes, exact instructions and second-session checks | One fresh unaided browser/wallet rehearsal | Pending public lifecycle; quotes must be renewed after relevant state changes |
-| Submission | Visual README, project brief, architecture, quickstart, sponsor evidence and recording outline | Human narration, real contribution review, feedback form and final submission | Repository navigation prepared; no video or entry submission claimed |
+| Now: finish series 1 | Finalize allocation receipt/cost evidence, original-Q payout and reserve reconciliation | Teammate redemption succeeded; team supplies fresh participant testing | Actual allocation plus independent holder payouts, residual withdrawal and final dust are linked to receipts |
+| Next: make judging repeatable | Preserve real unredeemed inventory; publish fresh executable asks after state changes; verify production build and desktop/mobile paths | One fresh participant tries purchase and redemption without navigation coaching, then a second participant repeats | Both sessions produce correct balances/receipts; failures and assistance are recorded |
+| Continue operations | Keep keeper, retention, replication and Graph healthy; monitor disk, gas and cost; maintain recovery evidence | Name primary/fallback human operators and alert contacts | Responsibility continues through all live obligations, including after submission |
+| Package evidence | Update financial receipts, sponsor links, deployment provenance, recording outline and exact demo URLs | Review actual human contributions and reference-asset provenance; review FEEDBACK | Each claim has correctly labelled public, fork or local evidence |
+| Submit before 19:00 | Provide the tested app/repository and concise prepared text | Human narration, Uniswap feedback form, dashboard partner selection, upload and submission confirmation | Human records submission receipt before deadline |
 
-No additional hosting purchase is needed to resolve the observed crash. The authorized service is running within its current resource ceiling. [Hosted restart evidence](evidence/operations/hosted-restart.json) and [public readiness](evidence/operations/hosted-readiness.json) are operational observations, not a completed public lifecycle. The detailed IDs below retain their acceptance gates.
+Hosting and Graph credentials are already configured. No additional account purchase, RPC key or keeper funding is requested by this checklist. Use current readiness and balances before every new sale; old balance snapshots are not new spending authority.
 
-## Release decision
+## Implementation and acceptance ledger
 
-**The public site is not yet ready for an unattended end-to-end judge session.** The supplied stencil interface, seller-first signed listings, deployed contracts and automated financial flows are implemented. Hosting resources are provisioned. Source `9d089b1` deployed successfully with the reviewed keeper and Graph services enabled. At 12:28 UTC, the public `/api/operations` probe passed protocol, keeper, retention and off-host replication checks; deployment pins independently matched. There is no completed public series or participant financial lifecycle to demonstrate.
+A checked row completes the stated scope only. Human acceptance and recurring operations have separate rows.
 
-Keep the existing three partners. Prioritize the actual Uniswap/Aqua lifecycle and run Graph work concurrently. Do not add a hook, second AMM, AI assistant or extra network merely to accumulate integrations. Success depends on the integrations being essential, understandable and demonstrable.
-
-## Current checkpoint and next implementation batch
-
-Implementation checkpoint, 13 September: J04–J08/J14 now include the actual seller listing form, exact signed terms, persistent discovery and withdrawal, separate-wallet funding/acceptance, explicit transaction stages, refresh and receipt recovery. The stencil redesign passes 78 hermetic browser checks. Both actual local-chain settlement variants include gasless publication from a zero-ETH seller, SQLite restart, second-wallet discovery/funding, listing withdrawal preserving funded-offer rights, and seller approval/acceptance. Trade, capture, NFT return, allocation and original-Q redemptions remain verified locally. [Design and automated evidence](design/STENCIL_VERIFICATION.md).
-
-Publishing or withdrawing a listing is a gasless EOA signature for a nonbinding advertisement. It requires the actual listing service, but can work while the keeper is paused. It neither approves nor escrows the NFT, creates claims, pays the seller, or cancels a buyer's funded offer. Funding and seller acceptance retain their preservation-readiness gates. The implemented J09/J10 signer and authenticated recovery tools still need the actual hosted endpoint and restoration rehearsal.
-
-Independent review also found and fixed an existing liquidity-substitution race: funding now requires the buyer's reviewed position commitment onchain. The fixed FeeStrip and market are now deployed publicly and independently verified; the app still gates new sales on operated preservation. The participant cancelled old offer2 at public block11689226 and recovered672SepoliaUSDC; independent readback confirms zero old liabilities and no activated series. [Public refund evidence](evidence/operations/old-offer-refund.json). Both replacement deployments match reviewed code and22bindings on an independent public readback. [Deployment evidence](evidence/operations/commitment-upgrade-readback.json). Studio v0.2.0 now indexes the new address and agrees with RPC at11689393.
-
-The user delegated provider selection, and Railway's `usufruct` service, 500 MB private persistent volume and private proof bucket are provisioned. The dedicated keeper received 0.01 Sepolia ETH. Hosting selection and provisioning are complete; no further hosting approval is pending. [Deployment, costs and operator recovery](deployment-operations.md). The reviewed restart fix preserves the existing signed journal and financial configuration when enabling or pausing the keeper. The initial public readiness probe passes. Continued operation through restart, an actual series endpoint and restoration, operator coordination and the Graph buyer join remain to be verified.
-
-The frontend now distinguishes project-operated service pauses from wallet prerequisites, with a signature-free recheck. Graph HTTP composition is integrated behind the operations gateway, with canonical common-block verification and bounded history queries. The continuous runner validates an actual Swap or Initialize anchor before the earning window; catch-up and a live sale join remain separate gates. A verified recent swap avoids replaying millions of irrelevant pre-sale blocks. [Current service evidence](evidence/graph-service.md).
-
-The next implementation batch is **J09/J10 alongside J04–J08/J14**. Hosting the existing read-only worker alone is insufficient: it does not submit the endpoint checkpoint. No new public sale should be activated before checkpointing and witness recovery pass their operational checks.
-
-| Order | Lead-owned work | Team contribution / dependency | Completion target |
+| State | ID | Deliverable | Evidence / remaining action |
 | --- | --- | --- | --- |
-| 1A | Verify the provisioned Railway service, funded restricted signer, persistent storage, independent witness copy and HTTPS recovery; J09/J10 | Hosting choice is complete. Name primary/fallback operators and alert contacts; retain the passing enabled-service checks through restart and complete the endpoint/restoration rehearsal | Restart/RPC-failure rehearsal preserves the endpoint anchor and authenticated witness; hosted recovery serves the exact bytes |
-| 1B, parallel | Rehearse seller publication/discovery and the implemented exact funding/acceptance flow on public wallets; J04–J08/J14 | Automated implementation passes. Publishing needs the listing service; public funding/acceptance wait for hosted preservation readiness | Separate browser wallets publish, discover, fund, locate and accept exact terms without developer intervention; listing withdrawal and buyer cancellation retain their distinct effects |
-| 2 | Operate initialized Substreams history and expose the actual Subgraph + stream buyer view; remaining J15–J17 | No additional Graph credentials; actual sale data follows the safe public rehearsal | A real instrument shows sourced range/activity context and break-even, with explicit coverage/freshness and no payout authority |
-| 3 | Rehearse native-compatible fee activity and one complete nonzero public lifecycle; J11/J12 | Assign seller/buyer/secondary-holder roles to public wallet addresses; participants review the prepared exact terms/budget and sign | Fund → accept → Aqua trade → fees → late capture → NFT return before allocation → proof → independent payouts, with receipts/balance checks |
-| 4 | Maintain executable judge inventory, complete the unaided session and evidence packet; J13/J18/J19 | Human review, narration, Uniswap feedback form and final submission; T05–T07 | A fresh judge can buy/redeem, a second fresh participant can repeat it, and each sponsor claim links to actual evidence |
+| [x] | J01 | Product footer and attribution | Product points to source/credits; upstream licenses and ScopeLift credit remain in the repository |
+| [x] | J02 | Product introduction and public network labels | Reference intro, skip/reduced-motion and clean normal screens implemented; human comprehension still tested under J19 |
+| [x] | J03 | Existing LP discovery and exact-ID lookup | Canonical positions load; teammate NFTs 39220–39222 remain owned by 0x746b…4C6d and were in range at 11696304; recheck before a new sale |
+| [x] | J04 | Persistent signed seller listings | Gasless publication/discovery and separate-wallet funding implemented and exercised through the production frontend |
+| [x] | J05 | Exact funded terms | Buyer funds a reviewed position commitment; seller accepts exact Q/share/payment/N/deadline; live series 1 pays 0.25 USDC for 25% |
+| [x] | J06 | Listing → offer → issued claim handoff | Actual public activation and three teammate secondary buys; approval alone is never a sale |
+| [x] | J07 | Current state and receipt recovery | Automated stale/reload/replacement guards; unaided production recovery remains part of J19 |
+| [x] | J08 | Distinct signatures and transactions | Gasless advertisement, USDC approval/funding, NFT approval and acceptance are separate; browser receipts retained |
+| [x] | J09 | Operated endpoint checkpoint and retention | Actual dedicated-keeper tx at N+2, finalized canonical hash, prompt proof retention and tested normal restart; ongoing named operator handoff remains T02-ops |
+| [x] | J10 | Hosted recovery and remote restoration | Actual finalized series proof authenticated from remote GETs into a fresh isolated local DB/two copies; this is not a destructive hosted failover test |
+| [x] | J11 | Nonzero native-compatible activity for the tested pool | Actual NFT 39216 is USDC/WETH; controlled donations generate nonzero fees. Exact native-N fork oracle matches 999999 micros. This does not qualify every native-ETH pool route |
+| [ ] | J12 | Complete public financial lifecycle | Funding, acceptance, Aqua trades, capture, NFT return, endpoint recovery and allocation observed. Teammate redemption succeeded; original buyer/seller payouts and residual/dust reconciliation still open |
+| [ ] | J13 | Repeatable judge inventory | Prepare an allocated claim with real unredeemed inventory and current executable ask; renew quotes after relevant state changes; two fresh purchase/redemption sessions |
+| [x] | J14 | Actionable prerequisites | Wallet/network/gas/proof readiness and small exact amounts implemented; gasless listings can be signed without ETH; actual allocation used 4,396,570 gas |
+| [x] | J15 | Operated Graph provider products | Studio v0.2.0 plus authenticated Substreams v0.1.1 running on the hosted service; retained history survives restart |
+| [x] | J16 | Actual joined buyer query | Real series 1 joined at 11696247; 22/22 observed blocks and common canonical hash verified. Partial-period snapshot and finality lag disclosed |
+| [x] | J17 | Public reusable integration | Versioned SPKG, schema, standalone consumer, common-block join and live example published; human demo must still explain the reuse |
+| [ ] | J18 | Final sponsor evidence packet | Live Graph/restore/native evidence linked; retain all holder/residual receipts and final accounting, complete human feedback/attribution review |
+| [ ] | J19 | Unaided final judge rehearsal | Fresh desktop/mobile participants, repeat redemption route, rejected prompt, reload, insufficient gas and stale quote; final CI/public build checked by lead |
 
-The next user contribution is participant/operator coordination, not another RPC or Graph key. Implementation preparation can proceed while that is arranged. Price/term approval belongs to a concrete prepared test, not a generic permission request now.
+The public seller flow used the existing configured test wallet and a constrained Node-held browser wallet. A teammate's real purchases are separately observed. Neither fact establishes a completed unaided two-person acceptance study. The existing real local-chain suites remain useful regression evidence, with fixture assets clearly labelled.
 
-## The experience a judge should get
+## Team checklist
 
-| Entry | Expected experience | Completion evidence |
-| --- | --- | --- |
-| Arrive without a wallet | Understand that an LP sells a fixed period of native USDC fees while retaining the NFT return right; open a real instrument and inspect terms | A fresh visitor explains the product and finds a live claim in under one minute |
-| Try a purchase | Connect a compatible Sepolia wallet, obtain test assets, review an actual ask, approve the needed token amount, buy, then see the receipt and next action | Successful public transaction and correct claim/USDC balances; no coaching through navigation |
-| Try redemption now | Buy a small claim from a separately prepared allocated series, then redeem its unpaid entitlement | Nonzero payout and linked receipt; the UI explicitly identifies this as an already allocated period |
-| Explore delayed settlement | Inspect another real series where capture and NFT return happened but allocation is pending; inspect retained proof and reserve state | Exact chain/series/endpoint evidence, followed by a demonstrated permissionless allocation |
-| Try the seller path | Find an owned eligible NFT, sign and publish exact listing terms, share the listing, receive a buyer-funded offer, review, approve and accept | Two wallets complete this for an NFT absent from the manifest and prior offers; publishing alone leaves NFT/USDC balances unchanged |
-| Leave and return | Reopen the same link, recover pending/confirmed state, understand what has changed and what can happen next | Reload, account/network change, counterparty acceptance and maturity do not strand the user |
-
-The active, proof-pending and allocated examples are **different real series**, each labeled with its own period and receipts. A judge cannot compress a newly purchased earning window into instant redemption. Only the NFT/residual owner can execute seller actions. A separately labeled simulation may teach the entire sequence without assets, but is optional and never substitutes for live bounty evidence.
-
-## Implementation checklist — Codex lead owns delivery
-
-| Implemented | ID / priority | Deliverable | Acceptance check / dependency |
+| State | ID | Owner / action | Exact remaining input |
 | --- | --- | --- | --- |
-| [x] | J01 / presentation | Move prominent prior-work credit out of the product footer; retain source attribution | Footer links to this repository's Source & credits. ScopeLift remains credited in README/feedback/technical documentation; licenses remain intact |
-| [x] | J02 / presentation | Add a concise first-visit guide and clear public network label | Expandable guide explains funding, whole-period unpaid income, NFT return and allocation; public UI says Sepolia/test assets and has no fixture-control label |
-| [x] | J03 / discovery | Find recent owned LPs and offer exact ID/link lookup | NFTs39220/21/22 verified with public reads; wrong currency/owner/network and broken metadata handled; [evidence](evidence/position-discovery.md) |
-| [x] | J04 / critical | Persistent signed listings and shareable position targets | Automated two-wallet publication/reload/withdrawal/funding passes; public participant acceptance remains open. A buyer can view/fund the seller's previously unknown canonical NFT. Viewing/funding does not require ownership; approval and acceptance still do. Link reconstructs canonical state after reload |
-| [x] | J05 / critical | Explicit small funded-offer terms | Automated exact-term review passes; public participant acceptance remains open. Payment, sold fraction, exact end block and acceptance deadline are reviewable and bounded, with small editable defaults; immutable Q and exact seller consent remain enforced |
-| [x] | J06 / critical | Connect the offer → sale → market handoff | Automated listing → offer → accepted-claim handoff passes; public participant acceptance remains open. Funding receipt distinguishes escrowed USDC from issued claims. Seller receives a usable link/offer ID and chooses exact terms. Accepted buyer sees claims and an explicit publish-quote next action; secondary buyer gets a claim link. Unaccepted/expired offers expose cancellation and exact refunds; expiry alone never implies an automatic refund |
-| [x] | J07 / critical | Keep wallets and lifecycle state current | Automated stale listing, counterparty and replacement/reload checks pass; public participant acceptance remains open. Bounded refresh on page visibility, wallet change, pending counterpart action and approaching maturity; no stale account overwrites, double submissions or silent changes to reviewed terms |
-| [x] | J08 / critical | Explain each signature and preserve receipts | Automated signature and receipt recovery passes; public participant acceptance remains open. Distinguish gasless listing signatures from allowance/approval, submission and confirmation states. Rejection after approval explains the remaining allowance. Reload resumes known receipts and shows the next allowed action |
-| [ ] | J09 / critical | Operate endpoint checkpointing and retention | Restricted testnet signer, nonce/receipt/retry handling, fee/balance limits, canonical checkpoint within N+256, prompt witness acquisition, restart/failure rehearsal and named fallback. Must pass before public activation |
-| [ ] | J10 / critical | Host recovery and expose truthful service state | Persistent service with independent off-host witness copy, tested restoration, HTTPS API/proxy and bounded requests. Distinguish missing checkpoint, missing proof, finality and cached growth. Never allocate from server estimates |
-| [ ] | J11 / critical | Prepare and rehearse native-compatible pool activity | Confirm current in-range liquidity and nonzero USDC fee delta before selling. Use a native-ETH-compatible activity route for ETH/USDC; the existing local ERC20 activity router is not a generic native swap router |
-| [ ] | J12 / critical | Complete one nonzero public lifecycle | Separate wallets: fund/accept → actual Aqua trade after some accrual → pre/post-N activity → late capture → same NFT returned before allocation → valid proof → independent redemptions. Retain exact balances, hashes and dust; native-N oracle is an isolated fork replay |
-| [ ] | J13 / critical | Keep staged judge inventory executable | Active, proof-pending and allocated series have real bounded inventory. After a redemption invalidates maker state, renew quotes safely from maker assets. Two successive fresh-wallet purchase/redemption sessions pass |
-| [x] | J14 / critical | Make prerequisites and cost actionable | Automated prerequisites pass, including gasless listing publication at zero ETH; public participant acceptance remains open. Explain wallet/network and test-asset acquisition before transaction signatures. Read ETH as well as USDC balances; estimate actual transaction gas; show unavailable estimates honestly. Offer sizes fit prepared wallets and floored claim payouts are nonzero |
-| [ ] | J15 / Graph | Deploy the actual Subgraph and consume live Substreams | Studio v0.2.0 and live Substreams v0.1.1 verified, with real mint decoding, cursor resume and shared block/RPC agreement. A local11,299-block snapshot retains a verified pre-sale Swap seed and matches the recent RPC/Studio tail. Still operate the hosted stream; undo has local tests only. T01 and T02 provisioning complete; hosted operation and T02-ops remain open; [evidence](evidence/substreams.md) |
-| [ ] | J16 / Graph | Show useful live joined buyer analysis | Common chain/pool/block/hash, coverage, range occupancy, source identity and quote break-even visible in app. Separate expected finality delay from stalled indexing; replace hardcoded provider labels with actual request state |
-| [ ] | J17 / Graph | Publish a reusable integration | Versioned v0.1.1 SPKG/schema/config and standalone live consumer are public. Remaining: demonstrate the useful two-product composition on an actual instrument and explain reuse in the demo. No fake chart, forecast or exact-fee claim |
-| [ ] | J18 / submission | Package sponsor evidence and human review materials | Public source/runtime provenance, transaction links, measured cost, reusable Uniswap recipe, current FEEDBACK, licenses/AI record and concise recording script. Each claim links to the correct public/fork/local evidence |
-| [ ] | J19 / final acceptance | Run the full judge rehearsal and publish verified build | Two unaided participants; both desktop/mobile; wrong network, insufficient gas, rejected signature, reload, stale/depleted quote, counterparty action, unaccepted/expired offer refund and acceptance race, proof outage and post-redemption quote renewal; hosted CI and public build verified |
+| [x] | T00 | Team: confirm event/track | ETHOnline 2026 Classic confirmed; folder name is accidental |
+| [x] | T01 | Team: Graph access | Studio/Graph Market access is configured and live |
+| [x] | T02 | Team/lead: managed hosting | Railway service, 500 MB volume, private bucket and dedicated funded keeper are operated; no hosting approval remains |
+| [ ] | T02-ops | Team: operator handoff | Name primary/fallback people and how they receive alerts; lead supplies exact recovery procedures |
+| [x] | T03 | Team/lead: initial test wallets | Seller/buyer prepared; teammate wallet 0x746b…4C6d actually acquired 1,000 claims. Fresh judge wallets and gas remain J13/J19 prerequisites |
+| [x] | T04 | Team/lead: bounded live self-test | User authorized controlled self-testing; exact series 1 terms executed. New terms require a new concrete review |
+| [ ] | T05 | Team: independent rehearsal | Teammate purchase/redemption passed; still complete a fresh unaided purchase/redeem session and second repeat; report confusion and assistance |
+| [ ] | T06 | Team: meaningful human review | Record actual design/engineering/test contributions and Classic reference-asset provenance in the attribution record |
+| [ ] | T07 | Team: complete submission | Review FEEDBACK, send required Uniswap form, record human video, select three intended partners, upload and retain submission confirmation |
+| [x] | T08 | Prior buyer: old offer refund | Old deployment offer 2 refunded 672 Sepolia USDC; do not accept/refund it again. [Receipt](evidence/operations/old-offer-refund.json) |
 
-Security-sensitive changes receive separate review before publication. The 78 hermetic browser checks and both actual local-chain settlement variants do not replace J12/J19. The funded-position commitment replacement is deployed, independently verified and reflected in the operational pins and Studio v0.2.0 configuration. Provisioning is complete; hosted preservation acceptance and the public financial lifecycle remain pending. Use the [teammate brief](TEAMMATE_BRIEF.md) for the frontend rehearsal and judge script.
+## Bounties and evidence boundaries
 
-## Team checklist — access, decisions and hands-on work
+Keep the three selected partners: **Uniswap — Best Uniswap Stack Contribution**, **1inch — Build an Aqua App**, **The Graph — Best Use of Composable or Standardized Graph Products**. Use the ordinary Classic-compatible Uniswap/Aqua pools, not their Continuity-only pools. [Exact requirement/evidence matrix](evidence/sponsors.md).
 
-| Done | ID | Team action | What to provide / what Codex then handles |
-| --- | --- | --- | --- |
-| [x] | T00 | Confirm event and entry | ETHOnline2026 Classic confirmed. The local folder name does not determine eligibility |
-| [x] | T01 | Make Graph access available | Studio deployment and Graph Market JWT both verified live. Credentials remain in ignored `.env`; Studio query currently needs no extra credential. Hosted secret configuration is part of T02 |
-| [x] | T02 | Select and provision an always-on host | User delegated provider choice; Railway service, 500 MB private volume and private proof bucket are provisioned. Dedicated keeper funded with 0.01 Sepolia ETH. No further hosting approval is pending |
-| [ ] | T02-ops | Coordinate ongoing operation | Identify primary/fallback operators and alert contacts; verify enabled service health, exact endpoint preservation and authenticated restoration. Provisioned resources alone do not complete J09/J10 |
-| [x] | T08 | Refund the old unaccepted offer before switching deployments | Buyer0x746b…4C6d cancelled offer2 for672SepoliaUSDC at11689226. Receipt and zero remaining old-contract liabilities verified at11689275; [evidence](evidence/operations/old-offer-refund.json) |
-| [ ] | T03 | Prepare separate participant wallets | Seller controls an eligible NFT; buyer and secondary buyer/holder have Sepolia ETH and authentic test USDC. Name the maker and participant wallets; the dedicated keeper already exists and is funded. Share public addresses only; keys remain in wallets/secrets |
-| [ ] | T04 | Agree to the bounded real test | Choose exact NFT, upfront payment, sold fraction, cutoff and maximum test-asset/activity/gas budget from a prepared review. Confirm actual owners will sign; do not move or mint more liquidity blindly |
-| [ ] | T05 | Join an unaided two-wallet rehearsal | At least seller and buyer participants; preferably a fresh secondary buyer. Record misunderstandings and assistance rather than teaching the flow first. A second participant must be able to repeat the redeemable path |
-| [ ] | T06 | Perform and record meaningful human review | Review rights, reserve/cutoff behavior, costs and test outcomes. Verify origin/creation dates of project-specific design references for Classic. Record actual authorship/contributions; do not invent completed reviews |
-| [ ] | T07 | Complete sponsor and event submission | Review FEEDBACK and submit Uniswap's form; record 2–4 minutes in a human voice; select the intended partner tracks in the dashboard; upload and confirm submission receipt before deadline |
+The live Graph composition gap is closed for the recorded snapshot. The final demo and reusable-work explanation are still required. Aqua public token transfers now exist; disclose the source-pinned fresh deployment and custom dispatcher. Uniswap has live custody, fees and historical proof evidence; its feedback form remains a human submission task. Organizer eligibility is not certified by this checklist.
 
-Account names and availability are enough to begin coordinating access. Existing RPC/deployment credentials and test funding are already configured and should not be requested again. Historical balances are not a fresh budget: the lead reads current balances before preparing transactions. Public test setup never implies permission to purchase services or spend mainnet funds.
+## Demo discipline
 
-## Bounty-specific acceptance
+- Keep original **Q=10000** as the denominator. A claim carries its fraction of the whole period's unpaid USDC income, including accrual before transfer. Other-currency fees and post-period USDC belong to the residual beneficiary.
+- Series 1 has progressed from active to captured/NFT-returned. Those are **successive recorded states of one series**, not simultaneous A/B/C inventory. An additional active example needs a separately prepared, labelled series and continuing operator coverage.
+- After allocation, show actual redemption only when the receipt succeeds. Retained claims, residual funds and rounding dust are distinct. Tiny test payouts prove accounting, not commercial gas economics.
+- A saved checkpoint and a retained proof are independent requirements. Analytics never supply settlement authority. Keep obligations running through outages and past submission.
+- Do not promise an early cost-plus-2% buyback, monthly tranches, guaranteed fees, organic demand, audited safety, or a human study that did not happen.
 
-| Partner / selected track | Requirement to satisfy | Our evidence plan |
-| --- | --- | --- |
-| Uniswap / Best Uniswap Stack Contribution | Meaningful stack integration, public code, FEEDBACK, developer feedback form and precise integration pointers | Individual canonical v4 NFT preservation, native USDC income, exact delayed endpoint, reusable escrow/verification recipe; J12/J18/T07 |
-| 1inch / Build an Aqua App | Official Aqua/SwapVM use, demonstrated onchain transfers and real Git history; SwapVM favored, modified SwapVM redeployment permitted, local forks accepted | Actual issued-claim bids/asks, shared capital and quote invalidation; disclose new Aqua instance/custom router provenance. Retain an official-deployment fork fallback or obtain sponsor clarification through the team; J12/J13/J18 |
-| The Graph / Best Use of Composable or Standardized Graph Products | Live provider data and multiple composed Graph products or meaningful standardization; reusable work and demo | Live Substreams pool context + live series Subgraph, common-block buyer decision view and reusable module; J15–J17. This target stays unfinished until actual provider composition works |
+## Final submission window
 
-Official requirements rechecked12September2026: [Uniswap](https://ethglobal.com/events/ethonline2026/prizes/uniswap-foundation), [1inch](https://ethglobal.com/events/ethonline2026/prizes/1inch), [The Graph](https://ethglobal.com/events/ethonline2026/prizes/the-graph). These are the current selected targets; any account-specific dashboard variation should be reconciled before submission. Eligibility decisions belong to the organizers, not this checklist.
+Finish financial evidence and the fresh-user check now. Prepare the human recording in parallel; target upload by **18:30 Bucharest**, leaving 30 minutes for errors. The official deadline remains **19:00**, regardless of unfinished features. Keep the page honest if a gate remains open; do not replace live evidence with fixtures. [Official event rules](https://ethglobal.com/events/ethonline2026/info/details) were rechecked 13 September 2026; [submission.md](submission.md) contains the recording and attribution requirements.
 
-## The details that can break a seemingly successful demo
-
-**An eligible LP may earn nothing.** An NFT containing USDC, with no hooks and nonzero liquidity, is admissible; that does not establish current range or activity. Pool donations distribute through active liquidity and do not manufacture income for an out-of-range NFT. A read-only check at Sepolia block11687429 found NFT39216 and the team’s NFTs39220/39221/39222 all in range. That snapshot does not prove a nonzero fee delta or guarantee future range. Recheck tick/bounds and rehearse activity before activation; no additional mint is justified merely by the earlier discovery failure. Once sold, the range/liquidity must stay fixed. Do not relabel controlled donations as organic demand.
-
-**One completed judge session can consume the next session's route.** Redemptions change the state bound into Aqua quotes. A maker needs to renew offers after those changes, using its own assets. Inventory, keeper gas and test-token distribution need continuity throughout judging, with explicit low-balance alerts. Captured reserves are liabilities, never a pool of demo funds.
-
-**Proof and anchor are independent obligations.** A saved witness without a usable canonical hash cannot rescue the present verifier after its window expires. A saved hash cannot reconstruct pruned state. Test both outage paths before taking public commitments. A verified growth cache is useful only after actual authenticated verification of the exact tuple; it does not turn a server number into truth.
-
-**Proof costs dominate tiny examples.** The retained public proof measured4,417,289call gas; that excludes full transaction overhead. The1,425,145gas local settlement used a different trie. Show actual public transaction costs and who pays them. A tiny positive test payout proves accounting, not an economical retail product.
-
-**A single actor cannot demonstrate all permissions honestly.** The anonymous buyer path requires no LP NFT. The seller path requires that actor's position and an external funded offer. Buying a prepared matured claim demonstrates real trading/redemption without pretending that the same new sale matured instantly. A recording should show the full original series; prepared browseable states complement it.
-
-**Source credits should support inspection.** The product footer now leads to this project's source/credits; the README continues to credit ScopeLift and upstream sources. Retain attribution and avoid first-ever fee/principal separation claims. Product screens should explain decisions and rights; developer diagnostics and sponsor evidence belong behind clearly labeled links.
-
-## Delivery sequence and stop conditions
-
-1. **Connect counterparties and prepare infrastructure together:** J04–J10, with T01–T04 running alongside. Ship the shareable target and exact offer review before asking participants to improvise around hidden terms.
-2. **Prove the complete public lifecycle:** J11/J12 and an initial human rehearsal. If witness/anchor reliability, nonzero income or native-currency activity fails, stop new activations and fix the failure. Existing recovery obligations continue.
-3. **Prepare repeatable judge states and live analysis:** J13–J17. If Graph remains unavailable, keep the disclosure truthful; it cannot be replaced by a simulation for that bounty.
-4. **Freeze, rehearse and submit:** J18/J19 and T05–T07. Prepare a clear known-limits list and the exact evidence links used in the recording.
-
-The official submission deadline is **13September2026,19:00Europe/Bucharest (16:00UTC)**. Target feature freeze at12:00, reviewed video/materials by15:00 and submission by17:00, retaining two hours for upload problems. These are internal targets, not a promise that unfinished safety gates will pass. The event requires Classic start-fresh provenance, truthful AI attribution, meaningful human involvement and a2–4minute video at720p or higher with human narration. [Official event requirements](https://ethglobal.com/events/ethonline2026/info/details).
-
-Defer broad chain/token support, EIP-2935 migration, proof compression/ZK, a new AMM, an order book, general NFT indexing and open-ended agent infrastructure until the bounded public experience works. Later production readiness still requires deeper independent security review, provider/load qualification, sustainable liquidity and evidence of real user demand.
-
-## Historical presentation verification — 12 September
-
-The lead inspected the disconnected public Orchard/Pin/Cabinet and current code; separate frontend and protocol reviewers returned the counterparty, refresh, native-activity and repeat-redemption findings incorporated here. Presentation edits pass TypeScript, the isolated public build and all47UI tests. The discovery implementation and subsequent evidence commit already passed all hosted jobs: [implementation CI](https://github.com/MihRazvan/eth-online-2026/actions/runs/34679841461), [evidence CI](https://github.com/MihRazvan/eth-online-2026/actions/runs/34679888515). No new public transaction, paid service, sponsor message or submission occurred during this pass.
-
-[Baseline public observations](evidence/judge-pass/before.json), [local public-build presentation check](evidence/judge-pass/presentation-local.json), [desktop](evidence/judge-pass/desktop.png), [mobile](evidence/judge-pass/mobile.png).
-
-The presentation increment `5eddbd7` is deployed on the public Vercel alias. The [production browser check](evidence/judge-pass/presentation-production.json) passed keyboard guide expansion, correct source-credit link, public network/data labels, no page errors and no mobile overflow. This verifies the presentation changes, not the unchecked financial/service gates above.
-
-## Current implementation and operational verification — 13 September
-
-The supplied stencil and listing implementation are covered by [the redesign verification](design/STENCIL_VERIFICATION.md), including exact original-Q selections and real local-chain seller/buyer transactions. The [listing service contract](../packages/listings/README.md) documents signed terms, persistent cancellation tombstones, EOA support and service boundaries. The keeper enablement fix passes 18 unit tests; its earlier migration increment also passed actual isolated-Anvil enablement, restart and checkpoint/reorg verification. These automated results do not establish a public checkpoint or restored series proof.
-
-Railway deployment `c2506416-973e-4e53-8897-2ad363ed1454`, source `9d089b1`, succeeded. At 12:28 UTC, public `/api/operations` reported `readyForNewSales=true` with all four checks passing. Independent deployment pins matched; the enabled keeper held 0.01 Sepolia ETH at nonce 0, and `nextSeriesId=1` confirmed no activated series. Graph is enabled, with its retained tail and normal-restart continuity still under verification. Consult [STATUS](STATUS.md) and [the operations runbook](deployment-operations.md) for subsequent live observations. Keep J09/J10 actual endpoint/restoration evidence and J12/J19 human public acceptance open; a readiness probe is not an actual checkpoint transaction or a restored series proof.
+Existing evidence: [stencil/listing regressions](design/STENCIL_VERIFICATION.md), [browser financial tests](evidence/browser.md), [independent reviews](evidence/integration-review.md), [live Graph](evidence/operations/live-series-one-graph.md), [remote restoration](evidence/operations/live-series-one-restore.json), [native endpoint oracle](evidence/operations/live-series-one-native-oracle.md). Lead owns current [STATUS](STATUS.md), README, integration and pushes.

@@ -2,6 +2,23 @@
 
 Exact frontend steps and local rehearsal commands. Read the [project brief and judge demo](TEAMMATE_BRIEF.md) for the product explanation, current limitations and separately staged examples. Public testing uses **Ethereum Sepolia** at https://usufruct-mu.vercel.app. This runbook does not authorize bypassing operational readiness or treat local tests as public acceptance.
 
+## Current public test ticket — 13 September
+
+| Field | Verified state / next action |
+| --- | --- |
+| Series / position | [Series 1](https://usufruct-mu.vercel.app/#market/1), canonical NFT 39216, USDC/WETH pool, activation 11696226, exactN 11696317 |
+| Original terms | Q 10000; buyer 2,500 claims for 0.25 test USDC; seller initially 7500. Read current balances before further actions |
+| Actual secondary holder | Teammate 0x746b…4C6d bought 189+63+748=1,000 claims. The initially planned agent-controlled holder did not receive those claims |
+| Captured / returned | Actual late capture 1.499999 USDC; original NFT returned at 11696393 **before allocation** |
+| Allocation | Public allocation observed:0.999999 USDC sold reserve /0.500000 residual. Teammate redemption confirmed:1,000 claims paid 0.099999 USDC; remaining wallets/residual/dust reconciliation still pending |
+| Preservation | Keeper saved N at N+2; endpoint/receipt finalized; remote proof restored into fresh local DB/two copies using 2 GETs, zero writes and no RPC witness fallback |
+| Graph | Actual live joined series 1 query verified at 11696247; partial earning history 22/22 known blocks, all in range |
+| Immediate owners | Lead verifies receipts, pays only its controlled wallets and maintains judge inventory. Teammate redemption is confirmed. Team records confusion, tests a fresh repeat session and completes human submission |
+
+[Receipts and sponsor evidence](evidence/sponsors.md), [remote restoration](evidence/operations/live-series-one-restore.json), [native endpoint comparison](evidence/operations/live-series-one-native-oracle.md), [live Graph join](evidence/operations/live-series-one-graph.md). This was controlled public testing with funded donations. It is not yet a completed unaided user study.
+
+**Continue this series from its actual current state.** Do not republish, fund again, repeat capture or return the NFT again to follow an old checklist. Allocation being observed does not mean a pending redemption succeeded. Review the correct current claim balance and predicted payout, sign once, retain the receipt, and compare the actual USDC increase. The originalQ remains 10000 after other holders redeem. A fresh judge needs an executable quote backed by unredeemed inventory; renew quotes after relevant state changes.
+
 ## End-to-end test: exact manual flow
 
 ### 1. Prepare the people, assets and operator
@@ -15,9 +32,9 @@ Use separate browser profiles/wallet contexts:
 
 Two people can coordinate these roles, but three wallet contexts make the full trade/redemption demonstration clearer. Share public addresses only. Previously discovered NFTs include 39216 and 39220–39222; verify current ownership/eligibility rather than assuming a fixed role from an old session.
 
-Before a public sale, require fresh deployment-matching `/api/operations` readiness for **protocol, keeper, retention and replication**, and complete the operator’s restart/remote-restoration rehearsal. Fund gas for every wallet, including potentially expensive proof allocation. Use the app’s links for authentic Sepolia test USDC and ETH; do not use mainnet funds or arbitrary tokens named “USDC”.
+Before a public sale, require fresh deployment-matching `/api/operations` readiness for **protocol, keeper, retention and replication**, and inspect the operator’s current restart/remote-restoration evidence. The actual series 1 drill is complete; later series still need continuous preservation. Fund gas for every wallet, including potentially expensive proof allocation. Use the app’s links for authentic Sepolia test USDC and ETH; do not use mainnet funds or arbitrary tokens named “USDC”.
 
-Record a test ticket: app commit, network, S/B/C addresses, NFT ID, upfront payment, sold percentage, Q, exact N, acceptance deadline in UTC, offer link, resulting series link and operator. For a small rehearsal, **0.25 test USDC / 25% sold** is an example to agree on, not a standing instruction to fund a particular NFT. Choose N with comfortable time for both wallets and activity. The listing form defaults to **1 USDC / 100% / +600 blocks / one-hour acceptance deadline**; the direct buyer proposal defaults to 80%. Replace defaults deliberately.
+Record a test ticket: app commit, network, S/B/C addresses, NFT ID, upfront payment, sold percentage, Q, exact N, acceptance deadline in UTC, offer link, resulting series link and operator. For a small rehearsal, **0.25 test USDC / 25% sold** is an example to agree on, not a standing instruction to fund a particular NFT. Choose N with comfortable time for both wallets and activity. Read and replace the current form defaults deliberately; never assume an earlier screenshot’s terms are still selected.
 
 ### 2. Publish, fund and activate — two different wallets
 
@@ -41,7 +58,7 @@ Test **Withdraw listing** separately: it is a gasless signed withdrawal of the a
 
 ### 3. Trade the issued claims
 
-1. B opens **Holdings → Publish sell quote** and chooses **Sell claims (ask)**. Set a small **Claim quantity**, **Total USDC ask** and **Expires in minutes**. Replace the maker form’s 1,000-claim / 84-USDC defaults.
+1. B opens **Holdings → Publish sell quote** and chooses **Sell claims (ask)**. Set a small **Claim quantity**, **Total USDC ask** and **Expires in minutes**. Set a reviewed small amount and price; do not reuse a placeholder default or already depleted quote.
 2. B selects **Review maker quote → Approve and publish quote**. Complete the required approval and publication actions. Inventory remains in B’s wallet; Aqua allocations do not create extra capital.
 3. C opens the issued claim from Market, sets **Claims to buy**, then **Review purchase → Confirm claim purchase**. Complete USDC approval if requested.
 4. Verify actual USDC and FeeClaim balance changes for B and C. Show C’s cabinet and saved receipt. Leave both wallets with claims for independent payout testing.
@@ -54,7 +71,7 @@ Also exercise a **Buy claims (bid)** and **Review claim sale → Confirm claim s
 2. Preserve the endpoint witness and canonical checkpoint. Wait until a block strictly **after N**.
 3. Open the issued claim → **Capture actual fees → Confirm transaction**. Record the collected reserve. This may include post-period USDC; it is not all owed to claim holders.
 4. As S/residual owner, open **Holdings → Recover NFT #… → Confirm transaction**. Verify the same token ID returned, while allocation is still pending. This is a key demonstration.
-5. Open the issued claim → **Allocate fee reserve → Confirm transaction**. The app uses authenticated proof recovery or the exact verified onchain growth cache. It does not accept a manually typed payout amount. If proof is unavailable, leave the reserve protected and show the recovery state.
+5. Once recovery shows the exact finalized proof is available, open the issued claim → **Allocate fee reserve → Confirm transaction**. The app uses authenticated proof recovery or the exact verified onchain growth cache. It does not accept a manually typed payout amount. If proof is unavailable, leave the reserve protected and show the recovery state.
 6. B and C separately open **Holdings → Read claim & recovery** for this series, then **Redeem … claims → Confirm transaction**. Disconnect S while doing this. The current UI redeems each wallet’s whole remaining claim balance. Compare actual payouts with original-Q entitlement; tiny amounts can round down to zero micro-USDC.
 7. As the residual beneficiary, use **Withdraw residual fees** for separately available residual funds. Do not count retained fee claims twice as residual income.
 
