@@ -1,0 +1,1131 @@
+{
+  "schemaVersion": 1,
+  "checkedAt": "2026-09-13T14:37:22.161Z",
+  "scope": "Actual public Sepolia series1 receipts, native token/event deltas and current liabilities. Controlled demonstration plus a teammate-owned wallet purchase/redemption; no raw signatures or credentials.",
+  "chainId": 11155111,
+  "seriesId": "1",
+  "tokenId": "39216",
+  "contracts": {
+    "feeStrip": "0xd84eE56b24841c887c73e8b9079A01c28b1B3E8E",
+    "claim": "0x3f4Cd0787E83C05fDa83E24D7016E57438dce644",
+    "usdc": "0x1c7d4b196cb0c7b01d743fbc6116a902379c7238",
+    "positionManager": "0x429ba70129df741B2Ca2a85BC3A2a3328e5c09b4",
+    "poolManager": "0xE03A1074c86CFeDd5C142C4F04F1a1536e203543",
+    "swapRouter": "0x1ef56bd27fa3c0795954b4dace7836696dfc3830",
+    "aqua": "0x5be8474a6c74a51c35dd3b27cab93774d0fe73ee"
+  },
+  "roles": {
+    "seller": "0x92AAe0857979a139344f5b6F008e71F27A507522",
+    "buyer": "0xe11543861dba1D526520069f775eb53aB9BB8866",
+    "unusedControlledHolder": "0x72fF16Ab9Dcdfa176a962A0b1f4B627256995418",
+    "teammate": "0x746bb7beFD31D9052BB8EbA7D5dD74C9aCf54C6d",
+    "keeper": "0xFfaa5fE1C38Aa538fd9B1A28D8CF8516fa3728Ad"
+  },
+  "observation": {
+    "blockNumber": "11696517",
+    "blockHash": "0x7957e0a744139945062406aaabe08d2c07710972afc9e473d0231fa7e8937f2c",
+    "finalizedBlock": "11696430",
+    "finalizedHash": "0x42666cf320885cc0e4450c88525290708a479b7875f2f6564715eb0fdd37361f",
+    "allReceiptHeadersMatchIndependentPublicNode": true,
+    "allLifecycleReceiptsFinalized": false
+  },
+  "activation": {
+    "seriesId": "1",
+    "offerId": "1",
+    "tokenId": "39216",
+    "claim": "0x3f4Cd0787E83C05fDa83E24D7016E57438dce644",
+    "endBlock": "11696317",
+    "quantity": "10000000000000000000000"
+  },
+  "allocation": {
+    "seriesId": "1",
+    "soldUSDC": "999999",
+    "residualUSDC": "500000"
+  },
+  "capture": {
+    "seriesId": "1",
+    "usdcAmount": "1499999",
+    "otherAmount": "0"
+  },
+  "nftReturnedBeforeAllocation": true,
+  "purchases": [
+    {
+      "hash": "0x2c369fcc59d2af2762e11a7ccca76b10aed32633cb70c050056f76243a658b9b",
+      "blockNumber": "11696266",
+      "claims": "189000000000000000000",
+      "usdcMicros": "9450",
+      "router": "0x1ef56bd27fa3c0795954b4dace7836696dfc3830"
+    },
+    {
+      "hash": "0xfba1f66a9e6c8294e7ecbc992f448828c584ef6e74fcf2d1fedb4521847ac504",
+      "blockNumber": "11696279",
+      "claims": "63000000000000000000",
+      "usdcMicros": "3150",
+      "router": "0x1ef56bd27fa3c0795954b4dace7836696dfc3830"
+    },
+    {
+      "hash": "0x0d09b53db087f1f60fada8969c3accd583b53f4bd5872175c5ba44bbb30d08c9",
+      "blockNumber": "11696329",
+      "claims": "748000000000000000000",
+      "usdcMicros": "37400",
+      "router": "0x1ef56bd27fa3c0795954b4dace7836696dfc3830"
+    }
+  ],
+  "redemptions": [
+    {
+      "action": "teammate-redeem-1000",
+      "seriesId": "1",
+      "holder": "0x746bb7beFD31D9052BB8EbA7D5dD74C9aCf54C6d",
+      "recipient": "0x746bb7beFD31D9052BB8EbA7D5dD74C9aCf54C6d",
+      "quantity": "1000000000000000000000",
+      "usdcAmount": "99999",
+      "hash": "0x3ac55ef51fee55243983065ab343e41d9b1dd57b72f02a4d0f3340822f028a3e"
+    },
+    {
+      "action": "buyer-redeem-1500",
+      "seriesId": "1",
+      "holder": "0xe11543861dba1D526520069f775eb53aB9BB8866",
+      "recipient": "0xe11543861dba1D526520069f775eb53aB9BB8866",
+      "quantity": "1500000000000000000000",
+      "usdcAmount": "149999",
+      "hash": "0xa6dd65e42ed9a46335536edb4e3a90278e194e5b4aff343b5e3b87e17aa89f56"
+    },
+    {
+      "action": "seller-redeem-6500",
+      "seriesId": "1",
+      "holder": "0x92AAe0857979a139344f5b6F008e71F27A507522",
+      "recipient": "0x92AAe0857979a139344f5b6F008e71F27A507522",
+      "quantity": "6500000000000000000000",
+      "usdcAmount": "649999",
+      "hash": "0x164cdd3b680be44cd894c7b4b17f28492461b45b004d372f2012a89b95cd747f"
+    }
+  ],
+  "controlledActivity": {
+    "preEndpointDonationMicros": "1000000",
+    "postEndpointDonationMicros": "500000",
+    "description": "Sender-funded controlled USDC donations create test fee growth. These receipts demonstrate accounting; they do not establish organic trading revenue or a repeatable investment return."
+  },
+  "current": {
+    "series": {
+      "tokenId": "39216",
+      "claim": "0x3f4Cd0787E83C05fDa83E24D7016E57438dce644",
+      "residualOwner": "0x92AAe0857979a139344f5b6F008e71F27A507522",
+      "key": {
+        "currency0": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+        "currency1": "0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14",
+        "fee": 3000,
+        "tickSpacing": 60,
+        "hooks": "0x0000000000000000000000000000000000000000"
+      },
+      "tickLower": 58980,
+      "tickUpper": 60180,
+      "liquidity": "3411586204",
+      "activationBlock": "11696226",
+      "endBlock": "11696317",
+      "baselineX128": "0",
+      "quantity": "10000000000000000000000",
+      "capturedUSDC": "1499999",
+      "otherReserve": "0",
+      "soldUSDC": "999999",
+      "redeemedQuantity": "9000000000000000000000",
+      "paidClaims": "899997",
+      "residualUSDC": "0",
+      "captured": true,
+      "allocated": true,
+      "nftReturned": true,
+      "closed": false
+    },
+    "nftOwner": "0x92AAe0857979a139344f5b6F008e71F27A507522",
+    "totalSupply": "1000000000000000000000",
+    "reservedUSDC": "100002",
+    "escrowUSDC": "100002",
+    "balances": [
+      {
+        "role": "seller",
+        "address": "0x92AAe0857979a139344f5b6F008e71F27A507522",
+        "claims": "0",
+        "usdcMicros": "14199999"
+      },
+      {
+        "role": "buyer",
+        "address": "0xe11543861dba1D526520069f775eb53aB9BB8866",
+        "claims": "1000000000000000000000",
+        "usdcMicros": "449999"
+      },
+      {
+        "role": "unusedControlledHolder",
+        "address": "0x72fF16Ab9Dcdfa176a962A0b1f4B627256995418",
+        "claims": "0",
+        "usdcMicros": "250000"
+      },
+      {
+        "role": "teammate",
+        "address": "0x746bb7beFD31D9052BB8EbA7D5dD74C9aCf54C6d",
+        "claims": "0"
+      }
+    ],
+    "remainingOneBurnPayoutMicros": "99999",
+    "dustIfAllRemainingClaimsBurnedOnce": "3"
+  },
+  "accounting": {
+    "openingClosingControlledUSDC": [
+      {
+        "role": "seller",
+        "address": "0x92AAe0857979a139344f5b6F008e71F27A507522",
+        "openingBlock": "11696168",
+        "closingBlock": "11696517",
+        "openingUsdcMicros": "15050000",
+        "closingUsdcMicros": "14199999",
+        "eventDeltaUsdcMicros": "-850001"
+      },
+      {
+        "role": "buyer",
+        "address": "0xe11543861dba1D526520069f775eb53aB9BB8866",
+        "openingBlock": "11696168",
+        "closingBlock": "11696517",
+        "openingUsdcMicros": "0",
+        "closingUsdcMicros": "449999",
+        "eventDeltaUsdcMicros": "449999"
+      },
+      {
+        "role": "unusedControlledHolder",
+        "address": "0x72fF16Ab9Dcdfa176a962A0b1f4B627256995418",
+        "openingBlock": "11696168",
+        "closingBlock": "11696517",
+        "openingUsdcMicros": "0",
+        "closingUsdcMicros": "250000",
+        "eventDeltaUsdcMicros": "250000"
+      }
+    ],
+    "receiptTokenDeltas": {
+      "seller": {
+        "USDC": "-850001",
+        "FeeClaim": "0"
+      },
+      "buyer": {
+        "USDC": "449999",
+        "FeeClaim": "1000000000000000000000"
+      },
+      "unusedControlledHolder": {
+        "USDC": "250000",
+        "FeeClaim": "0"
+      },
+      "teammate": {
+        "USDC": "49999",
+        "FeeClaim": "0"
+      },
+      "keeper": {
+        "USDC": "0",
+        "FeeClaim": "0"
+      }
+    },
+    "teammatePurchaseMicros": "50000",
+    "teammateRedemptionMicros": "99999",
+    "teammateNetUsdcBeforeGas": "49999",
+    "paidClaimsMicros": "899997",
+    "residualWithdrawnMicros": "500000",
+    "remainingReserveMicros": "100002",
+    "identity": "1499999 captured = 899997 paid claims + 500000 withdrawn residual + 100002 retained reserve"
+  },
+  "gas": {
+    "gasCostWeiByRole": {
+      "seller": "7695263249624944",
+      "buyer": "868788620149657",
+      "unusedControlledHolder": "60195535112925",
+      "teammate": "1016562129991755",
+      "keeper": "47674132015650"
+    },
+    "totalRecordedGasCostWei": "9688483666894931",
+    "controlledPlusKeeperGasCostWei": "8671921536903176",
+    "controlledParticipantEthFundingWei": "35000000000000000",
+    "scope": "Actual gasUsed × effectiveGasPrice for listed receipts only, including discovered teammate USDC approvals and keeper checkpoint. Excludes prior contract deployment/NFT mint, host setup, later judge-ask publication and any unrelated wallet activity."
+  },
+  "receipts": [
+    {
+      "action": "buyer-eth",
+      "hash": "0x592a53e9a74e372a5452956a448d8039c25914d406ae1f0af387a237c6500257",
+      "blockNumber": "11696169",
+      "blockHash": "0xece29c6dee7892e68bfb211e7d7036fa95a712c6694ff56eb76357699de06bd6",
+      "timestamp": "1789305864",
+      "status": "success",
+      "from": "0x92aae0857979a139344f5b6f008e71f27a507522",
+      "to": "0xe11543861dba1d526520069f775eb53ab9bb8866",
+      "createdContract": null,
+      "valueWei": "25000000000000000",
+      "gasUsed": "21000",
+      "effectiveGasPriceWei": "1074949471",
+      "gasCostWei": "22573938891000",
+      "transfers": [],
+      "events": []
+    },
+    {
+      "action": "holder-eth",
+      "hash": "0xeaa531e8aa5d63efa8b716d5e5136477cfe552f08c8317be35182ff74dbb9ce5",
+      "blockNumber": "11696171",
+      "blockHash": "0x61cc924813dc6466753deabc1b9f8461e9a55ff9e5871cafe8542e597ad83fe5",
+      "timestamp": "1789305888",
+      "status": "success",
+      "from": "0x92aae0857979a139344f5b6f008e71f27a507522",
+      "to": "0x72ff16ab9dcdfa176a962a0b1f4b627256995418",
+      "createdContract": null,
+      "valueWei": "10000000000000000",
+      "gasUsed": "21000",
+      "effectiveGasPriceWei": "1006671778",
+      "gasCostWei": "21140107338000",
+      "transfers": [],
+      "events": []
+    },
+    {
+      "action": "buyer-usdc",
+      "hash": "0x4101ad836c87cc5599003071676448bef4a2be6d3f0268f3484fb2866d40ca51",
+      "blockNumber": "11696173",
+      "blockHash": "0x5321f7ea499a47da0c401c3e795dfc046e52887084d2f0437b15acc3b7ae2694",
+      "timestamp": "1789305912",
+      "status": "success",
+      "from": "0x92aae0857979a139344f5b6f008e71f27a507522",
+      "to": "0x1c7d4b196cb0c7b01d743fbc6116a902379c7238",
+      "createdContract": null,
+      "valueWei": "0",
+      "gasUsed": "62159",
+      "effectiveGasPriceWei": "1058566995",
+      "gasCostWei": "65799465842205",
+      "transfers": [
+        {
+          "token": "USDC",
+          "address": "0x1c7d4b196cb0c7b01d743fbc6116a902379c7238",
+          "logIndex": 356,
+          "from": "0x92AAe0857979a139344f5b6F008e71F27A507522",
+          "to": "0xe11543861dba1D526520069f775eb53aB9BB8866",
+          "amount": "500000"
+        }
+      ],
+      "events": []
+    },
+    {
+      "action": "holder-usdc",
+      "hash": "0x5bd30fc42fd81917035a98b4311c574ffabd46a1c196f4ccff2ba10882d32aa3",
+      "blockNumber": "11696176",
+      "blockHash": "0x55bcd627161dbb82149a490e8dfc892f076426fc68a92675531e8c272b54776c",
+      "timestamp": "1789305948",
+      "status": "success",
+      "from": "0x92aae0857979a139344f5b6f008e71f27a507522",
+      "to": "0x1c7d4b196cb0c7b01d743fbc6116a902379c7238",
+      "createdContract": null,
+      "valueWei": "0",
+      "gasUsed": "62159",
+      "effectiveGasPriceWei": "1061027076",
+      "gasCostWei": "65952382017084",
+      "transfers": [
+        {
+          "token": "USDC",
+          "address": "0x1c7d4b196cb0c7b01d743fbc6116a902379c7238",
+          "logIndex": 437,
+          "from": "0x92AAe0857979a139344f5b6F008e71F27A507522",
+          "to": "0x72fF16Ab9Dcdfa176a962A0b1f4B627256995418",
+          "amount": "250000"
+        }
+      ],
+      "events": []
+    },
+    {
+      "action": "activity-helper",
+      "hash": "0x7c630000968b5658013fe93e3893e1afd563379a0c0c0c057975f7740bd09b0c",
+      "blockNumber": "11696179",
+      "blockHash": "0x7c8bb55d05dde02bb79df0d377b9c0e1431e7c67b494629b120ecf488f8e3122",
+      "timestamp": "1789305984",
+      "status": "success",
+      "from": "0x92aae0857979a139344f5b6f008e71f27a507522",
+      "to": null,
+      "createdContract": "0x57fb30da16f23aa261db7d950ebc32e390ebe422",
+      "valueWei": "0",
+      "gasUsed": "664658",
+      "effectiveGasPriceWei": "1096668262",
+      "gasCostWei": "728909333684396",
+      "transfers": [],
+      "events": []
+    },
+    {
+      "action": "approve-primary-usdc",
+      "hash": "0xe1b0680efd166fbcb7db34e0408896fc7f841e62f57a5fc73ece2baf825dc6dd",
+      "blockNumber": "11696213",
+      "blockHash": "0x511adc27e1271b7383ecb4b0ecfb6ca7a07661c79f495755698911bee6bb6fe3",
+      "timestamp": "1789306392",
+      "status": "success",
+      "from": "0xe11543861dba1d526520069f775eb53ab9bb8866",
+      "to": "0x1c7d4b196cb0c7b01d743fbc6116a902379c7238",
+      "createdContract": null,
+      "valueWei": "0",
+      "gasUsed": "55437",
+      "effectiveGasPriceWei": "1074466287",
+      "gasCostWei": "59565187552419",
+      "transfers": [],
+      "events": []
+    },
+    {
+      "action": "fund-primary-offer",
+      "hash": "0x4ed1cfd0555c0be289c02c5815511a7c8142ed74128312a60447e6f0df797909",
+      "blockNumber": "11696214",
+      "blockHash": "0x64d584a574cd954c1aca09ee2c0ae841904d3aaa0c0458d17b28344716c47676",
+      "timestamp": "1789306404",
+      "status": "success",
+      "from": "0xe11543861dba1d526520069f775eb53ab9bb8866",
+      "to": "0xd84ee56b24841c887c73e8b9079a01c28b1b3e8e",
+      "createdContract": null,
+      "valueWei": "0",
+      "gasUsed": "309890",
+      "effectiveGasPriceWei": "1027256515",
+      "gasCostWei": "318336521433350",
+      "transfers": [
+        {
+          "token": "USDC",
+          "address": "0x1c7d4b196cb0c7b01d743fbc6116a902379c7238",
+          "logIndex": 191,
+          "from": "0xe11543861dba1D526520069f775eb53aB9BB8866",
+          "to": "0xd84eE56b24841c887c73e8b9079A01c28b1B3E8E",
+          "amount": "250000"
+        }
+      ],
+      "events": [
+        {
+          "name": "OfferFunded",
+          "args": {
+            "offerId": "1",
+            "buyer": "0xe11543861dba1D526520069f775eb53aB9BB8866",
+            "seller": "0x92AAe0857979a139344f5b6F008e71F27A507522",
+            "tokenId": "39216",
+            "proceeds": "250000"
+          },
+          "logIndex": 192
+        }
+      ]
+    },
+    {
+      "action": "approve-nft-39216",
+      "hash": "0xd4408fdabf270e18e648d9ebc65cdf1e04407a82f1509a3e1ddcf3a88af03627",
+      "blockNumber": "11696219",
+      "blockHash": "0x177591b81a2c87821501549ad5b4b8730693497bd1ac4f7548086c5f00e4a3a1",
+      "timestamp": "1789306488",
+      "status": "success",
+      "from": "0x92aae0857979a139344f5b6f008e71f27a507522",
+      "to": "0x429ba70129df741b2ca2a85bc3a2a3328e5c09b4",
+      "createdContract": null,
+      "valueWei": "0",
+      "gasUsed": "48288",
+      "effectiveGasPriceWei": "1090258991",
+      "gasCostWei": "52646426157408",
+      "transfers": [],
+      "events": []
+    },
+    {
+      "action": "accept-primary-offer",
+      "hash": "0xd2d549c1607418cb2b8893d456bc4d9153e4b51ab19c93854da831eb09f70336",
+      "blockNumber": "11696226",
+      "blockHash": "0x16ab24ccfffaba7df2e3af7466d0dedc34913dcaf2030324003b47667b394296",
+      "timestamp": "1789306584",
+      "status": "success",
+      "from": "0x92aae0857979a139344f5b6f008e71f27a507522",
+      "to": "0xd84ee56b24841c887c73e8b9079a01c28b1b3e8e",
+      "createdContract": null,
+      "valueWei": "0",
+      "gasUsed": "1162357",
+      "effectiveGasPriceWei": "1075721341",
+      "gasCostWei": "1250372230760737",
+      "transfers": [
+        {
+          "token": "PositionNFT",
+          "address": "0x429ba70129df741b2ca2a85bc3a2a3328e5c09b4",
+          "logIndex": 464,
+          "from": "0x92AAe0857979a139344f5b6F008e71F27A507522",
+          "to": "0xd84eE56b24841c887c73e8b9079A01c28b1B3E8E",
+          "tokenId": "39216"
+        },
+        {
+          "token": "otherCurrency",
+          "address": "0xfff9976782d46cc05630d1f6ebab18b2324d6b14",
+          "logIndex": 466,
+          "from": "0xE03A1074c86CFeDd5C142C4F04F1a1536e203543",
+          "to": "0xd84eE56b24841c887c73e8b9079A01c28b1B3E8E",
+          "amount": "4768425"
+        },
+        {
+          "token": "FeeClaim",
+          "address": "0x3f4cd0787e83c05fda83e24d7016e57438dce644",
+          "logIndex": 467,
+          "from": "0x0000000000000000000000000000000000000000",
+          "to": "0xe11543861dba1D526520069f775eb53aB9BB8866",
+          "amount": "2500000000000000000000"
+        },
+        {
+          "token": "FeeClaim",
+          "address": "0x3f4cd0787e83c05fda83e24d7016e57438dce644",
+          "logIndex": 468,
+          "from": "0x0000000000000000000000000000000000000000",
+          "to": "0x92AAe0857979a139344f5b6F008e71F27A507522",
+          "amount": "7500000000000000000000"
+        },
+        {
+          "token": "USDC",
+          "address": "0x1c7d4b196cb0c7b01d743fbc6116a902379c7238",
+          "logIndex": 469,
+          "from": "0xd84eE56b24841c887c73e8b9079A01c28b1B3E8E",
+          "to": "0x92AAe0857979a139344f5b6F008e71F27A507522",
+          "amount": "250000"
+        },
+        {
+          "token": "otherCurrency",
+          "address": "0xfff9976782d46cc05630d1f6ebab18b2324d6b14",
+          "logIndex": 470,
+          "from": "0xd84eE56b24841c887c73e8b9079A01c28b1B3E8E",
+          "to": "0x92AAe0857979a139344f5b6F008e71F27A507522",
+          "amount": "4768425"
+        }
+      ],
+      "events": [
+        {
+          "name": "Activated",
+          "args": {
+            "seriesId": "1",
+            "offerId": "1",
+            "tokenId": "39216",
+            "claim": "0x3f4Cd0787E83C05fDa83E24D7016E57438dce644",
+            "endBlock": "11696317",
+            "quantity": "10000000000000000000000"
+          },
+          "logIndex": 471
+        }
+      ]
+    },
+    {
+      "action": "approve-test-donations",
+      "hash": "0x1b238607753c58f4c0118d1bc97ebc6481fc07fb2749aac421e828710cc42294",
+      "blockNumber": "11696233",
+      "blockHash": "0xc830c5993beae6e0f621a9edb0db181aeeb2899efb645f1b918df898b4ab75cb",
+      "timestamp": "1789306668",
+      "status": "success",
+      "from": "0x92aae0857979a139344f5b6f008e71f27a507522",
+      "to": "0x1c7d4b196cb0c7b01d743fbc6116a902379c7238",
+      "createdContract": null,
+      "valueWei": "0",
+      "gasUsed": "55437",
+      "effectiveGasPriceWei": "1079159974",
+      "gasCostWei": "59825391478638",
+      "transfers": [],
+      "events": []
+    },
+    {
+      "action": "pre-endpoint-donation",
+      "hash": "0xb70b1a1388a63ab8e446d5077a339b09a0d7be4283eb2a938a10bfca43d49d97",
+      "blockNumber": "11696238",
+      "blockHash": "0x4123c8d9357d977b432bec0943d54b78cbbd9d7891f438b68b3bd9083901994f",
+      "timestamp": "1789306728",
+      "status": "success",
+      "from": "0x92aae0857979a139344f5b6f008e71f27a507522",
+      "to": "0x57fb30da16f23aa261db7d950ebc32e390ebe422",
+      "createdContract": null,
+      "valueWei": "0",
+      "gasUsed": "91757",
+      "effectiveGasPriceWei": "1109597838",
+      "gasCostWei": "101813368821366",
+      "transfers": [
+        {
+          "token": "USDC",
+          "address": "0x1c7d4b196cb0c7b01d743fbc6116a902379c7238",
+          "logIndex": 151,
+          "from": "0x92AAe0857979a139344f5b6F008e71F27A507522",
+          "to": "0xE03A1074c86CFeDd5C142C4F04F1a1536e203543",
+          "amount": "1000000"
+        }
+      ],
+      "events": []
+    },
+    {
+      "action": "approve-maker-claims",
+      "hash": "0x2ec11b05f5da8174d377f1249911209851956b96ef8d6f35894d5ef1d4306801",
+      "blockNumber": "11696239",
+      "blockHash": "0x411e17d9459dbc7913c98e9579a34c7fc8f98b6eeba15b21784983a16fcc0a32",
+      "timestamp": "1789306752",
+      "status": "success",
+      "from": "0xe11543861dba1d526520069f775eb53ab9bb8866",
+      "to": "0x3f4cd0787e83c05fda83e24d7016e57438dce644",
+      "createdContract": null,
+      "valueWei": "0",
+      "gasUsed": "45949",
+      "effectiveGasPriceWei": "1066265303",
+      "gasCostWei": "48993824407547",
+      "transfers": [],
+      "events": []
+    },
+    {
+      "action": "ship-actual-ask",
+      "hash": "0x356ebcca07dbc387fe99bb1af24baf2e7a653e707e07f78576a472350f1edf95",
+      "blockNumber": "11696247",
+      "blockHash": "0xa81c275bfbb0c454d480f0240c27f4687c7b5c2424dccd647590a5739239d868",
+      "timestamp": "1789306848",
+      "status": "success",
+      "from": "0xe11543861dba1d526520069f775eb53ab9bb8866",
+      "to": "0x5be8474a6c74a51c35dd3b27cab93774d0fe73ee",
+      "createdContract": null,
+      "valueWei": "0",
+      "gasUsed": "87735",
+      "effectiveGasPriceWei": "1092034547",
+      "gasCostWei": "95809650981045",
+      "transfers": [],
+      "events": []
+    },
+    {
+      "action": "teammate-usdc-approval-1",
+      "hash": "0x1740d144563afa476fe969c1ea1f35ae71fe8823601697f8eccf0652e9c372a2",
+      "blockNumber": "11696265",
+      "blockHash": "0x1760eaaa3441694ecdb23ebcd16f464d8557fa47ea86b4c8061beb9b04e3fe0d",
+      "timestamp": "1789307064",
+      "status": "success",
+      "from": "0x746bb7befd31d9052bb8eba7d5dd74c9acf54c6d",
+      "to": "0x1c7d4b196cb0c7b01d743fbc6116a902379c7238",
+      "createdContract": null,
+      "valueWei": "0",
+      "gasUsed": "55425",
+      "effectiveGasPriceWei": "1298706342",
+      "gasCostWei": "71980799005350",
+      "transfers": [],
+      "events": []
+    },
+    {
+      "action": "approve-secondary-usdc",
+      "hash": "0x15b723c9123c2fbcc2f990b5650c833f86859c354cdf4313a2ee4af806f55066",
+      "blockNumber": "11696266",
+      "blockHash": "0x3cf1768470bee51114e8bb76523ca8000585e345bcd8ede38e1bf6ed536163b5",
+      "timestamp": "1789307076",
+      "status": "success",
+      "from": "0x72ff16ab9dcdfa176a962a0b1f4b627256995418",
+      "to": "0x1c7d4b196cb0c7b01d743fbc6116a902379c7238",
+      "createdContract": null,
+      "valueWei": "0",
+      "gasUsed": "55425",
+      "effectiveGasPriceWei": "1086071901",
+      "gasCostWei": "60195535112925",
+      "transfers": [],
+      "events": []
+    },
+    {
+      "action": "teammate-purchase-1",
+      "hash": "0x2c369fcc59d2af2762e11a7ccca76b10aed32633cb70c050056f76243a658b9b",
+      "blockNumber": "11696266",
+      "blockHash": "0x3cf1768470bee51114e8bb76523ca8000585e345bcd8ede38e1bf6ed536163b5",
+      "timestamp": "1789307076",
+      "status": "success",
+      "from": "0x746bb7befd31d9052bb8eba7d5dd74c9acf54c6d",
+      "to": "0x1ef56bd27fa3c0795954b4dace7836696dfc3830",
+      "createdContract": null,
+      "valueWei": "0",
+      "gasUsed": "178560",
+      "effectiveGasPriceWei": "1251262164",
+      "gasCostWei": "223425372003840",
+      "transfers": [
+        {
+          "token": "USDC",
+          "address": "0x1c7d4b196cb0c7b01d743fbc6116a902379c7238",
+          "logIndex": 66,
+          "from": "0x746bb7beFD31D9052BB8EbA7D5dD74C9aCf54C6d",
+          "to": "0x1EF56bd27fA3c0795954B4dAcE7836696dfc3830",
+          "amount": "9450"
+        },
+        {
+          "token": "USDC",
+          "address": "0x1c7d4b196cb0c7b01d743fbc6116a902379c7238",
+          "logIndex": 68,
+          "from": "0x1EF56bd27fA3c0795954B4dAcE7836696dfc3830",
+          "to": "0xe11543861dba1D526520069f775eb53aB9BB8866",
+          "amount": "9450"
+        },
+        {
+          "token": "FeeClaim",
+          "address": "0x3f4cd0787e83c05fda83e24d7016e57438dce644",
+          "logIndex": 70,
+          "from": "0xe11543861dba1D526520069f775eb53aB9BB8866",
+          "to": "0x746bb7beFD31D9052BB8EbA7D5dD74C9aCf54C6d",
+          "amount": "189000000000000000000"
+        }
+      ],
+      "events": []
+    },
+    {
+      "action": "teammate-usdc-approval-2",
+      "hash": "0x493c13370f561e2b20acf8bb4accda4dd2a7b85ac2fa85515a743f71bdcd6778",
+      "blockNumber": "11696278",
+      "blockHash": "0xf0a4b6043e2466a9bfbabecabd7db62de2b3f712b923dc4442d4a99f0826524e",
+      "timestamp": "1789307232",
+      "status": "success",
+      "from": "0x746bb7befd31d9052bb8eba7d5dd74c9acf54c6d",
+      "to": "0x1c7d4b196cb0c7b01d743fbc6116a902379c7238",
+      "createdContract": null,
+      "valueWei": "0",
+      "gasUsed": "55425",
+      "effectiveGasPriceWei": "1225705193",
+      "gasCostWei": "67934710322025",
+      "transfers": [],
+      "events": []
+    },
+    {
+      "action": "teammate-purchase-2",
+      "hash": "0xfba1f66a9e6c8294e7ecbc992f448828c584ef6e74fcf2d1fedb4521847ac504",
+      "blockNumber": "11696279",
+      "blockHash": "0xa1c35c9205f0a516c06282796ad8c86f702e7162b9d4d52a3e7961bec5474db5",
+      "timestamp": "1789307244",
+      "status": "success",
+      "from": "0x746bb7befd31d9052bb8eba7d5dd74c9acf54c6d",
+      "to": "0x1ef56bd27fa3c0795954b4dace7836696dfc3830",
+      "createdContract": null,
+      "valueWei": "0",
+      "gasUsed": "164848",
+      "effectiveGasPriceWei": "1313546382",
+      "gasCostWei": "216535493979936",
+      "transfers": [
+        {
+          "token": "USDC",
+          "address": "0x1c7d4b196cb0c7b01d743fbc6116a902379c7238",
+          "logIndex": 58,
+          "from": "0x746bb7beFD31D9052BB8EbA7D5dD74C9aCf54C6d",
+          "to": "0x1EF56bd27fA3c0795954B4dAcE7836696dfc3830",
+          "amount": "3150"
+        },
+        {
+          "token": "USDC",
+          "address": "0x1c7d4b196cb0c7b01d743fbc6116a902379c7238",
+          "logIndex": 60,
+          "from": "0x1EF56bd27fA3c0795954B4dAcE7836696dfc3830",
+          "to": "0xe11543861dba1D526520069f775eb53aB9BB8866",
+          "amount": "3150"
+        },
+        {
+          "token": "FeeClaim",
+          "address": "0x3f4cd0787e83c05fda83e24d7016e57438dce644",
+          "logIndex": 62,
+          "from": "0xe11543861dba1D526520069f775eb53aB9BB8866",
+          "to": "0x746bb7beFD31D9052BB8EbA7D5dD74C9aCf54C6d",
+          "amount": "63000000000000000000"
+        }
+      ],
+      "events": []
+    },
+    {
+      "action": "keeper-endpoint-checkpoint",
+      "hash": "0x29970542ad717021f9cd530916bc568e7010e6aa6ea5bc807da35669a4c12083",
+      "blockNumber": "11696319",
+      "blockHash": "0x33db67faf8dffe0e1d88f244d6fb6d4cbe889e76ac761fea8349f27aaa50b145",
+      "timestamp": "1789307736",
+      "status": "success",
+      "from": "0xffaa5fe1c38aa538fd9b1a28d8cf8516fa3728ad",
+      "to": "0x1c8f1a571b229c5ab6b2ab3e0b6db0dcd9bca1cb",
+      "createdContract": null,
+      "valueWei": "0",
+      "gasUsed": "45150",
+      "effectiveGasPriceWei": "1055905471",
+      "gasCostWei": "47674132015650",
+      "transfers": [],
+      "events": []
+    },
+    {
+      "action": "teammate-usdc-approval-3",
+      "hash": "0xfd7584f73dac232a7c1987cd3e1131544364148645e0f0fa15e2df593a863a34",
+      "blockNumber": "11696327",
+      "blockHash": "0xc85dab2aacedd5630ce1ca0b39b01295a99338cedb61e41e48f4f98466492e47",
+      "timestamp": "1789307844",
+      "status": "success",
+      "from": "0x746bb7befd31d9052bb8eba7d5dd74c9acf54c6d",
+      "to": "0x1c7d4b196cb0c7b01d743fbc6116a902379c7238",
+      "createdContract": null,
+      "valueWei": "0",
+      "gasUsed": "55425",
+      "effectiveGasPriceWei": "1176873958",
+      "gasCostWei": "65228239122150",
+      "transfers": [],
+      "events": []
+    },
+    {
+      "action": "teammate-purchase-3",
+      "hash": "0x0d09b53db087f1f60fada8969c3accd583b53f4bd5872175c5ba44bbb30d08c9",
+      "blockNumber": "11696329",
+      "blockHash": "0x31c63fa69cfbe4e97ce10caf06ca4b37fe173c2591217dbeb920bee585548266",
+      "timestamp": "1789307868",
+      "status": "success",
+      "from": "0x746bb7befd31d9052bb8eba7d5dd74c9acf54c6d",
+      "to": "0x1ef56bd27fa3c0795954b4dace7836696dfc3830",
+      "createdContract": null,
+      "valueWei": "0",
+      "gasUsed": "164848",
+      "effectiveGasPriceWei": "1323814826",
+      "gasCostWei": "218228226436448",
+      "transfers": [
+        {
+          "token": "USDC",
+          "address": "0x1c7d4b196cb0c7b01d743fbc6116a902379c7238",
+          "logIndex": 29,
+          "from": "0x746bb7beFD31D9052BB8EbA7D5dD74C9aCf54C6d",
+          "to": "0x1EF56bd27fA3c0795954B4dAcE7836696dfc3830",
+          "amount": "37400"
+        },
+        {
+          "token": "USDC",
+          "address": "0x1c7d4b196cb0c7b01d743fbc6116a902379c7238",
+          "logIndex": 31,
+          "from": "0x1EF56bd27fA3c0795954B4dAcE7836696dfc3830",
+          "to": "0xe11543861dba1D526520069f775eb53aB9BB8866",
+          "amount": "37400"
+        },
+        {
+          "token": "FeeClaim",
+          "address": "0x3f4cd0787e83c05fda83e24d7016e57438dce644",
+          "logIndex": 33,
+          "from": "0xe11543861dba1D526520069f775eb53aB9BB8866",
+          "to": "0x746bb7beFD31D9052BB8EbA7D5dD74C9aCf54C6d",
+          "amount": "748000000000000000000"
+        }
+      ],
+      "events": []
+    },
+    {
+      "action": "post-endpoint-donation",
+      "hash": "0x145936ff6deb2e82a63e7fa6374f0fbf31e52e22ab04e094ac7ff81919fa526f",
+      "blockNumber": "11696352",
+      "blockHash": "0x009bf8ab11cea051c01328b544d9afd4f6461dda5eb5c744f9b690b4d272113b",
+      "timestamp": "1789308156",
+      "status": "success",
+      "from": "0x92aae0857979a139344f5b6f008e71f27a507522",
+      "to": "0x57fb30da16f23aa261db7d950ebc32e390ebe422",
+      "createdContract": null,
+      "valueWei": "0",
+      "gasUsed": "86957",
+      "effectiveGasPriceWei": "1060568384",
+      "gasCostWei": "92223844967488",
+      "transfers": [
+        {
+          "token": "USDC",
+          "address": "0x1c7d4b196cb0c7b01d743fbc6116a902379c7238",
+          "logIndex": 585,
+          "from": "0x92AAe0857979a139344f5b6F008e71F27A507522",
+          "to": "0xE03A1074c86CFeDd5C142C4F04F1a1536e203543",
+          "amount": "500000"
+        }
+      ],
+      "events": []
+    },
+    {
+      "action": "capture-series-one",
+      "hash": "0x4f00faa90d98cde6a87a0fe5d9f7675151ef8260815a3f14db8c53acc780ee79",
+      "blockNumber": "11696375",
+      "blockHash": "0xba87ce525a8ab44fd47625f6c760c9b2e469ab4abab483491baf7477f382b726",
+      "timestamp": "1789308432",
+      "status": "success",
+      "from": "0xe11543861dba1d526520069f775eb53ab9bb8866",
+      "to": "0xd84ee56b24841c887c73e8b9079a01c28b1b3e8e",
+      "createdContract": null,
+      "valueWei": "0",
+      "gasUsed": "244095",
+      "effectiveGasPriceWei": "1059939924",
+      "gasCostWei": "258726035748780",
+      "transfers": [
+        {
+          "token": "USDC",
+          "address": "0x1c7d4b196cb0c7b01d743fbc6116a902379c7238",
+          "logIndex": 242,
+          "from": "0xE03A1074c86CFeDd5C142C4F04F1a1536e203543",
+          "to": "0xd84eE56b24841c887c73e8b9079A01c28b1B3E8E",
+          "amount": "1499999"
+        }
+      ],
+      "events": [
+        {
+          "name": "Captured",
+          "args": {
+            "seriesId": "1",
+            "usdcAmount": "1499999",
+            "otherAmount": "0"
+          },
+          "logIndex": 243
+        }
+      ]
+    },
+    {
+      "action": "return-nft-39216",
+      "hash": "0xa15a77e111e3e8e75bc63b8cea8982e4041546337186f90620ef0237cfcc5442",
+      "blockNumber": "11696393",
+      "blockHash": "0xaf5c04e6e6fce581a1afdb83cbd814436100e4b178e81fe07ead8beb64940e4e",
+      "timestamp": "1789308660",
+      "status": "success",
+      "from": "0x92aae0857979a139344f5b6f008e71f27a507522",
+      "to": "0xd84ee56b24841c887c73e8b9079a01c28b1b3e8e",
+      "createdContract": null,
+      "valueWei": "0",
+      "gasUsed": "83835",
+      "effectiveGasPriceWei": "1066248041",
+      "gasCostWei": "89388904517235",
+      "transfers": [
+        {
+          "token": "PositionNFT",
+          "address": "0x429ba70129df741b2ca2a85bc3a2a3328e5c09b4",
+          "logIndex": 316,
+          "from": "0xd84eE56b24841c887c73e8b9079A01c28b1B3E8E",
+          "to": "0x92AAe0857979a139344f5b6F008e71F27A507522",
+          "tokenId": "39216"
+        }
+      ],
+      "events": [
+        {
+          "name": "NFTReturned",
+          "args": {
+            "seriesId": "1",
+            "recipient": "0x92AAe0857979a139344f5b6F008e71F27A507522"
+          },
+          "logIndex": 317
+        }
+      ]
+    },
+    {
+      "action": "allocate-series-one",
+      "hash": "0xf5cbfa5deb0b7ecd05d59a06daec73ca6c9a5def7dc50aea10fc904abcc50101",
+      "blockNumber": "11696445",
+      "blockHash": "0x626d25c369e28882752bc296ace509a67c871055017d13519acbed59c2ac1d4f",
+      "timestamp": "1789309332",
+      "status": "success",
+      "from": "0x92aae0857979a139344f5b6f008e71f27a507522",
+      "to": "0xd84ee56b24841c887c73e8b9079a01c28b1b3e8e",
+      "createdContract": null,
+      "valueWei": "0",
+      "gasUsed": "4396570",
+      "effectiveGasPriceWei": "1115364518",
+      "gasCostWei": "4903778178903260",
+      "transfers": [],
+      "events": [
+        {
+          "name": "Allocated",
+          "args": {
+            "seriesId": "1",
+            "soldUSDC": "999999",
+            "residualUSDC": "500000"
+          },
+          "logIndex": 128
+        }
+      ]
+    },
+    {
+      "action": "teammate-redeem-1000",
+      "hash": "0x3ac55ef51fee55243983065ab343e41d9b1dd57b72f02a4d0f3340822f028a3e",
+      "blockNumber": "11696463",
+      "blockHash": "0x1fb07f82f4d752b8dae7ff8802a8c8593413e716d6933ebde74de494f9610587",
+      "timestamp": "1789309560",
+      "status": "success",
+      "from": "0x746bb7befd31d9052bb8eba7d5dd74c9acf54c6d",
+      "to": "0xd84ee56b24841c887c73e8b9079a01c28b1b3e8e",
+      "createdContract": null,
+      "valueWei": "0",
+      "gasUsed": "122011",
+      "effectiveGasPriceWei": "1255864546",
+      "gasCostWei": "153229289122006",
+      "transfers": [
+        {
+          "token": "FeeClaim",
+          "address": "0x3f4cd0787e83c05fda83e24d7016e57438dce644",
+          "logIndex": 125,
+          "from": "0x746bb7beFD31D9052BB8EbA7D5dD74C9aCf54C6d",
+          "to": "0x0000000000000000000000000000000000000000",
+          "amount": "1000000000000000000000"
+        },
+        {
+          "token": "USDC",
+          "address": "0x1c7d4b196cb0c7b01d743fbc6116a902379c7238",
+          "logIndex": 126,
+          "from": "0xd84eE56b24841c887c73e8b9079A01c28b1B3E8E",
+          "to": "0x746bb7beFD31D9052BB8EbA7D5dD74C9aCf54C6d",
+          "amount": "99999"
+        }
+      ],
+      "events": [
+        {
+          "name": "Redeemed",
+          "args": {
+            "seriesId": "1",
+            "holder": "0x746bb7beFD31D9052BB8EbA7D5dD74C9aCf54C6d",
+            "recipient": "0x746bb7beFD31D9052BB8EbA7D5dD74C9aCf54C6d",
+            "quantity": "1000000000000000000000",
+            "usdcAmount": "99999"
+          },
+          "logIndex": 127
+        }
+      ]
+    },
+    {
+      "action": "buyer-redeem-1500",
+      "hash": "0xa6dd65e42ed9a46335536edb4e3a90278e194e5b4aff343b5e3b87e17aa89f56",
+      "blockNumber": "11696469",
+      "blockHash": "0xd4cd3b9191a415d7462d21c565bc163f3867d3d0506c0c5e9ac41c54f08cd751",
+      "timestamp": "1789309632",
+      "status": "success",
+      "from": "0xe11543861dba1d526520069f775eb53ab9bb8866",
+      "to": "0xd84ee56b24841c887c73e8b9079a01c28b1b3e8e",
+      "createdContract": null,
+      "valueWei": "0",
+      "gasUsed": "90009",
+      "effectiveGasPriceWei": "970540724",
+      "gasCostWei": "87357400026516",
+      "transfers": [
+        {
+          "token": "FeeClaim",
+          "address": "0x3f4cd0787e83c05fda83e24d7016e57438dce644",
+          "logIndex": 166,
+          "from": "0xe11543861dba1D526520069f775eb53aB9BB8866",
+          "to": "0x0000000000000000000000000000000000000000",
+          "amount": "1500000000000000000000"
+        },
+        {
+          "token": "USDC",
+          "address": "0x1c7d4b196cb0c7b01d743fbc6116a902379c7238",
+          "logIndex": 167,
+          "from": "0xd84eE56b24841c887c73e8b9079A01c28b1B3E8E",
+          "to": "0xe11543861dba1D526520069f775eb53aB9BB8866",
+          "amount": "149999"
+        }
+      ],
+      "events": [
+        {
+          "name": "Redeemed",
+          "args": {
+            "seriesId": "1",
+            "holder": "0xe11543861dba1D526520069f775eb53aB9BB8866",
+            "recipient": "0xe11543861dba1D526520069f775eb53aB9BB8866",
+            "quantity": "1500000000000000000000",
+            "usdcAmount": "149999"
+          },
+          "logIndex": 168
+        }
+      ]
+    },
+    {
+      "action": "retain-judge-1000-claims",
+      "hash": "0x729aa524c1cae6e0051b36815b48d59e929a734f8e8d438f1febf3c73042331c",
+      "blockNumber": "11696479",
+      "blockHash": "0xedc1cf59ea497652dbc48857d2db4b47e981af84ac130b1c77be10d89071ecc2",
+      "timestamp": "1789309752",
+      "status": "success",
+      "from": "0x92aae0857979a139344f5b6f008e71f27a507522",
+      "to": "0x3f4cd0787e83c05fda83e24d7016e57438dce644",
+      "createdContract": null,
+      "valueWei": "0",
+      "gasUsed": "51223",
+      "effectiveGasPriceWei": "1070815587",
+      "gasCostWei": "54850386812901",
+      "transfers": [
+        {
+          "token": "FeeClaim",
+          "address": "0x3f4cd0787e83c05fda83e24d7016e57438dce644",
+          "logIndex": 277,
+          "from": "0x92AAe0857979a139344f5b6F008e71F27A507522",
+          "to": "0xe11543861dba1D526520069f775eb53aB9BB8866",
+          "amount": "1000000000000000000000"
+        }
+      ],
+      "events": []
+    },
+    {
+      "action": "seller-redeem-6500",
+      "hash": "0x164cdd3b680be44cd894c7b4b17f28492461b45b004d372f2012a89b95cd747f",
+      "blockNumber": "11696484",
+      "blockHash": "0x8b3838861b0306dfa300299a03bd738c03dfb1f4aa83d1362cbd182cd2abdb57",
+      "timestamp": "1789309824",
+      "status": "success",
+      "from": "0x92aae0857979a139344f5b6f008e71f27a507522",
+      "to": "0xd84ee56b24841c887c73e8b9079a01c28b1b3e8e",
+      "createdContract": null,
+      "valueWei": "0",
+      "gasUsed": "90009",
+      "effectiveGasPriceWei": "1095102842",
+      "gasCostWei": "98569111705578",
+      "transfers": [
+        {
+          "token": "FeeClaim",
+          "address": "0x3f4cd0787e83c05fda83e24d7016e57438dce644",
+          "logIndex": 416,
+          "from": "0x92AAe0857979a139344f5b6F008e71F27A507522",
+          "to": "0x0000000000000000000000000000000000000000",
+          "amount": "6500000000000000000000"
+        },
+        {
+          "token": "USDC",
+          "address": "0x1c7d4b196cb0c7b01d743fbc6116a902379c7238",
+          "logIndex": 417,
+          "from": "0xd84eE56b24841c887c73e8b9079A01c28b1B3E8E",
+          "to": "0x92AAe0857979a139344f5b6F008e71F27A507522",
+          "amount": "649999"
+        }
+      ],
+      "events": [
+        {
+          "name": "Redeemed",
+          "args": {
+            "seriesId": "1",
+            "holder": "0x92AAe0857979a139344f5b6F008e71F27A507522",
+            "recipient": "0x92AAe0857979a139344f5b6F008e71F27A507522",
+            "quantity": "6500000000000000000000",
+            "usdcAmount": "649999"
+          },
+          "logIndex": 418
+        }
+      ]
+    },
+    {
+      "action": "seller-withdraw-residual",
+      "hash": "0x1b5c6e595b2153e268eaa62b3ce1b35b3b284a589045512c635b40c7a47666ed",
+      "blockNumber": "11696493",
+      "blockHash": "0x3d0f479a1afafe929fa13a17fdbfcc2895c759d485ed5b246115e54f6663f818",
+      "timestamp": "1789309944",
+      "status": "success",
+      "from": "0x92aae0857979a139344f5b6f008e71f27a507522",
+      "to": "0xd84ee56b24841c887c73e8b9079a01c28b1b3e8e",
+      "createdContract": null,
+      "valueWei": "0",
+      "gasUsed": "86836",
+      "effectiveGasPriceWei": "1006727368",
+      "gasCostWei": "87420177727648",
+      "transfers": [
+        {
+          "token": "USDC",
+          "address": "0x1c7d4b196cb0c7b01d743fbc6116a902379c7238",
+          "logIndex": 307,
+          "from": "0xd84eE56b24841c887c73e8b9079A01c28b1B3E8E",
+          "to": "0x92AAe0857979a139344f5b6F008e71F27A507522",
+          "amount": "500000"
+        },
+        {
+          "token": "otherCurrency",
+          "address": "0xfff9976782d46cc05630d1f6ebab18b2324d6b14",
+          "logIndex": 308,
+          "from": "0xd84eE56b24841c887c73e8b9079A01c28b1B3E8E",
+          "to": "0x92AAe0857979a139344f5b6F008e71F27A507522",
+          "amount": "0"
+        }
+      ],
+      "events": [
+        {
+          "name": "ResidualWithdrawn",
+          "args": {
+            "seriesId": "1",
+            "recipient": "0x92AAe0857979a139344f5b6F008e71F27A507522",
+            "usdcAmount": "500000",
+            "otherAmount": "0"
+          },
+          "logIndex": 309
+        }
+      ]
+    }
+  ],
+  "references": {
+    "graph": "live-series-one-graph.json",
+    "nativeEndpointOracle": "live-series-one-native-oracle.json",
+    "restoration": "live-series-one-restore.json"
+  },
+  "limitations": [
+    "Remaining1000Q are an outstanding liability, not fully redeemed or zero-reserve settlement. A single final1000Q burn pays99999micros and leaves3micros permanently segregated dust; splitting burns may increase dust.",
+    "Current inventory is a block-pinned observation and can change through teammate/judge actions. New asks and their later fills are outside this evidence snapshot.",
+    "The isolated controlled holder did not purchase claims; teammate-owned wallet transactions replaced that planned path. Human attribution comes from teammate/user confirmation; chain data proves address activity.",
+    "Teammate unrelated wallet balances and all raw signed transaction/signature material are omitted."
+  ]
+}
