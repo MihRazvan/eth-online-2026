@@ -1,3 +1,4 @@
+import { formatUnits } from "viem";
 import { useAppUpdate } from "./appUpdate";
 import { AppUpdateNotice } from "./components/AppUpdateNotice";
 import type { SellerListing } from "./listingTypes";
@@ -779,6 +780,14 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
       | "withdrawResidual",
     market: Market,
   ) => {
+    const otherDecimals = market.otherTokenDecimals;
+    const hasOtherUnits = Number.isInteger(otherDecimals) && otherDecimals! >= 0 && otherDecimals! <= 255;
+    const otherSymbol = market.otherTokenSymbol || market.pair.split(" / ")[0];
+    const otherAmount = market.otherReserve === undefined
+      ? "Unavailable"
+      : hasOtherUnits
+        ? `${formatUnits(BigInt(market.otherReserve), otherDecimals!)} ${otherSymbol}`
+        : `${integer(market.otherReserve)} ${otherSymbol} base units`;
     const titles = {
       withdrawResidual: "Withdraw residual fees",
       capture: "Capture actual fees",
@@ -793,6 +802,14 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
       lines: [
         ["Series", market.pair + " · NFT #" + market.tokenId],
         ["Exact earning cutoff", "End of block " + integer(market.endBlock)],
+        ...(type === "withdrawResidual"
+          ? ([
+              ["Available residual USDC", market.residualUsdcMicros === undefined ? "Unavailable" : money(market.residualUsdcMicros, 6) + " USDC"],
+              ["Other-currency reserve", otherAmount],
+              ["Recipient", market.residualOwner ?? "Recorded residual beneficiary"],
+              ["Fee-claim reserve", "Excluded from this withdrawal"],
+            ] as [string, string][])
+          : []),
         ...(type === "redeem"
           ? ([
               [
@@ -812,7 +829,9 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
           : []),
       ],
       warning:
-        type === "withdrawNFT"
+        type === "withdrawResidual"
+          ? "Withdraws the recorded residual USDC and other-currency fees to the residual beneficiary. It does not redeem fee claims or release their reserve. Other-currency amounts retain their native token units, with no USD conversion." + (market.phase === "captured" ? " Sold-period allocation is still pending; any later residual USDC needs a separate withdrawal." : "")
+          : type === "withdrawNFT"
           ? "The same original NFT returns after capture. The USDC reserve stays segregated while proof is pending; the residual beneficiary remains recorded."
           : type === "settle" && fixture
             ? "This fixture demonstrates the allocated state only. It does not generate or verify a historical proof."
