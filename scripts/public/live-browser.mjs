@@ -111,6 +111,12 @@ export async function sendReviewed({command,journalPath,bridge}){
  assert(action.to===null||/^0x[0-9a-f]{40}$/i.test(action.to));
  assert(typeof action.data==='string'&&/^0x(?:[0-9a-f]{2})*$/i.test(action.data));
  assert(typeof action.valueWei==='string'&&/^(0|[1-9][0-9]*)$/.test(action.valueWei));
+ // bridge.request matches transaction bytes across stages. Refuse aliases so an
+ // old exact ID cannot accidentally select a newer identical approved action.
+ const envelope=value=>JSON.stringify([value.from.toLowerCase(),value.to===null?null:value.to.toLowerCase(),value.data.toLowerCase(),BigInt(value.valueWei).toString()]);
+ const selected=envelope(action);let matches=0;
+ for(const stage of journal.stages){assert(Array.isArray(stage.transactions));for(const candidate of stage.transactions)if(envelope(candidate)===selected)matches++;}
+ assert(matches===1,'AMBIGUOUS_REVIEWED_ENVELOPE');
  return bridge.request(action.from,{method:'eth_sendTransaction',params:[{from:action.from,to:action.to,data:action.data,value:'0x'+BigInt(action.valueWei).toString(16)}]});
 }
 export function installShutdownSignals(target,onStop){
@@ -204,6 +210,8 @@ async function selfTest(){
   assert.deepEqual(calls,[{address:action.from,request:{method:'eth_sendTransaction',params:[{from:action.from,to:action.to,data:'0x1234',value:'0x10'}]}}]);
   for(const command of [{...reviewedCommand,stageId:'missing'},{...reviewedCommand,actionId:'missing'},{...reviewedCommand,tx:{to:action.to}}])await assert.rejects(sendReviewed({command,journalPath:reviewedPath,bridge:stubBridge}));assert.equal(calls.length,1);
   reviewed.stages[0].transactions.push({...action});privateJSON(reviewedPath,reviewed);await assert.rejects(sendReviewed({command:reviewedCommand,journalPath:reviewedPath,bridge:stubBridge}));assert.equal(calls.length,1);
+  reviewed.stages[0].transactions=[action];reviewed.stages.push({id:'newer',transactions:[{...action,id:'alias',from:action.from.toUpperCase().replace('0X','0x'),data:action.data.toUpperCase().replace('0X','0x'),valueWei:'016'}]});privateJSON(reviewedPath,reviewed);
+  await assert.rejects(sendReviewed({command:reviewedCommand,journalPath:reviewedPath,bridge:stubBridge}));assert.equal(calls.length,1);reviewed.stages.pop();
   reviewed.stages[0].transactions=[{...action,to:null}];privateJSON(reviewedPath,reviewed);await sendReviewed({command:reviewedCommand,journalPath:reviewedPath,bridge:stubBridge});assert.equal(calls[1].request.params[0].to,null);
   await assert.rejects(sendReviewed({command:reviewedCommand,journalPath:reviewedPath,bridge:{request:async()=>{throw new Error('BRIDGE_POLICY_REFUSAL');}}}));
   const paths={commandsPath:resolve(directory,'commands.jsonl'),statePath:resolve(directory,'state.json'),ackPath:resolve(directory,'ack.jsonl')};let count=0;
