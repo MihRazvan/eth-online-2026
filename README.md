@@ -42,7 +42,7 @@ pnpm dev
 
 Open **http://127.0.0.1:4174** for the explicitly labelled fixture preview. See [Quickstart](docs/QUICKSTART.md) for prerequisites, real local transactions and verification commands.
 
-The [live app](https://usufruct-mu.vercel.app) uses Ethereum Sepolia and test assets. Contracts are [deployed](deployments/sepolia.json); local contract and browser lifecycles are verified. Public wallet sale-to-redemption acceptance remains a separate gate. Consult [release readiness](docs/JUDGE_READINESS.md) for current availability and [the submission packet](docs/submission.md) for scoped evidence.
+The [live app](https://usufruct-mu.vercel.app) uses Ethereum Sepolia and test assets. Contracts are [deployed](deployments/sepolia.json). Series 1 has completed actual public funding, three human secondary purchases, NFT return, historical allocation and independent redemptions. [Public lifecycle evidence](docs/evidence/operations/live-series-one-lifecycle.md) records the amounts and remaining claims; test fees include controlled donations. Consult [release readiness](docs/JUDGE_READINESS.md) for current availability and [the submission packet](docs/submission.md) for scoped evidence.
 
 ## Prior work and attribution
 

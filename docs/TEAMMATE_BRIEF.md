@@ -14,6 +14,16 @@ The name describes the separation between an asset and the right to enjoy its in
 
 **Why someone uses it:** the LP chooses upfront cash instead of waiting for uncertain fee income. Buyers choose exposure to that income without owning or managing the liquidity position. A secondary market lets holders trade claims when another participant supplies an executable quote.
 
+## Fast live demo: buy and redeem
+
+1. Open [series 1](https://usufruct-mu.vercel.app/#market/1) and connect a funded Ethereum Sepolia wallet. It needs native test USDC and ETH for gas.
+2. Enter **10 claims**. At the recorded quote, the purchase costs **0.000500 USDC**. Review the exact current amount; approve USDC if requested, then confirm the purchase.
+3. Open **Holdings → Redeem 10 claims**. If this wallet already owns other claims, the button redeems its entire displayed balance. Review the exact payout and confirm.
+4. Verify the receipt and USDC increase. Ten claims currently redeem for **0.000999 USDC before ETH gas**; these are tiny test amounts and controlled test fees.
+5. The maker renews its quote after redemption before the next participant begins. The remaining claim reserve stays in the contract. This renewal is an operator task, not a judge action.
+
+The introduction, claim screen and Holdings are the primary recording views. Open the five supporting disclosures only when explaining a relevant detail. Pin’s **Use estimate** copies the displayed scenario into the asking price; it neither signs a listing nor predicts a guaranteed payout.
+
 ## What works today
 
 The actual public **series 1** is now funded, traded, captured and allocated. Its original NFT returned before allocation. Hosted checkpointing, remote proof restoration and a real Graph buyer join are verified. **The teammate’s 1,000-claim redemption paid 0.099999 USDC. Original buyer/seller payouts and residual withdrawal are also confirmed; funded claims remain for judges. Unaided fresh-user understanding remains open.**
@@ -30,9 +40,9 @@ The public self-test used the configured seller and a constrained Node-held brow
 
 Confirmed payouts are **0.099999 USDC** for the teammate’s 1,000 claims, **0.149999 USDC** for the original buyer’s 1,500 claims, and **0.649999 USDC** for the seller’s 6,500 claims. The seller separately withdrew the **0.500000 USDC residual**. A later controlled holder bought **10 claims for 0.000500 USDC** and redeemed them for **0.000999 USDC** through the updated public UI. Current totals are **9,010 claims redeemed / 0.900996 USDC paid / 0.099003 USDC retained**, with **990 funded, unredeemed claims** reserved for judges. A single redemption of those 990 claims would pay 0.098999 USDC and leave four micro-USDC of rounding dust; splitting redemptions may increase dust. The reserve remains a liability, not available project cash. [Complete public lifecycle evidence](evidence/operations/live-series-one-lifecycle.md).
 
-The controlled repeat [purchase](https://sepolia.etherscan.io/tx/0x239f863f30530277460a0ef8f05f03724196cf0f6cecc9767c894fb27a93b909) and [redemption](https://sepolia.etherscan.io/tx/0xd82bf3a5625e43d8e5018024cc546b87c84ebf8cbe4469ad3dc3d45452bdeb50) extend the earlier lifecycle snapshot. They are actual canonical receipt observations, not a claim of finality or a second unaided human session.
+The controlled repeat [purchase](https://sepolia.etherscan.io/tx/0x239f863f30530277460a0ef8f05f03724196cf0f6cecc9767c894fb27a93b909) and [redemption](https://sepolia.etherscan.io/tx/0xd82bf3a5625e43d8e5018024cc546b87c84ebf8cbe4469ad3dc3d45452bdeb50) extend the earlier lifecycle snapshot. They are actual canonical receipt observations, not a claim of finality or a second unaided human session. [Independent repeat and renewed-quote verification](evidence/operations/live-new-interface-repeat.md).
 
-The renewed **990-claim / 0.049500-USDC ask**, expiring **20 September at 14:45 UTC**, is reviewed but its publication receipt is still pending at this checkpoint. Treat the older quote as stale after the redemption. Fresh executable inventory must be checked before inviting another buyer.
+The renewed **990-claim / 0.049500-USDC ask**, expiring **20 September at 14:45 UTC**, is published and executable at this checkpoint. [Renewal transaction](https://sepolia.etherscan.io/tx/0x9ccafb84b0c67dbfd575f206399938de7dc17c0e47472c33b44888bf7fe2150d). A redemption invalidates existing quotes; the maker must publish fresh terms for remaining inventory. Check availability before recording or inviting another buyer.
 
 Evidence: [actual keeper/remote restore](evidence/operations/live-series-one-restore.json), [live Graph join](evidence/operations/live-series-one-graph.md), [native oracle](evidence/operations/live-series-one-native-oracle.md), [public transaction links](evidence/sponsors.md). The Railway service, 500 MB volume and private proof bucket are operated, normal restart passes, and no additional hosting approval is pending. New sales still require fresh readiness; a paused service is an actionable prerequisite, not permission to bypass the gate.
 
@@ -83,7 +93,7 @@ Series 1 is the real end-to-end example. Its earlier earning and proof-pending s
 | --- | --- | --- |
 | A — earning | Series 1 has passedN; use its clearly labelled earlier recording, or prepare another actual series | Fixed custody and range while fee claims trade |
 | B — captured, not allocated | Series 1 passed through this state: NFT returned at 11696393; its receipt remains evidence | NFT recovery does not wait for fee allocation |
-| C — allocated | Series 1 allocation observed at the lead’s 11696450 readback; teammate redemption confirmed; independent payouts/residual withdrawal are confirmed; funded judge inventory remains | Human teammate and controlled repeat payouts verified; 990 backed claims remain, with renewed quote publication pending |
+| C — allocated | Series 1 allocation observed at the lead’s 11696450 readback; teammate redemption confirmed; independent payouts/residual withdrawal are confirmed; funded judge inventory remains | Human teammate and controlled repeat payouts verified; 990 backed claims remain, with a renewed executable quote |
 
 A new earning window cannot become an instant payout in a presentation. Refresh quotes after allocation/redemption and disclose prepared inventory. Never use an earlier balance snapshot as proof that another judge can buy now.
 

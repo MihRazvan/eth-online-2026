@@ -40,3 +40,5 @@ A single redemption of all remaining 1000Q would pay **99999 micros**, leaving *
 Recorded gas cost is **0.009688483666894931 ETH**, summing actual `gasUsed × effectiveGasPrice` across the listed transactions, including three discovered teammate USDC approvals and the keeper checkpoint. Controlled wallets plus keeper account for **0.008671921536903176 ETH**; the teammate accounts for **0.001016562129991755 ETH**. The separate **0.035 ETH** participant funding remains a funding allocation, not automatically a spent fee. Gas totals exclude earlier contract deployment/NFT mint, host setup, later judge inventory publication and unrelated wallet activity.
 
 All values above belong to this canonical snapshot. Remaining inventory, quote validity and reserve liabilities must be read again after further purchases or redemptions. No raw signed transaction, wallet secret or credential is included.
+
+Subsequent activity is recorded separately in the [updated-interface repeat and renewal](live-new-interface-repeat.md). It supersedes this checkpoint’s remaining inventory figures without changing its historical receipts.
