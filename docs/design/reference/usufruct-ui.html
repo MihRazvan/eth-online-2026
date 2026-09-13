@@ -1,0 +1,1591 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>usufruct — sell one window of your Uniswap fees</title>
+<meta name="description" content="usufruct lets a liquidity provider take USDC up front for one fixed window of a Uniswap v4 position's future fees. The position never leaves escrow and returns as the same NFT.">
+<meta name="theme-color" content="#0a0a0c" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#e8e6e0" media="(prefers-color-scheme: light)">
+<meta name="color-scheme" content="dark light">
+<link rel="canonical" href="https://usufruct-mu.vercel.app/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="usufruct">
+<meta property="og:title" content="usufruct — sell one window of your Uniswap fees">
+<meta property="og:description" content="Take USDC up front for one fixed window of a position's future fees. The seed stays yours.">
+<meta property="og:url" content="https://usufruct-mu.vercel.app/">
+<meta property="og:image" content="https://usufruct-mu.vercel.app/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="The usufruct wordmark with a barbed citrus stencil, sixty-two percent of the word highlighted in blue.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="usufruct — sell one window of your Uniswap fees">
+<meta name="twitter:description" content="Take USDC up front for one fixed window of a position's future fees. The seed stays yours.">
+<meta name="twitter:image" content="https://usufruct-mu.vercel.app/og-image.png">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230a0a0c'/%3E%3Cpath d='M16 2 L19 12 L29 9 L22 16 L29 23 L19 20 L16 30 L13 20 L3 23 L10 16 L3 9 L13 12 Z' fill='%23e8e6e0'/%3E%3Ccircle cx='16' cy='16' r='6' fill='%232b5cff'/%3E%3C/svg%3E" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+:root[data-theme="dark"]{
+  --bg:#0a0a0c; --ink:#e8e6e0; --muted:#a3a198; --rule:#26262b; --rule2:#3a3a40;
+  --panel:#101014; --bar:#e8e6e0; --barink:#0a0a0c;
+  --sel:#2b5cff; --seldim:#17316d; --selink:#ffffff; --seltext:#a8bcff; --warn:#ff7a68;
+}
+:root[data-theme="light"]{
+  --bg:#e8e6e0; --ink:#131318; --muted:#565349; --rule:#bdb9af; --rule2:#918e84;
+  --panel:#dfdcd4; --bar:#131318; --barink:#e8e6e0;
+  --sel:#2b5cff; --seldim:#bccaff; --selink:#ffffff; --seltext:#1a3ab0; --warn:#b02a18;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:"Space Mono",ui-monospace,monospace; font-size:13px; line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3{margin:0;font-weight:400}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--sel); outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+.display{font-family:Anton,"Arial Narrow",Helvetica,sans-serif;font-weight:400;letter-spacing:-.02em;line-height:.92}
+.tele{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted)}
+.tele-ink{color:var(--ink)}
+.tele-sel{color:var(--seltext)}
+
+/* window chrome */
+.titlebar{
+  position:sticky;top:0;z-index:60;display:flex;align-items:center;gap:12px;
+  background:var(--bar);color:var(--barink);padding:5px 12px;
+  font-size:11px;letter-spacing:.12em;
+}
+.titlebar .path{flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.titlebar button{color:var(--barink);font-size:11px;letter-spacing:.12em;padding:0 4px}
+.titlebar button:hover{text-decoration:underline}
+
+.nav{display:flex;gap:0;border-bottom:1px solid var(--rule);padding:0 20px;flex-wrap:wrap}
+.nav button{
+  padding:12px 18px 10px;font-size:11px;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px;
+}
+.nav button:hover{color:var(--ink)}
+.nav button[aria-current="page"]{color:var(--ink);border-bottom-color:var(--sel)}
+.nav .spacer{flex:1}
+.nav .addr{padding:12px 0 10px;font-size:11px;letter-spacing:.14em;color:var(--muted);align-self:center}
+
+.wrap{max-width:1040px;margin:0 auto;padding:28px 20px 80px;position:relative}
+.screen{display:none}
+.screen.on{display:block}
+
+/* page head */
+.pagehead{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap;margin-bottom:6px}
+.pagehead h1{font-size:clamp(56px,11vw,116px)}
+.pagehead .meta{text-align:right}
+.rule{height:1px;background:var(--rule);margin:18px 0 0}
+.lede{max-width:62ch;color:var(--muted);margin:14px 0 0;font-size:13px}
+
+/* market rows */
+.rows{margin-top:26px}
+.row{
+  display:grid;grid-template-columns:76px 1fr auto;gap:20px;align-items:center;
+  width:100%;text-align:left;padding:18px 0;border-bottom:1px solid var(--rule);
+}
+.row:hover .rowid{text-decoration:underline;text-decoration-thickness:3px;text-underline-offset:6px}
+.row .art{width:76px;height:76px;color:var(--ink)}
+.rowid{font-size:clamp(28px,5vw,44px);display:inline-block}
+.rowsub{margin-top:2px}
+.rowright{text-align:right;white-space:nowrap}
+.price{font-size:17px;font-weight:700}
+.row.claimed .rowid{background:var(--sel);color:var(--selink);padding:0 8px;margin-left:-8px}
+.row.claimed .art{color:var(--sel)}
+.row.claimed .rowsub{color:var(--seltext)}
+
+/* detail */
+.detail{display:grid;grid-template-columns:1fr 1fr;gap:44px;margin-top:26px;align-items:start}
+.art-big{width:100%;max-width:400px;color:var(--ink)}
+.back{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin-bottom:20px}
+.back:hover{color:var(--ink)}
+
+.selbar{
+  position:relative;background:var(--panel);border:1px solid var(--rule2);
+  padding:20px 16px;margin:0 0 4px;cursor:ew-resize;user-select:none;touch-action:none;
+}
+.selbar .band{position:absolute;top:0;bottom:0;pointer-events:none}
+.selbar .sold{background:var(--seldim)}
+.selbar .mine{background:var(--sel)}
+.selbar .word{position:relative;font-size:clamp(34px,7vw,60px);pointer-events:none;display:block}
+.selhint{display:flex;justify-content:space-between;gap:12px}
+
+.readout{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--rule2);border-top:none}
+.readout div{padding:12px 14px}
+.readout div+div{border-left:1px solid var(--rule2)}
+.readout .big{font-size:22px;font-weight:700;letter-spacing:0}
+
+.terms{list-style:none;padding:0;margin:26px 0 0;border-top:1px solid var(--rule)}
+.terms li{display:flex;justify-content:space-between;gap:20px;padding:9px 0;border-bottom:1px solid var(--rule)}
+.terms span:first-child{color:var(--muted)}
+.terms span:last-child{text-align:right}
+
+.actions{display:flex;gap:10px;margin-top:24px;flex-wrap:wrap}
+.btn{
+  border:1px solid var(--ink);padding:11px 20px;font-size:11px;letter-spacing:.22em;text-transform:uppercase;
+}
+.btn:hover{background:var(--ink);color:var(--bg)}
+.btn.primary{background:var(--sel);border-color:var(--sel);color:var(--selink)}
+.btn.primary:hover{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.btn[disabled]{opacity:.4;cursor:not-allowed}
+.btn[disabled]:hover{background:none;color:var(--ink)}
+.btn.ghost{border-color:var(--rule2);color:var(--muted)}
+.btn.ghost:hover{background:none;border-color:var(--ink);color:var(--ink)}
+
+/* steps */
+.steps{display:flex;gap:0;border:1px solid var(--rule2);margin-top:26px;flex-wrap:wrap}
+.steps div{flex:1;min-width:150px;padding:11px 14px;border-right:1px solid var(--rule2);color:var(--muted);font-size:11px;letter-spacing:.18em;text-transform:uppercase}
+.steps div:last-child{border-right:none}
+.steps div.on{background:var(--sel);color:var(--selink)}
+.steps div.done{color:var(--ink)}
+
+.grid3{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;margin-top:26px}
+.tile{border:1px solid var(--rule2);padding:18px;text-align:left;width:100%}
+.tile:hover{border-color:var(--ink)}
+.tile[aria-pressed="true"]{border-color:var(--sel);background:var(--panel)}
+.tile[aria-pressed="true"] .tileart{color:var(--sel)}
+.tileart{width:100%;height:120px;color:var(--ink)}
+.tilename{font-family:Anton,"Arial Narrow",sans-serif;font-size:26px;letter-spacing:-.02em;margin-top:10px}
+
+.field{margin-top:22px}
+.field label{display:block;margin-bottom:8px}
+.field input[type=range]{width:100%;accent-color:var(--sel)}
+.field input[type=text]{
+  width:100%;background:transparent;border:1px solid var(--rule2);color:var(--ink);
+  font:inherit;font-size:20px;padding:10px 12px;
+}
+.field input[type=text]:focus{border-color:var(--sel);outline:none}
+.err{color:var(--warn);font-size:11px;letter-spacing:.1em;text-transform:uppercase;margin-top:6px;display:none}
+.err.on{display:block}
+
+/* holdings */
+.group{margin-top:38px}
+.group h2{font-family:Anton,"Arial Narrow",sans-serif;font-size:34px;letter-spacing:-.02em}
+.hold{display:grid;grid-template-columns:56px 1fr auto auto;gap:18px;align-items:center;padding:16px 0;border-bottom:1px solid var(--rule)}
+.hold .art{width:56px;height:56px;color:var(--ink)}
+.holdname{font-family:Anton,"Arial Narrow",sans-serif;font-size:30px;letter-spacing:-.02em}
+.state{font-size:11px;letter-spacing:.18em;text-transform:uppercase;border:1px solid var(--rule2);padding:4px 10px;white-space:nowrap}
+.state.live{border-color:var(--sel);color:var(--seltext)}
+.state.ready{background:var(--sel);border-color:var(--sel);color:var(--selink)}
+
+/* empty */
+.empty{text-align:center;padding:70px 0}
+.empty svg{width:190px;height:190px;color:var(--rule2)}
+.empty h2{font-family:Anton,"Arial Narrow",sans-serif;font-size:44px;letter-spacing:-.02em;margin:18px 0 8px}
+.empty p{color:var(--muted);max-width:44ch;margin:0 auto 22px}
+
+/* dialog */
+.veil{position:fixed;inset:0;background:rgba(0,0,0,.62);display:none;align-items:center;justify-content:center;padding:20px;z-index:80}
+.veil.on{display:flex}
+.dlg{background:var(--bg);border:1px solid var(--ink);width:100%;max-width:420px}
+.dlg .tb{background:var(--bar);color:var(--barink);display:flex;justify-content:space-between;padding:5px 10px;font-size:11px;letter-spacing:.12em}
+.dlg .bd{padding:20px}
+.dlg h3{font-family:Anton,"Arial Narrow",sans-serif;font-size:26px;letter-spacing:-.02em;margin-bottom:8px}
+.dlg p{color:var(--muted);margin:0 0 16px}
+.dlg .dl{display:flex;justify-content:space-between;padding:7px 0;border-top:1px solid var(--rule)}
+.dlg .dl span:first-child{color:var(--muted)}
+.dlgbtns{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
+
+.foot{margin-top:64px;padding-top:18px;border-top:1px solid var(--rule);display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
+
+#bgfx{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;
+  image-rendering:pixelated;opacity:.12}
+body:not(.onlanding) #bgfx{display:none}
+.nav{position:relative;z-index:2}
+.wrap{z-index:2}
+.glyphs{position:absolute;right:12px;top:18px;width:min(280px,32vw);color:var(--rule2);z-index:0}
+.glyphs .g1{height:200px}
+.glyphs .g2{height:64px;margin-top:14px}
+.glyphs .g3{height:30px;margin-top:14px}
+.secttl{font-size:clamp(28px,5.2vw,48px);margin:44px 0 18px;position:relative;z-index:2}
+.defs{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:0;
+  border-top:1px solid var(--rule);margin:0;position:relative;z-index:2}
+.defs div{padding:15px 18px 18px;border-bottom:1px solid var(--rule);border-right:1px solid var(--rule)}
+.defs dt{font-family:Anton,"Arial Narrow",Helvetica,sans-serif;font-size:25px;letter-spacing:-.02em}
+.defs dd{margin:5px 0 0;color:var(--muted);font-size:12px;line-height:1.65}
+.note{border:1px solid var(--sel);padding:20px 22px;margin-top:38px;position:relative;z-index:2}
+.note h4{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--seltext);
+  margin:0 0 8px;font-weight:400}
+.note p{margin:0;color:var(--ink);max-width:78ch}
+
+/* boot loader */
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+#boot{position:fixed;inset:0;z-index:200;background:var(--bg);display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:0;transition:opacity .45s ease}
+#boot.off{opacity:0;pointer-events:none}
+.bootcrop{position:absolute;inset:18px}
+.bootcrop i{position:absolute;width:17px;height:17px;border:0 solid var(--rule2)}
+.bootcrop i:nth-child(1){top:0;left:0;border-top-width:1px;border-left-width:1px}
+.bootcrop i:nth-child(2){top:0;right:0;border-top-width:1px;border-right-width:1px}
+.bootcrop i:nth-child(3){bottom:0;right:0;border-bottom-width:1px;border-right-width:1px}
+.bootcrop i:nth-child(4){bottom:0;left:0;border-bottom-width:1px;border-left-width:1px}
+.boottl{position:absolute;top:30px;left:32px}
+.bootstage{position:relative;display:flex;align-items:center;justify-content:center;
+  width:min(300px,64vw);height:min(300px,64vw)}
+.bootart{position:absolute;inset:0;color:var(--rule2)}
+.bootword{position:relative;font-size:clamp(15px,3.4vw,21px);letter-spacing:.34em;
+  text-transform:uppercase;color:var(--ink);background:var(--bg);padding:7px 12px;
+  border-left:3px solid var(--sel);white-space:nowrap}
+.bootfoot{position:absolute;left:32px;right:32px;bottom:36px}
+.bootmeta{display:flex;justify-content:space-between;margin-top:9px}
+
+/* privacy notice */
+.notice{position:fixed;left:0;right:0;bottom:0;z-index:70;background:var(--bg);
+  border-top:1px solid var(--sel)}
+.noticein{max-width:1040px;margin:0 auto;padding:18px 20px;display:flex;gap:20px;
+  align-items:center;justify-content:space-between;flex-wrap:wrap}
+.noticein p{margin:0;max-width:72ch;font-size:12px;line-height:1.65;color:var(--muted)}
+.noticein strong{font-weight:400;color:var(--ink)}
+.noticebtns{display:flex;gap:10px;flex-wrap:wrap}
+
+/* legal + 404 */
+.legal{max-width:74ch}
+.legal h2{font-family:Anton,"Arial Narrow",Helvetica,sans-serif;font-size:clamp(24px,4vw,34px);
+  letter-spacing:-.02em;margin:38px 0 10px}
+.legal p{margin:0 0 14px;line-height:1.75}
+.legal ul{margin:0 0 16px;padding:0;list-style:none}
+.legal li{padding:9px 0 9px 20px;border-top:1px solid var(--rule);position:relative}
+.legal li::before{content:"";position:absolute;left:0;top:16px;width:8px;height:8px;background:var(--sel)}
+.legal .no li::before{background:none;border:1px solid var(--rule2)}
+.legal .stamp{border:1px solid var(--sel);padding:16px 18px;margin:26px 0}
+.legal .stamp p{margin:0;color:var(--ink)}
+.updated{color:var(--muted);font-size:11px;letter-spacing:.2em;text-transform:uppercase}
+
+/* fee model */
+.est{border:1px solid var(--rule2);padding:15px 16px 16px;margin-top:22px}
+.esthead{display:flex;justify-content:space-between;gap:14px;align-items:baseline;flex-wrap:wrap}
+.estval{font-size:27px;font-weight:700;letter-spacing:0}
+.esthist{height:58px;margin:14px 0 10px;color:var(--rule2)}
+.estnote{color:var(--muted);font-size:12px;line-height:1.65;margin:0}
+.estnote b{font-weight:400;color:var(--seltext)}
+.estnote i{font-style:normal;color:var(--warn)}
+.estuse{border:1px solid var(--sel);color:var(--seltext);padding:6px 13px;
+  font-size:11px;letter-spacing:.2em;text-transform:uppercase}
+.estuse:hover{background:var(--sel);color:var(--selink)}
+.estrow{display:flex;justify-content:space-between;gap:10px;margin-top:10px}
+
+/* motion: stencil barbs, window clock, transaction process */
+@keyframes spin{to{transform:rotate(360deg)}}
+.barbs,.pulse,.ring,.sweep{transform-origin:100px 100px}
+.barbs,.ring,.sweep{animation-name:spin;animation-timing-function:linear;animation-iteration-count:infinite}
+@keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.045)}}
+.pulse{animation:breathe cubic-bezier(.45,0,.55,1) infinite}
+@keyframes ping{0%{transform:scale(1);opacity:.42}
+  15%{transform:scale(1.72);opacity:0}100%{transform:scale(1.72);opacity:0}}
+.ping{transform-origin:100px 100px;animation-name:ping;
+  animation-timing-function:cubic-bezier(.2,.7,.3,1);animation-iteration-count:infinite}
+@keyframes pass{0%{transform:translateY(-18px);opacity:0}
+  1.5%{opacity:.13}13%{transform:translateY(212px);opacity:.13}
+  14%{transform:translateY(212px);opacity:0}100%{transform:translateY(-18px);opacity:0}}
+.pass{animation-name:pass;animation-timing-function:linear;animation-iteration-count:infinite}
+.winprog{margin:0 0 16px}
+.wpbar{position:relative;height:10px;background:var(--rule);overflow:hidden}
+.wpbar i{position:absolute;left:0;top:0;bottom:0;background:var(--seldim);width:0}
+.wpbar b{position:absolute;top:0;bottom:0;width:2px;background:var(--sel);left:0}
+.wpmeta{display:flex;justify-content:space-between;gap:12px;margin-top:7px}
+.prog{display:block;height:2px;background:var(--rule);margin-top:9px;max-width:330px}
+.prog i{display:block;height:100%;background:var(--sel);width:0}
+.proc{margin:2px 0 0}
+.procart{height:152px;display:flex;align-items:center;justify-content:center;color:var(--ink)}
+.procart svg{max-height:152px;max-width:152px}
+.scanbox{position:relative;width:100%;height:74px;color:var(--ink);overflow:hidden}
+.scanbox .bcw{position:absolute;inset:0}
+.scanline{position:absolute;top:0;bottom:0;width:3px;background:var(--sel);left:0}
+.procsteps{list-style:none;margin:16px 0 0;padding:0}
+.procsteps li{padding:6px 0 6px 12px;border-left:2px solid var(--rule2);color:var(--muted);
+  font-size:11px;letter-spacing:.2em;text-transform:uppercase}
+.procsteps li.on{color:var(--ink);border-left-color:var(--sel)}
+.procsteps li.ok{color:var(--seltext);border-left-color:var(--sel)}
+.procbar{display:flex;gap:2px;margin-top:16px}
+.procbar i{flex:1;height:14px;background:var(--rule)}
+.procbar i.on{background:var(--sel)}
+
+/* aperture — a cut in the sheet, field showing through */
+.aperture{position:relative;z-index:2;height:clamp(170px,28vh,280px);
+  border-left:1px solid var(--rule2);border-right:1px solid var(--rule2);
+  margin:0 -25px;padding:0 24px 14px;display:flex;align-items:flex-end;
+  justify-content:space-between;gap:16px}
+.aperture::before,.aperture::after{content:"";position:absolute;width:18px;height:18px;
+  border:0 solid var(--rule2);pointer-events:none}
+.aperture::before{top:14px;left:14px;border-top-width:1px;border-left-width:1px}
+.aperture::after{bottom:14px;right:14px;border-bottom-width:1px;border-right-width:1px}
+.plate+.aperture{margin-top:0}
+.aperture+.plate{margin-top:0;border-top:none}
+
+/* knockout plate — the sheet laid over the field */
+.plate{position:relative;z-index:2;background:var(--bg);border:1px solid var(--rule2);
+  padding:4px 24px 30px;margin:36px -25px 0}
+.plate .strip:first-of-type{border-top:none}
+.claim{font-size:clamp(17px,2.5vw,25px);line-height:1.35;margin:24px 0 0;max-width:30ch;
+  display:inline-block;background:var(--bg);padding:12px 16px 14px;border-left:3px solid var(--sel)}
+.claim b{font-weight:400;background:var(--sel);color:var(--selink);padding:0 5px}
+
+/* hover: the selection idiom, reused */
+.prow h3{position:relative;display:inline-block;isolation:isolate}
+.prow h3::before{content:"";position:absolute;left:-8px;right:-8px;top:10%;bottom:8%;
+  background:var(--sel);transform:scaleX(0);transform-origin:left;z-index:-1;
+  transition:transform .3s cubic-bezier(.16,.84,.24,1)}
+.prow:hover h3::before,.prow:focus-within h3::before{transform:scaleX(1)}
+.prow{transition:border-color .2s}
+.prow:hover{border-bottom-color:var(--sel)}
+.defs div{transition:background .18s,color .18s}
+.defs div:hover{background:var(--sel)}
+.defs div:hover dt,.defs div:hover dd{color:var(--selink)}
+
+.strip .wg{height:18px;width:50px;flex:none}
+.ticker{overflow:hidden;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);
+  padding:10px 0;margin-top:30px;position:relative;z-index:2}
+.tkin{display:flex;gap:36px;white-space:nowrap;width:max-content;animation:mq 44s linear infinite}
+.tkin .hi{color:var(--seltext)}
+.tkin .u{display:flex;gap:36px;align-items:center}
+.tkin .bcm{width:90px;height:16px;color:var(--rule2);flex:none}
+@keyframes mq{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@keyframes selin{from{width:0}to{width:62%}}
+@keyframes fadeup{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.hero .claim,.hero .cta{animation:fadeup .7s ease .55s both}
+
+/* ---- sheet furniture ---- */
+.crops{position:absolute;inset:10px;pointer-events:none;z-index:1}
+.crops i{position:absolute;width:15px;height:15px;border:0 solid var(--rule2)}
+.crops i:nth-child(1){top:0;left:0;border-top-width:1px;border-left-width:1px}
+.crops i:nth-child(2){top:0;right:0;border-top-width:1px;border-right-width:1px}
+.crops i:nth-child(3){bottom:0;right:0;border-bottom-width:1px;border-right-width:1px}
+.crops i:nth-child(4){bottom:0;left:0;border-bottom-width:1px;border-left-width:1px}
+.reg{width:15px;height:15px;color:var(--rule2);flex:none}
+.strip{display:flex;align-items:center;gap:12px;padding:14px 0;color:var(--ink);
+  border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}
+.strip .bc{height:24px;flex:1 1 40px;min-width:30px}
+.strip .dt{height:24px;width:66px;flex:none}
+.strip .sp{width:26px;height:26px;flex:none;color:var(--ink)}
+.strip .lb{flex:none}
+.sheetno{display:flex;align-items:center;gap:8px;justify-content:flex-end}
+
+/* ---- landing ---- */
+.hero{padding-top:18px}
+.hero h1{font-size:clamp(60px,15.5vw,178px);line-height:.84;margin:0}
+.selword{position:relative;display:inline-block}
+.selword .hl{position:absolute;top:9%;bottom:8%;left:-.02em;width:62%;background:var(--sel);
+  animation:selin 1.05s cubic-bezier(.16,.84,.24,1) .25s both}
+.selword em{position:relative;font-style:normal}
+.cta{display:flex;gap:12px;margin-top:28px;flex-wrap:wrap;align-items:center}
+.poster{margin-top:8px}
+.prow{display:grid;grid-template-columns:1fr auto;gap:10px 24px;align-items:baseline;
+  padding:18px 0;border-bottom:1px solid var(--rule)}
+.prow h3{font-family:Anton,"Arial Narrow",Helvetica,sans-serif;font-size:clamp(32px,6.4vw,58px);
+  letter-spacing:-.02em;line-height:.95}
+.prow p{margin:6px 0 0;color:var(--muted);max-width:52ch}
+.heroart{position:absolute;right:14px;top:20px;width:min(310px,36vw);opacity:.9;
+  color:var(--rule2);pointer-events:none;z-index:0}
+.hero,.poster,.cta{position:relative;z-index:2}
+.walletrow{display:flex;justify-content:space-between;align-items:center;width:100%;
+  padding:12px 0;border-top:1px solid var(--rule);font-size:13px;text-align:left}
+.walletrow:last-child{border-bottom:1px solid var(--rule)}
+.walletrow:hover{color:var(--sel)}
+.walletrow span:last-child{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+.walletrow:hover span:last-child{color:var(--sel)}
+body.onlanding .nav{display:none}
+
+@media (max-width:760px){
+  .heroart{display:none}
+  .plate{margin:30px -14px 0;padding:4px 14px 24px}
+  .aperture{margin:0 -14px;padding:0 14px 12px;height:150px}
+    .strip .wg{display:none}
+  .strip .dt{display:none}
+  .detail{grid-template-columns:1fr;gap:30px}
+  .row{grid-template-columns:52px 1fr;row-gap:8px}
+  .row .art{width:52px;height:52px}
+  .rowright{grid-column:2;text-align:left}
+  .hold{grid-template-columns:44px 1fr;row-gap:10px}
+  .hold .art{width:44px;height:44px}
+  .hold .state,.hold .btn{grid-column:2;justify-self:start}
+}
+</style>
+</head>
+<body>
+<div id="boot" role="status" aria-live="polite">
+  <div class="bootcrop" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+  <span class="boottl tele" aria-hidden="true">usufruct.exe</span>
+  <div class="bootstage">
+    <div class="bootart" id="bootArt" aria-hidden="true"></div>
+    <div class="bootword" id="bootWord" aria-hidden="true">SEED</div>
+  </div>
+  <div class="bootfoot">
+    <div class="procbar" id="bootBar" aria-hidden="true"></div>
+    <div class="bootmeta"><span class="tele">loading</span><span class="tele" id="bootPct">0%</span></div>
+  </div>
+  <span class="sr">Loading usufruct</span>
+</div>
+<canvas id="bgfx" aria-hidden="true"></canvas>
+
+<div class="titlebar">
+  <span class="path" id="tbpath">usufruct.exe — /positions</span>
+  <button id="themebtn" aria-label="Switch colour mode">[ light ]</button>
+  <span aria-hidden="true">[ □ ]</span>
+  <span aria-hidden="true">[ x ]</span>
+</div>
+
+<nav class="nav">
+  <button data-go="landing">usufruct</button>
+  <button data-go="market" aria-current="page">positions</button>
+  <button data-go="pin">pin a seed</button>
+  <button data-go="holdings">holdings</button>
+  <span class="spacer"></span>
+  <button class="addr" id="addr">connect wallet</button>
+</nav>
+
+<main class="wrap">
+  <div class="crops" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+
+  <!-- ============ LANDING ============ -->
+  <section class="screen on" id="landing">
+    <div class="glyphs" id="glyphs" aria-hidden="true"></div>
+    <div class="hero">
+      <h1 class="display"><span class="selword"><span class="hl"></span><em>USUFRUCT</em></span></h1>
+      <p class="claim">One window of a Uniswap position&#8217;s fees. Sold once, up front. <b>The seed stays yours.</b></p>
+      <div class="cta">
+        <button class="btn primary" id="connectCta">connect wallet</button>
+        <button class="btn ghost" data-go="market">look at the sheet first</button>
+      </div>
+    </div>
+
+    <div class="plate">
+    <div class="ticker" aria-hidden="true"><div class="tkin" id="tkin"></div></div>
+
+    <div class="poster">
+      <div class="prow">
+        <div><h3>PIN</h3>
+        <p>Lock one seed for a fixed stretch of blocks. Liquidity and range freeze exactly where they are, and the NFT sits in escrow.</p></div>
+        <div class="tele" style="white-space:nowrap">step 01 &#183; seller signs twice</div>
+      </div>
+      <div class="prow">
+        <div><h3>SELL</h3>
+        <p>Buyers take shares of that window&#8217;s unpaid USDC fees. You are paid the moment the first share sells, whatever the window goes on to earn.</p></div>
+        <div class="tele" style="white-space:nowrap">step 02 &#183; usdc up front</div>
+      </div>
+      <div class="prow">
+        <div><h3>RETURN</h3>
+        <p>After the window closes, fees are captured and the same NFT comes back to you. Buyers redeem once allocation is verified against history.</p></div>
+        <div class="tele" style="white-space:nowrap">step 03 &#183; same token id</div>
+      </div>
+    </div>
+
+    <div class="strip" id="strip1"></div>
+
+    </div>
+
+    <div class="aperture">
+      <span class="tele">open field</span>
+      <span class="tele">no print &#183; 01</span>
+    </div>
+
+    <div class="plate">
+    <div class="strip" id="strip2"></div>
+
+    <h2 class="secttl display">WORDS USED HERE</h2>
+    <dl class="defs" id="defs"></dl>
+
+    <div class="note">
+      <h4>before you connect</h4>
+      <p>Sepolia only, and unaudited. Figures shown anywhere in this interface are estimates until a window is captured and its allocation is verified &#8212; estimates never authorise a payout. An unfunded seed is a draft, not a sale.</p>
+    </div>
+
+    <div class="foot">
+      <span class="tele">sepolia &#183; hookless v4 &#183; unaudited</span>
+      <span class="tele"><button class="tele" data-go="privacy" style="letter-spacing:.22em">privacy</button>
+        &#183; <button class="tele" data-go="terms" style="letter-spacing:.22em">terms</button></span>
+    </div>
+    </div>
+  </section>
+
+  <!-- ============ MARKET ============ -->
+  <section class="screen" id="market">
+    <div class="pagehead">
+      <h1 class="display">USUFRUCT</h1>
+      <div class="meta">
+        <div class="tele tele-ink sheetno"><span id="regM"></span>sheet 03</div>
+        <div class="tele">sepolia · 6 positions</div>
+        <div class="tele tele-sel">1 fully claimed</div>
+      </div>
+    </div>
+    <div class="rule"></div>
+    <p class="lede">Each position is escrowed for one fixed window of blocks. Buy a share of that window and you hold that share of its whole unpaid USDC fee income. The position itself never moves.</p>
+    <div class="rows" id="rows"></div>
+    <div class="strip" id="strip3" style="margin-top:34px"></div>
+    <div class="foot">
+      <span class="tele">a-558 / sw.log / hookless v4</span>
+      <span class="tele">estimates never authorise payouts</span>
+    </div>
+  </section>
+
+  <!-- ============ DETAIL ============ -->
+  <section class="screen" id="detail">
+    <button class="back" data-go="market">← all positions</button>
+    <div class="detail">
+      <div>
+        <div class="art-big" id="detailArt"></div>
+        <div class="strip" id="strip5" style="margin-top:8px"></div>
+      </div>
+      <div>
+        <div class="tele" id="dTop">window open</div>
+        <div class="winprog">
+          <div class="wpbar"><i id="wpFill"></i><b id="wpHead"></b></div>
+          <div class="wpmeta">
+            <span class="tele" id="wpA">start</span>
+            <span class="tele tele-sel" id="wpC">now</span>
+            <span class="tele" id="wpB">end</span>
+          </div>
+        </div>
+        <div class="selbar" id="selbar" tabindex="0" role="slider"
+             aria-label="How much of this window to buy, in percent"
+             aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+          <span class="band sold" id="bandSold"></span>
+          <span class="band mine" id="bandMine"></span>
+          <span class="word display" id="dWord">NFT 39216</span>
+        </div>
+        <div class="selhint">
+          <span class="tele">drag across to select</span>
+          <button class="tele tele-sel" id="selall" style="letter-spacing:.22em">select all remaining</button>
+        </div>
+
+        <div class="readout" style="margin-top:14px">
+          <div>
+            <div class="tele">your selection</div>
+            <div class="big" id="dPct">0%</div>
+          </div>
+          <div>
+            <div class="tele">you pay</div>
+            <div class="big" id="dCost">0.00 USDC</div>
+          </div>
+        </div>
+
+        <ul class="terms">
+          <li><span>position</span><span id="dNft">NFT 39216 · hookless v4</span></li>
+          <li><span>window</span><span id="dWindow">block 8442100 – 8618400</span></li>
+          <li><span>already sold</span><span id="dSold">62%</span></li>
+          <li><span>ask, whole window</span><span id="dAsk">412.80 USDC</span></li>
+          <li><span>settles</span><span>after capture and verified allocation</span></li>
+          <li><span>seed returns to</span><span id="dOwner">0x91c2…40ab</span></li>
+        </ul>
+
+        <div class="actions">
+          <button class="btn" id="approveBtn">approve usdc</button>
+          <button class="btn primary" id="buyBtn" disabled>buy selection</button>
+        </div>
+        <p class="tele" style="margin-top:14px">Two signatures. The first lets the escrow move your USDC; the second buys the share. Neither touches the seed.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ PIN ============ -->
+  <section class="screen" id="pin">
+    <div class="pagehead">
+      <h1 class="display">PIN A SEED</h1>
+      <div class="meta">
+        <div class="tele tele-ink">seller</div>
+        <div class="tele">2 eligible positions</div>
+      </div>
+    </div>
+    <div class="rule"></div>
+    <p class="lede">Lock one seed for a fixed window and take USDC up front for the fees it earns during it. Liquidity and range freeze. The same NFT comes back to you after capture.</p>
+
+    <div class="steps" id="pinSteps">
+      <div class="on">1 · choose a position</div>
+      <div>2 · set the window</div>
+      <div>3 · sign twice</div>
+    </div>
+
+    <div id="pinStep1">
+      <div class="grid3" id="pinTiles"></div>
+    </div>
+
+    <div id="pinStep2" style="display:none">
+      <div class="detail">
+        <div><div class="art-big" id="pinArt"></div>
+          <p class="tele" style="margin-top:10px">The stencil is drawn from the token id. Yours, and only yours.</p>
+        </div>
+        <div>
+          <div class="field">
+            <label for="lenRange">window length <strong id="lenOut">176,300 blocks · about 24 days</strong></label>
+            <input type="range" id="lenRange" min="7" max="60" value="24" step="1">
+          </div>
+          <div class="est" id="estBox"></div>
+          <div class="field">
+            <label for="askInput">ask for the whole window, in USDC</label>
+            <input type="text" id="askInput" value="412.80" inputmode="decimal" autocomplete="off" spellcheck="false" aria-describedby="askErr" maxlength="12">
+            <div class="err" id="askErr" role="alert" aria-live="polite">Enter an amount above zero</div>
+          </div>
+          <ul class="terms">
+            <li><span>position</span><span id="pNft">—</span></li>
+            <li><span>freezes at</span><span id="pStart">block 8442100</span></li>
+            <li><span>capture at</span><span id="pEnd">block 8618400</span></li>
+            <li><span>you receive</span><span id="pRecv">412.80 USDC on first sale</span></li>
+            <li><span>you keep</span><span>the NFT, returned after capture</span></li>
+          </ul>
+          <div class="actions">
+            <button class="btn ghost" id="pinBack">back</button>
+            <button class="btn primary" id="pinNext">review and sign</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ HOLDINGS ============ -->
+  <section class="screen" id="holdings">
+    <div class="pagehead">
+      <h1 class="display">HOLDINGS</h1>
+      <div class="meta">
+        <div class="tele tele-ink">0x7a3f…9e21</div>
+        <div class="tele">3 claims · 1 seed</div>
+      </div>
+    </div>
+    <div class="rule"></div>
+
+    <div class="group">
+      <h2>Your claims</h2>
+      <p class="lede">Shares of a window's unpaid fees, including income that accrued before you bought in.</p>
+      <div id="claims"></div>
+    </div>
+
+    <div class="strip" id="strip4" style="margin-top:34px"></div>
+
+    <div class="group">
+      <h2>Your seeds</h2>
+      <p class="lede">Positions you pinned. Each comes back to you as the same NFT, untouched.</p>
+      <div id="seedlist"></div>
+    </div>
+  </section>
+
+  <!-- ============ PRIVACY ============ -->
+  <section class="screen" id="privacy">
+    <div class="pagehead">
+      <h1 class="display">PRIVACY</h1>
+      <div class="meta"><div class="updated">last changed 13 sep 2026</div></div>
+    </div>
+    <div class="rule"></div>
+    <div class="legal">
+      <div class="stamp"><p>The short version: we collect nothing, store nothing, and have nothing to sell. There is no account, no email field, no cookie, no tracking pixel and no analytics script anywhere on this site.</p></div>
+
+      <h2>WHAT WE COLLECT</h2>
+      <p>Nothing. That is the entire list. There is no server holding your data because there is no server holding data at all &#8212; the interface is a static page that talks directly to the blockchain through your own wallet.</p>
+
+      <h2>WHAT WE DON&#8217;T DO</h2>
+      <ul class="no">
+        <li>No cookies, no local profiling, no fingerprinting</li>
+        <li>No analytics, heatmaps, session recording or A/B tooling</li>
+        <li>No advertising, no data brokers, no &#8220;partners&#8221;</li>
+        <li>No newsletter list, because there is no newsletter</li>
+        <li>No linking of wallet addresses to identities, ever</li>
+      </ul>
+
+      <h2>THE ONE THING STORED</h2>
+      <p>If you dismiss the privacy note at the bottom of the page, a single flag is written to your browser&#8217;s local storage so the note stays dismissed. It never leaves your machine and we cannot read it. Clear your site data and it is gone.</p>
+
+      <h2>WHAT WE CAN&#8217;T CONTROL, AND WON&#8217;T PRETEND TO</h2>
+      <p>Being honest matters more here than sounding clean:</p>
+      <ul>
+        <li>Your wallet provider sees which sites you connect to. That is between you and them.</li>
+        <li>Your RPC endpoint sees the requests it serves, including your address. Run your own node if that matters to you.</li>
+        <li>Our host serves this page and, like every web host, its edge may briefly log IP addresses for abuse prevention. We do not read those logs, query them or export them.</li>
+        <li>Everything you do on-chain is public by design. That is the chain, not us.</li>
+      </ul>
+
+      <h2>IF THAT EVER CHANGES</h2>
+      <p>If we ever add anything &#8212; even a cookieless visit counter &#8212; it gets written here first, in plain words, with the date changed at the top. We will not quietly expand this page and hope nobody re-reads it.</p>
+
+      <h2>ASKING US THINGS</h2>
+      <p>There is no data to request, correct or delete, so there is no request form. If you want to check any of the above, the entire frontend is open source and you can read it yourself.</p>
+    </div>
+    <div class="foot">
+      <span class="tele">no cookies &#183; no trackers &#183; no analytics</span>
+      <button class="tele" data-go="terms" style="letter-spacing:.22em">terms &#8594;</button>
+    </div>
+  </section>
+
+  <!-- ============ TERMS ============ -->
+  <section class="screen" id="terms">
+    <div class="pagehead">
+      <h1 class="display">TERMS</h1>
+      <div class="meta"><div class="updated">last changed 13 sep 2026</div></div>
+    </div>
+    <div class="rule"></div>
+    <div class="legal">
+      <div class="stamp"><p>Unaudited software on a test network. You act for yourself, with your own keys, at your own risk. Nobody here can move, freeze, recover or refund your funds &#8212; including us.</p></div>
+
+      <h2>WHAT THIS IS</h2>
+      <p>usufruct is an interface to a set of smart contracts. It is a way of looking at them, not a service that holds anything. We are not a broker, an exchange, a custodian or an adviser, and nothing here is financial, legal or tax advice.</p>
+
+      <h2>YOU ARE IN CHARGE</h2>
+      <ul>
+        <li>You control your keys. Lose them and nobody can help you, us least of all.</li>
+        <li>You sign your own transactions. Once signed, they are final and irreversible.</li>
+        <li>You are responsible for checking what you are signing and for obeying the laws where you live.</li>
+        <li>Contract addresses shown here should be verified independently before you approve anything.</li>
+      </ul>
+
+      <h2>NO PROMISES ABOUT MONEY</h2>
+      <p>Fee income is whatever the position actually earns. The modelled ask on the pin screen is arithmetic on past fees, not a forecast and not a guarantee. Every figure in this interface is an estimate until a window is captured and its allocation verified against chain history. Estimates never authorise a payout. You can lose the entire amount you pay for a share.</p>
+
+      <h2>NO WARRANTY</h2>
+      <p>The software is provided as is, with no warranty of any kind. It has not been audited. It may contain bugs that cost you money. To the fullest extent the law allows, nobody involved in building it is liable for any loss arising from your use of it, including lost funds, lost profit, failed transactions, chain reorganisations, oracle failure, or the interface being wrong or unavailable.</p>
+
+      <h2>THINGS OUTSIDE OUR HANDS</h2>
+      <ul>
+        <li>The blockchain itself, and whether transactions land</li>
+        <li>Your wallet, your RPC provider, and any bridge or aggregator you use</li>
+        <li>Gas prices, congestion, reorgs and forks</li>
+        <li>Third-party contracts this protocol composes with</li>
+      </ul>
+
+      <h2>LICENCE</h2>
+      <p>The first-party frontend and contracts are MIT licensed. Vendored contracts, imported sources, fonts and reference material keep their own licences; the root licence does not relicense anything belonging to somebody else.</p>
+
+      <h2>CHANGES</h2>
+      <p>These terms can change. The date at the top changes with them. Continuing to use the interface means the current version applies to you.</p>
+    </div>
+    <div class="foot">
+      <span class="tele">unaudited &#183; sepolia &#183; no custody</span>
+      <button class="tele" data-go="privacy" style="letter-spacing:.22em">privacy &#8594;</button>
+    </div>
+  </section>
+
+  <!-- ============ 404 ============ -->
+  <section class="screen" id="nf404">
+    <div class="empty">
+      <div id="nfArt"></div>
+      <h2>Nothing grew here</h2>
+      <p>That page isn&#8217;t on the sheet. It may have been renamed, or it may never have existed &#8212; either way, the positions are still where you left them.</p>
+      <button class="btn primary" data-go="market">see the positions</button>
+    </div>
+    <div class="strip" id="strip404" style="margin-top:40px"></div>
+  </section>
+
+  <!-- ============ EMPTY ============ -->
+  <section class="screen" id="empty">
+    <div class="empty">
+      <div id="emptyArt"></div>
+      <h2>No positions open yet</h2>
+      <p>Nothing has been pinned on this network. Pin a position and it becomes the first stencil on the sheet.</p>
+      <button class="btn primary" data-go="pin">pin a seed</button>
+    </div>
+  </section>
+
+</main>
+
+<div class="notice" id="notice" role="region" aria-label="Privacy notice" hidden>
+  <div class="noticein">
+    <p><strong>No cookies. No trackers. No analytics.</strong> usufruct does not collect, store or sell anything about you. Dismissing this note saves one flag in your own browser &#8212; that is the only thing this site will ever write.</p>
+    <div class="noticebtns">
+      <button class="btn primary" id="noticeOk">understood</button>
+      <button class="btn ghost" data-go="privacy">read the policy</button>
+    </div>
+  </div>
+</div>
+
+<div class="veil" id="veil" role="dialog" aria-modal="true" aria-labelledby="dlgTitle">
+  <div class="dlg">
+    <div class="tb"><span id="dlgPath">usufruct.exe — confirm</span><span aria-hidden="true">[ x ]</span></div>
+    <div class="bd">
+      <h3 id="dlgTitle">Buy 20% of this window</h3>
+      <p id="dlgBody">You are buying a share of one fixed period's unpaid USDC fees. Income is redeemable only after capture and verified allocation.</p>
+      <div id="dlgRows"></div>
+      <div class="dlgbtns">
+        <button class="btn ghost" id="dlgCancel">cancel</button>
+        <button class="btn primary" id="dlgOk">sign</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------- seeded generator ---------- */
+function rng(seed){let s=(seed>>>0)||1;return function(){s=(s*1664525+1013904223)>>>0;return s/4294967296;};}
+
+let ARTN=0;const LIVE=[];
+function wavePaths(o,t){
+  const C=o.C,R=o.coreR,a=o.amp;
+  let d='M'+(C-R-8)+','+(C+R+10)+' L'+(C-R-8)+',';
+  let line='';
+  for(let x=C-R-8;x<=C+R+8;x+=4){
+    const y=o.lvl+Math.sin(x*0.055+t)*a+Math.sin(x*0.029-t*0.73)*a*0.55;
+    d+=(x===C-R-8?'':' L'+x+',')+y.toFixed(1);
+    line+=(line?' L':'M')+x+','+y.toFixed(1);
+  }
+  d+=' L'+(C+R+8)+','+(C+R+10)+' Z';
+  return{clip:d,line:line};
+}
+function citrus(seed,fill,opts){
+  opts=opts||{};
+  const r=rng(seed),C=100,coreR=opts.core||50;
+  const axis=r()*360, n=13+Math.floor(r()*7);
+  let barbs='',a=r()*360;
+  for(let i=0;i<n;i++){
+    a+=(360/n)*(0.55+r()*0.95);
+    const bias=1+0.55*Math.cos((a-axis)*Math.PI/180);
+    const len=(14+r()*30)*bias+8;
+    const w=3.4+r()*3.4;
+    const b=C-coreR+4, t=C-coreR-len;
+    barbs+='<path d="M'+(C-w)+','+b+' C'+(C-w*0.62)+','+(b-len*0.35)+' '+(C-w*0.26)+','+(b-len*0.72)+' '+C+','+t.toFixed(1)+
+           ' C'+(C+w*0.26)+','+(b-len*0.72)+' '+(C+w*0.62)+','+(b-len*0.35)+' '+(C+w)+','+b+
+           ' C'+(C+w*0.5)+','+(b+3)+' '+(C-w*0.5)+','+(b+3)+' '+(C-w)+','+b+' Z" transform="rotate('+a.toFixed(1)+' '+C+' '+C+')"/>';
+  }
+  let dots='';
+  const count=opts.live?300:190;
+  for(let i=0;i<count;i++){
+    const ang=r()*Math.PI*2,rad=Math.sqrt(r())*(coreR-4);
+    const x=C+Math.cos(ang)*rad,y=C+Math.sin(ang)*rad;
+    dots+='<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="'+(0.85+r()*0.95).toFixed(2)+'"/>';
+  }
+  const segs=8+Math.floor(r()*4);
+  let lines='';
+  for(let i=0;i<segs;i++){
+    const t=(i/segs)*Math.PI*2+r()*0.08;
+    lines+='<path d="M'+C+','+C+' L'+(C+Math.sin(t)*(coreR-4)).toFixed(1)+','+(C-Math.cos(t)*(coreR-4)).toFixed(1)+'"/>';
+  }
+  let ann='';
+  if(opts.annotate){
+    ann='<g stroke="currentColor" stroke-width="0.6" fill="none" opacity=".55">'+
+        '<path d="M62,60 L24,30 L8,30"/><path d="M140,62 L178,32 L194,32"/>'+
+        '<path d="M140,142 L180,172 L194,172"/></g>'+
+        '<g font-family="Space Mono, monospace" font-size="6.4" letter-spacing="0.6" fill="currentColor" opacity=".7">'+
+        '<text x="8" y="26">QN-39.32</text><text x="194" y="28" text-anchor="end">TICK 197400</text>'+
+        '<text x="194" y="186" text-anchor="end">A-558 / CAPTURE</text></g>';
+  }
+  const uid='lq'+(++ARTN);
+  const o={uid:uid,C:C,coreR:coreR,lvl:C+coreR-2*coreR*Math.max(0,Math.min(1,fill)),
+           amp:(fill>0.02&&fill<0.98)?3.1:0,phase:r()*6.28,bub:null};
+  const w0=wavePaths(o,o.phase);
+  const spinDur=(110+r()*90).toFixed(0), spinDir=r()>0.5?'normal':'reverse';
+  const breath=(7+r()*5).toFixed(1), ringDur=(150+r()*120).toFixed(0), sweepDur=(11+r()*9).toFixed(1);
+  const pingDur=(7.5+r()*5).toFixed(1), pingDelay=(r()*7).toFixed(1),
+        passDur=(15+r()*9).toFixed(1), passDelay=(r()*12).toFixed(1);
+  let bub='';
+  if(opts.bubbles&&fill>0.04){
+    o.bub=[];
+    for(let i=0;i<7;i++){
+      const bx=C+(r()-0.5)*(coreR*1.45), br=0.9+r()*1.7,
+            sp=0.10+r()*0.22, by=C+coreR-r()*coreR*1.9;
+      o.bub.push({x:bx,r:br,sp:sp,y:by});
+      bub+='<circle id="'+uid+'b'+i+'" cx="'+bx.toFixed(1)+'" cy="'+by.toFixed(1)+'" r="'+br.toFixed(2)+'" fill="var(--bg)"/>';
+    }
+  }
+  if(opts.live)LIVE.push(o);
+  return '<svg viewBox="0 0 200 200" width="100%" height="100%" role="img" aria-label="Stencil for this position, filled to '+Math.round(fill*100)+' percent">'+
+    '<defs><clipPath id="'+uid+'"><path id="'+uid+'p" d="'+w0.clip+'"/></clipPath>'+
+    '<clipPath id="'+uid+'c"><circle cx="100" cy="100" r="'+(coreR-2)+'"/></clipPath></defs>'+
+    '<g class="barbs" style="animation-duration:'+spinDur+'s;animation-direction:'+spinDir+'">'+
+      '<g class="pulse" fill="currentColor" style="animation-duration:'+breath+'s">'+barbs+'</g></g>'+
+    '<circle cx="100" cy="100" r="'+coreR+'" fill="var(--bg)" stroke="currentColor" stroke-width="2"/>'+
+    '<g fill="currentColor" clip-path="url(#'+uid+')">'+dots+'</g>'+
+    '<g clip-path="url(#'+uid+')">'+bub+'</g>'+
+    '<g clip-path="url(#'+uid+')"><path id="'+uid+'m" d="'+w0.line+'" fill="none" stroke="currentColor" stroke-width="1.1" opacity=".55"/></g>'+
+    '<g class="ring" stroke="currentColor" stroke-width="0.7" fill="none" opacity=".85" '+
+      'style="animation-duration:'+ringDur+'s;animation-direction:'+(spinDir==='normal'?'reverse':'normal')+'">'+lines+
+      '<circle cx="100" cy="100" r="'+(coreR*0.68).toFixed(1)+'"/></g>'+
+    '<g clip-path="url(#'+uid+'c)"><g class="sweep" style="animation-duration:'+sweepDur+'s">'+
+      '<path d="M100,100 L100,'+(C-coreR+3)+'" stroke="currentColor" stroke-width="1.6" opacity=".38"/>'+
+      '<path d="M100,100 L'+(C+Math.sin(0.22)*(coreR-3)).toFixed(1)+','+(C-Math.cos(0.22)*(coreR-3)).toFixed(1)+
+      '" stroke="currentColor" stroke-width="0.7" opacity=".18"/></g></g>'+ann+
+    '<circle class="ping" cx="100" cy="100" r="'+coreR+'" fill="none" stroke="currentColor" '+
+      'stroke-width="1.3" style="animation-duration:'+pingDur+'s;animation-delay:'+pingDelay+'s"/>'+
+    '<rect class="pass" x="0" y="0" width="200" height="15" fill="currentColor" '+
+      'style="animation-duration:'+passDur+'s;animation-delay:'+passDelay+'s"/></svg>';
+}
+const STILL=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+let clock=0;
+function slosh(){
+  clock+=0.016;
+  for(let i=LIVE.length-1;i>=0;i--){
+    const o=LIVE[i];
+    const p=document.getElementById(o.uid+'p');
+    if(!p){LIVE.splice(i,1);continue;}
+    if(o.kick){o.kick*=0.955;if(o.kick<0.05)o.kick=0;}
+    const w=wavePaths({C:o.C,coreR:o.coreR,lvl:o.lvl,amp:o.amp+(o.kick||0)},clock+o.phase);
+    p.setAttribute('d',w.clip);
+    const m=document.getElementById(o.uid+'m');
+    if(m)m.setAttribute('d',w.line);
+    if(o.bub)for(let k=0;k<o.bub.length;k++){
+      const b=o.bub[k];
+      b.y-=b.sp;
+      if(b.y<o.lvl-2)b.y=o.C+o.coreR-2;
+      const el=document.getElementById(o.uid+'b'+k);
+      if(el)el.setAttribute('cy',b.y.toFixed(1));
+    }
+  }
+  requestAnimationFrame(slosh);
+}
+if(!STILL)requestAnimationFrame(slosh);
+
+/* ---------- micro furniture ---------- */
+function svgOpen(w,h,stretch){
+  return '<svg viewBox="0 0 '+w+' '+h+'"'+(stretch?' preserveAspectRatio="none"':'')+
+         ' width="100%" height="100%" aria-hidden="true" focusable="false">';
+}
+function barcode(seed,w,h){
+  const r=rng(seed);let x=0,out='';
+  while(x<w-2){
+    const bw=1+Math.floor(r()*6);
+    if(r()>0.3)out+='<rect x="'+x+'" y="'+(r()>0.8?Math.floor(h*0.3):0)+'" width="'+bw+'" height="'+h+'"/>';
+    x+=bw+1+Math.floor(r()*4);
+  }
+  return svgOpen(w,h,true)+'<g fill="currentColor">'+out+'</g></svg>';
+}
+function dither(seed,cols,rows){
+  const r=rng(seed);let out='';
+  for(let y=0;y<rows;y++)for(let x=0;x<cols;x++){
+    if(r()<(x/(cols-1))*0.92+0.04)out+='<rect x="'+x+'" y="'+y+'" width="1" height="1"/>';
+  }
+  return svgOpen(cols,rows,true)+'<g fill="currentColor">'+out+'</g></svg>';
+}
+function spiral(seed){
+  const r=rng(seed),turns=3.4+r()*1.6;let d='M32,32';
+  for(let i=0;i<150;i++){
+    const t=(i/150)*turns*Math.PI*2,rad=1.2*Math.exp(0.26*t/1.0)*0.5;
+    d+=' L'+(32+Math.cos(t)*rad).toFixed(1)+','+(32+Math.sin(t)*rad).toFixed(1);
+  }
+  return svgOpen(64,64)+'<path d="'+d+'" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/></svg>';
+}
+function regmark(){
+  return '<svg viewBox="0 0 30 30" width="15" height="15" aria-hidden="true" focusable="false">'+
+    '<path d="M15,2.5 L27.5,15 L15,27.5 L2.5,15 Z" fill="none" stroke="currentColor" stroke-width="1.6"/>'+
+    '<path d="M15,9 L21,15 L15,21 L9,15 Z" fill="currentColor"/></svg>';
+}
+function wedge(seed){
+  const r=rng(seed);let out='';
+  for(let c=0;c<4;c++){
+    out+='<rect x="'+(c*9)+'" y="0" width="8" height="16" fill="none" stroke="currentColor" stroke-width="0.7"/>';
+    const want=c*0.34;
+    for(let i=0;i<26;i++){
+      if(r()<want)out+='<rect x="'+(c*9+1+Math.floor(r()*6))+'" y="'+(1+Math.floor(r()*14))+'" width="1.4" height="1.4" fill="currentColor"/>';
+    }
+  }
+  return '<svg viewBox="0 0 35 16" width="100%" height="100%" aria-hidden="true" focusable="false">'+out+'</svg>';
+}
+function strip(el,seed,label){
+  if(!el)return;
+  el.innerHTML=
+    '<span class="reg">'+regmark()+'</span>'+
+    '<span class="bc">'+barcode(seed,180,24)+'</span>'+
+    '<span class="wg">'+wedge(seed+3)+'</span>'+
+    '<span class="dt">'+dither(seed+7,22,8)+'</span>'+
+    '<span class="sp">'+spiral(seed+13)+'</span>'+
+    '<span class="bc">'+barcode(seed+29,160,24)+'</span>'+
+    '<span class="lb tele">'+label+'</span>';
+}
+
+/* ---------- data ---------- */
+const WINDOWS=[
+  {id:39216,start:8442100,end:8618400,ask:412.80,sold:62,owner:'0x91c2…40ab'},
+  {id:38902,start:8450900,end:8626000,ask:244.10,sold:18,owner:'0x44de…1f07'},
+  {id:40310,start:8461200,end:8637700,ask:980.00,sold:100,owner:'0x7a3f…9e21'},
+  {id:41077,start:8472600,end:8649100,ask:1204.00,sold:45,owner:'0x0b88…cc31'},
+  {id:40988,start:8480400,end:8656900,ask:88.40,sold:7,owner:'0xe310…7a52'},
+  {id:39540,start:8491800,end:8668300,ask:305.55,sold:81,owner:'0x2f61…b904'}
+];
+const MYCLAIMS=[
+  {id:40310,pct:34,state:'redeemable',note:'capture verified · 41.06 USDC'},
+  {id:39216,pct:12,state:'earning',note:'window closes in about 19 days'},
+  {id:39540,pct:9,state:'awaiting proof',note:'captured · allocation pending'}
+];
+const MYTREES=[{id:40310,state:'returned',note:'same nft back in your wallet, range untouched'}];
+const MYNFTS=[{id:44120,label:'NFT 44120'},{id:44871,label:'NFT 44871'}];
+const n0=x=>x.toLocaleString('en-US');
+const usd=x=>x.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+
+/* ---------- routing ---------- */
+const screens=[...document.querySelectorAll('.screen')];
+const paths={landing:'/',market:'/positions',detail:'/positions/open',pin:'/pin',
+  holdings:'/holdings',empty:'/positions',privacy:'/privacy',terms:'/terms',nf404:'/404'};
+const hashes={'':'landing','#/':'landing','#/positions':'market','#/pin':'pin',
+  '#/holdings':'holdings','#/privacy':'privacy','#/terms':'terms'};
+function go(name){
+  screens.forEach(s=>s.classList.toggle('on',s.id===name));
+  document.body.classList.toggle('onlanding',name==='landing');
+  document.querySelectorAll('.nav button[data-go]').forEach(b=>{
+    const on=(b.dataset.go===name)||(name==='detail'&&b.dataset.go==='market');
+    on?b.setAttribute('aria-current','page'):b.removeAttribute('aria-current');
+  });
+  document.getElementById('tbpath').textContent='usufruct.exe — '+(paths[name]||'/');
+  const want='#'+(paths[name]||'/');
+  if(canRoute&&name!=='detail'&&location.hash!==want){
+    try{history.replaceState(null,'',want);}
+    catch(e){canRoute=false;}
+  }
+  window.scrollTo(0,0);
+}
+let canRoute=true;
+try{history.replaceState(null,'',location.hash||'#/');}
+catch(e){canRoute=false;}
+function routeFromHash(){
+  if(!canRoute){go('landing');return;}
+  let h='';
+  try{h=location.hash;}catch(e){}
+  if(h===''||hashes[h]!==undefined){go(hashes[h]||'landing');return;}
+  go('nf404');
+}
+if(canRoute)addEventListener('hashchange',routeFromHash);
+document.addEventListener('click',e=>{
+  const t=e.target.closest('[data-go]');
+  if(t){go(t.dataset.go);}
+});
+
+/* ---------- theme ---------- */
+const themebtn=document.getElementById('themebtn');
+themebtn.addEventListener('click',()=>{
+  const root=document.documentElement;
+  const next=root.dataset.theme==='dark'?'light':'dark';
+  root.dataset.theme=next;
+  themebtn.textContent=next==='dark'?'[ light ]':'[ dark ]';
+});
+
+/* ---------- market ---------- */
+const rows=document.getElementById('rows');
+WINDOWS.forEach(w=>{
+  const b=document.createElement('button');
+  b.className='row'+(w.sold>=100?' claimed':'');
+  b.innerHTML=
+    '<span class="art">'+citrus(w.id,w.sold/100,{live:true})+'</span>'+
+    '<span><span class="rowid display">NFT '+w.id+'</span>'+
+    '<span class="rowsub tele" style="display:block">block '+n0(w.start)+' – '+n0(w.end)+'</span>'+
+    '<span class="prog" data-w="'+w.id+'"><i></i></span></span>'+
+    '<span class="rowright"><span class="price">'+usd(w.ask)+'</span>'+
+    '<span class="tele" style="display:block">'+(w.sold>=100?'claimed in full':w.sold+'% taken')+'</span></span>';
+  b.addEventListener('click',()=>openDetail(w));
+  rows.appendChild(b);
+});
+
+/* ---------- detail + drag select ---------- */
+let cur=WINDOWS[0],mine=0;
+const selbar=document.getElementById('selbar'),bandSold=document.getElementById('bandSold'),
+      bandMine=document.getElementById('bandMine'),buyBtn=document.getElementById('buyBtn');
+let approved=false;
+
+function openDetail(w){
+  cur=w;mine=0;approved=false;
+  document.getElementById('detailArt').innerHTML=citrus(w.id,w.sold/100,{annotate:true,live:true,bubbles:true});
+  document.getElementById('dWord').textContent='NFT '+w.id;
+  document.getElementById('dNft').textContent='NFT '+w.id+' · hookless v4';
+  document.getElementById('dWindow').textContent='block '+n0(w.start)+' – '+n0(w.end);
+  document.getElementById('dSold').textContent=w.sold+'%';
+  document.getElementById('dAsk').textContent=usd(w.ask)+' USDC';
+  document.getElementById('dOwner').textContent=w.owner;
+  document.getElementById('dTop').textContent=w.sold>=100?'window fully claimed':'window open · '+(100-w.sold)+'% remaining';
+  document.getElementById('approveBtn').textContent='approve usdc';
+  paint();go('detail');clockTick();
+}
+function paint(){
+  bandSold.style.left='0%';bandSold.style.width=cur.sold+'%';
+  bandMine.style.left=cur.sold+'%';bandMine.style.width=mine+'%';
+  document.getElementById('dPct').textContent=mine+'%';
+  document.getElementById('dCost').textContent=usd(cur.ask*mine/100)+' USDC';
+  selbar.setAttribute('aria-valuenow',mine);
+  buyBtn.disabled=!(approved&&mine>0);
+}
+function pick(clientX){
+  const r=selbar.getBoundingClientRect();
+  const pct=Math.round(((clientX-r.left)/r.width)*100);
+  mine=Math.max(0,Math.min(100-cur.sold,pct-cur.sold));
+  paint();
+}
+let dragging=false;
+selbar.addEventListener('pointerdown',e=>{if(cur.sold>=100)return;dragging=true;selbar.setPointerCapture(e.pointerId);pick(e.clientX);});
+selbar.addEventListener('pointermove',e=>{if(dragging)pick(e.clientX);});
+selbar.addEventListener('pointerup',()=>{dragging=false;});
+selbar.addEventListener('keydown',e=>{
+  const max=100-cur.sold;let d=0;
+  if(e.key==='ArrowRight'||e.key==='ArrowUp')d=1;
+  if(e.key==='ArrowLeft'||e.key==='ArrowDown')d=-1;
+  if(e.key==='Home')mine=0;
+  if(e.key==='End')mine=max;
+  if(d||e.key==='Home'||e.key==='End'){e.preventDefault();mine=Math.max(0,Math.min(max,mine+d));paint();}
+});
+document.getElementById('selall').addEventListener('click',()=>{mine=100-cur.sold;paint();});
+
+document.getElementById('approveBtn').addEventListener('click',()=>{
+  dialog('confirm','Approve USDC','Lets the escrow move up to your selected amount. This does not buy anything yet.',
+    [['spender','FeeStrip escrow'],['limit',usd(cur.ask)+' USDC']],'sign',()=>{
+      runProcess({kind:'scan',seed:cur.id,title:'Setting allowance',
+        body:'Writing an approval for the escrow contract. Nothing is bought and nothing moves yet.',
+        steps:['signing in wallet','broadcasting to sepolia','waiting for inclusion','allowance written'],
+        done:()=>{approved=true;document.getElementById('approveBtn').textContent='usdc approved';paint();}});
+    });
+});
+buyBtn.addEventListener('click',()=>{
+  dialog('confirm','Buy '+mine+'% of this window',
+    'You are buying a share of one fixed period\u2019s unpaid USDC fees. Income becomes redeemable only after capture and verified allocation.',
+    [['position','NFT '+cur.id],['share',mine+'%'],['you pay',usd(cur.ask*mine/100)+' USDC'],['settles','after capture']],
+    'sign',()=>{
+      const from=cur.sold/100,to=Math.min(100,cur.sold+mine)/100,got=mine;
+      runProcess({kind:'fill',seed:cur.id,from:from,to:to,title:'Buying '+got+'%',
+        body:'Your USDC goes to the seller and the share is written against this window.',
+        steps:['signing in wallet','usdc to seller','share written to escrow','claim issued to you'],
+        done:()=>{
+          cur.sold=Math.min(100,cur.sold+got);mine=0;
+          dialog('receipt','Claim bought','Your share is recorded. It stays under holdings through capture, proof and redemption.',
+            [['position','NFT '+cur.id],['share',got+'%'],['state','earning']],'ok',null);
+          openDetailRefresh();
+        }});
+    });
+});
+function openDetailRefresh(){
+  document.getElementById('detailArt').innerHTML=citrus(cur.id,cur.sold/100,{annotate:true,live:true,bubbles:true});
+  document.getElementById('dSold').textContent=cur.sold+'%';
+  document.getElementById('dTop').textContent=cur.sold>=100?'window fully claimed':'window open · '+(100-cur.sold)+'% remaining';
+  paint();
+}
+
+/* ---------- fee model ----------
+   Not a forecast. Resamples this position's own realised daily fees, then
+   discounts for range risk, dispersion and time value. In production the
+   samples come from the subgraph (per-position collected fees per day) —
+   here they are seeded stand-ins so the maths is visible end to end. */
+function feeHistory(id){
+  const r=rng(id*7919),out=[],base=5+(id%23);
+  for(let i=0;i<60;i++){
+    if(r()<0.14){out.push(0);continue;}
+    out.push(+(base*Math.exp((r()+r()+r()-1.5)*0.6)).toFixed(2));
+  }
+  return out;
+}
+function estimateAsk(id,days){
+  const h=feeHistory(id),r=rng(id+days*13),tot=[];
+  const inRange=h.filter(x=>x>0).length/h.length;
+  for(let s=0;s<500;s++){
+    let sum=0;
+    for(let d=0;d<days;d++)sum+=h[Math.floor(r()*h.length)];
+    tot.push(sum);
+  }
+  tot.sort((a,b)=>a-b);
+  const q=f=>tot[Math.min(tot.length-1,Math.floor(f*tot.length))];
+  const p25=q(0.25),p50=q(0.5),p75=q(0.75);
+  const disp=(p75-p25)/Math.max(1,p50);
+  const risk=Math.min(0.45,0.05+disp*0.35+days*0.0035);
+  const pv=1/(1+0.08*days/365);
+  return{tot:tot,p25:p25,p50:p50,p75:p75,inRange:inRange,risk:risk,
+         suggested:p50*(1-risk)*pv,days:days};
+}
+function histSVG(e,ask){
+  const t=e.tot,lo=t[0],hi=t[t.length-1],N=28,b=new Array(N).fill(0),span=(hi-lo)||1;
+  t.forEach(v=>{b[Math.min(N-1,Math.floor((v-lo)/span*N))]++;});
+  const mx=Math.max.apply(null,b);let out='';
+  for(let i=0;i<N;i++){
+    const h=Math.max(1,(b[i]/mx)*44),x=i*(100/N),w=100/N-0.7,mid=lo+((i+0.5)/N)*span;
+    out+='<rect x="'+x.toFixed(2)+'" y="'+(50-h).toFixed(2)+'" width="'+w.toFixed(2)+
+         '" height="'+h.toFixed(2)+'" fill="'+((mid>=e.p25&&mid<=e.p75)?'var(--sel)':'currentColor')+'"/>';
+  }
+  const px=v=>Math.max(0,Math.min(99.2,((v-lo)/span)*100));
+  out+='<rect x="'+px(e.p50).toFixed(2)+'" y="0" width="0.7" height="54" fill="var(--ink)"/>';
+  if(ask>0)out+='<rect x="'+px(ask).toFixed(2)+'" y="0" width="1.4" height="58" fill="var(--warn)"/>';
+  return '<svg viewBox="0 0 100 58" preserveAspectRatio="none" width="100%" height="100%" aria-hidden="true">'+out+'</svg>';
+}
+let askTouched=false,lastEst=null;
+function renderEst(){
+  const box=document.getElementById('estBox');
+  if(!chosen){box.innerHTML='';return;}
+  const days=+lenRange.value,e=estimateAsk(chosen.id,days);
+  lastEst=e;
+  const ask=parseFloat(document.getElementById('askInput').value)||0;
+  let verdict;
+  if(ask<=0)verdict='Set an ask to see where it sits.';
+  else if(ask<e.p25)verdict='Your ask sits <b>below the modelled range</b>. It should clear fast, and you keep less of the upside.';
+  else if(ask<=e.p75)verdict='Your ask sits <b>inside the modelled range</b>.';
+  else verdict='Your ask sits <i>above the modelled range</i>. Buyers are being asked to pay more than this window has historically earned.';
+  box.innerHTML=
+    '<div class="esthead"><div><div class="tele">modelled ask, whole window</div>'+
+    '<div class="estval">'+usd(e.suggested)+' USDC</div></div>'+
+    '<button class="estuse" id="estUse">use this</button></div>'+
+    '<div class="esthist">'+histSVG(e,ask)+'</div>'+
+    '<div class="estrow"><span class="tele">'+usd(e.p25)+' &mdash; '+usd(e.p75)+' modelled</span>'+
+    '<span class="tele tele-sel">'+Math.round(e.risk*100)+'% discount applied</span></div>'+
+    '<p class="estnote" style="margin-top:10px">Resampled from 60 days of this position&#8217;s realised fees. '+
+    'In range <b>'+Math.round(e.inRange*100)+'% of days</b>. '+verdict+' Past fees do not predict future fees; this is an estimate and never authorises a payout.</p>';
+  const u=document.getElementById('estUse');
+  if(u)u.addEventListener('click',()=>{
+    document.getElementById('askInput').value=e.suggested.toFixed(2);
+    askTouched=true;
+    document.getElementById('askErr').classList.remove('on');
+    document.getElementById('pRecv').textContent=usd(e.suggested)+' USDC on first sale';
+    renderEst();
+  });
+}
+
+/* ---------- pin ---------- */
+let chosen=null;
+const pinTiles=document.getElementById('pinTiles');
+MYNFTS.forEach(nft=>{
+  const b=document.createElement('button');
+  b.className='tile';b.setAttribute('aria-pressed','false');
+  b.innerHTML='<span class="tileart">'+citrus(nft.id,0,{live:true})+'</span>'+
+    '<span class="tilename">'+nft.label+'</span>'+
+    '<span class="tele" style="display:block">hookless v4 · in range</span>';
+  b.addEventListener('click',()=>{
+    chosen=nft;
+    [...pinTiles.children].forEach(c=>c.setAttribute('aria-pressed','false'));
+    b.setAttribute('aria-pressed','true');
+    document.getElementById('pinArt').innerHTML=citrus(nft.id,0,{annotate:true,live:true,bubbles:true});
+    document.getElementById('pNft').textContent=nft.label+' · hookless v4';
+    askTouched=false;setStep(2);
+    const e0=estimateAsk(nft.id,+lenRange.value);
+    document.getElementById('askInput').value=e0.suggested.toFixed(2);
+    document.getElementById('pRecv').textContent=usd(e0.suggested)+' USDC on first sale';
+    renderEst();
+  });
+  pinTiles.appendChild(b);
+});
+function setStep(n){
+  const s=document.getElementById('pinSteps').children;
+  [...s].forEach((d,i)=>{d.classList.toggle('on',i===n-1);d.classList.toggle('done',i<n-1);});
+  document.getElementById('pinStep1').style.display=n===1?'':'none';
+  document.getElementById('pinStep2').style.display=n===2?'':'none';
+}
+const lenRange=document.getElementById('lenRange'),lenOut=document.getElementById('lenOut');
+function lenPaint(){
+  const d=+lenRange.value,blocks=Math.round(d*7200);
+  lenOut.textContent=n0(blocks)+' blocks · about '+d+' days';
+  document.getElementById('pEnd').textContent='block '+n0(8442100+blocks);
+}
+lenRange.addEventListener('input',()=>{
+  lenPaint();
+  if(chosen&&!askTouched){
+    const e=estimateAsk(chosen.id,+lenRange.value);
+    document.getElementById('askInput').value=e.suggested.toFixed(2);
+    document.getElementById('pRecv').textContent=usd(e.suggested)+' USDC on first sale';
+  }
+  renderEst();
+});
+lenPaint();
+document.getElementById('askInput').addEventListener('input',e=>{
+  const v=parseFloat(e.target.value);
+  document.getElementById('askErr').classList.remove('on');
+  document.getElementById('pRecv').textContent=(v>0?usd(v):'—')+' USDC on first sale';
+  askTouched=true;renderEst();
+});
+document.getElementById('pinBack').addEventListener('click',()=>setStep(1));
+function validAsk(){
+  const raw=(document.getElementById('askInput').value||'').trim();
+  const err=document.getElementById('askErr');
+  if(!/^\d{1,9}(\.\d{1,2})?$/.test(raw)){
+    err.textContent='Use a number with up to two decimals, for example 412.80';
+    err.classList.add('on');return null;
+  }
+  const v=parseFloat(raw);
+  if(!(v>0)){err.textContent='Enter an amount above zero';err.classList.add('on');return null;}
+  if(v>1000000){err.textContent='That ask is above the 1,000,000 USDC limit';err.classList.add('on');return null;}
+  err.classList.remove('on');return v;
+}
+document.getElementById('pinNext').addEventListener('click',()=>{
+  const v=validAsk();
+  if(v===null){document.getElementById('askInput').focus();return;}
+  dialog('confirm','Pin '+chosen.label+' as a seed',
+    'Liquidity and range freeze for the window. The same NFT returns to you after capture. An unfunded draft is never locked.',
+    [['ask',usd(v)+' USDC'],['window',lenRange.value+' days'],['signatures','2']],'sign',()=>{
+      runProcess({kind:'fill',seed:chosen.id,from:0,to:0.1,title:'Pinning '+chosen.label,
+        body:'The NFT moves into escrow with its range frozen, and the window opens at the next block.',
+        steps:['approving the nft','signing the terms','escrow takes custody','window opens'],
+        done:()=>dialog('receipt','Seed pinned','Your seed is on the sheet. It shows as a draft until the first buyer funds it.',
+          [[chosen.label,'draft'],['visible at','/positions']],'ok',()=>{setStep(1);go('market');})});
+    });
+});
+
+/* ---------- holdings ---------- */
+function holdRow(o,kind){
+  const w=WINDOWS.find(x=>x.id===o.id)||{sold:100};
+  const cls=o.state==='redeemable'?'ready':(o.state==='earning'?'live':'');
+  const act=o.state==='redeemable'?'<button class="btn primary">redeem</button>':
+             (kind==='seed'?'<button class="btn ghost">view</button>':'<span></span>');
+  const el=document.createElement('div');
+  el.className='hold';
+  el.innerHTML='<span class="art">'+citrus(o.id,w.sold/100,{live:true})+'</span>'+
+    '<span><span class="holdname">NFT '+o.id+'</span>'+
+    '<span class="tele" style="display:block">'+(o.pct?o.pct+'% share · ':'')+o.note+'</span></span>'+
+    '<span class="state '+cls+'">'+o.state+'</span>'+act;
+  const btn=el.querySelector('.btn.primary');
+  if(btn)btn.addEventListener('click',()=>{
+    dialog('confirm','Redeem your share','Allocation is verified. Redemption pays the exact historical amount for your share of this window.',
+      [['position','NFT '+o.id],['share',o.pct+'%'],['you receive','41.06 USDC']],'sign',()=>{
+        runProcess({kind:'fill',seed:o.id,from:1,to:0,title:'Redeeming your share',
+          body:'Captured fees are checked against history, then your exact entitlement is paid out.',
+          steps:['signing in wallet','reading verified allocation','drawing your share','usdc to your wallet'],
+          done:()=>dialog('receipt','Redeemed','41.06 USDC sent to your wallet. This claim is closed.',
+            [['position','NFT '+o.id],['paid','41.06 USDC']],'ok',null)});
+      });
+  });
+  return el;
+}
+MYCLAIMS.forEach(o=>document.getElementById('claims').appendChild(holdRow(o,'claim')));
+MYTREES.forEach(o=>document.getElementById('seedlist').appendChild(holdRow(o,'seed')));
+document.getElementById('emptyArt').innerHTML=citrus(1234,0,{});
+
+/* ---------- landing + furniture ---------- */
+document.getElementById('regM').innerHTML=regmark();
+
+/* landing graphics */
+document.getElementById('glyphs').innerHTML=
+  '<div class="g1">'+spiral(77)+'</div>'+
+  '<div class="g2">'+dither(91,44,11)+'</div>'+
+  '<div class="g3">'+barcode(55,200,24)+'</div>';
+
+/* ticker — phrases, not positions */
+(function(){
+  const words=['ONE WINDOW','SOLD ONCE','FIXED PERIOD','NATIVE USDC','THE SEED STAYS YOURS',
+               'NO ROLLOVER','EXACT SETTLEMENT','NOTHING LEAVES ESCROW'];
+  const unit=words.map((w,i)=>
+    '<span'+(i%3===2?' class="hi"':'')+'>'+w+'</span>'+
+    '<span class="bcm">'+barcode(400+i*17,90,16)+'</span>').join('');
+  const html='<div class="u tele">'+unit+'</div>';
+  document.getElementById('tkin').innerHTML=html+html;
+})();
+
+/* glossary */
+const DEFS=[
+  ['SEED','One Uniswap v4 position, escrowed whole. Its liquidity and range are frozen for the window and it returns as the same token id.'],
+  ['WINDOW','A fixed stretch of blocks with a start and an end. Everything sold here is scoped to one window and never rolls into the next.'],
+  ['SHARE','A fraction of that window\u2019s unpaid native USDC fees. Transferable, including after income has accrued.'],
+  ['CAPTURE','Collecting the fees the window actually earned, once it has closed. It happens after the end block, not at it.'],
+  ['PROOF','Checking captured amounts against on-chain history so each share\u2019s entitlement is exact rather than estimated.'],
+  ['REDEEM','Taking your verified income. Available only after capture and proof, and done independently by each holder.']
+];
+document.getElementById('defs').innerHTML=DEFS.map(d=>
+  '<div><dt>'+d[0]+'</dt><dd>'+d[1]+'</dd></div>').join('');
+
+/* dithered field */
+(function(){
+  const cv=document.getElementById('bgfx');
+  const gl=cv&&cv.getContext('webgl',{alpha:true,antialias:false,premultipliedAlpha:true});
+  if(!gl){if(cv)cv.style.display='none';return;}
+  const VS='attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}';
+  const FS=[
+  'precision mediump float;uniform vec2 u_res;uniform float u_t;uniform vec3 u_col;',
+  'float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}',
+  'float noise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);',
+  ' return mix(mix(hash(i),hash(i+vec2(1.,0.)),f.x),mix(hash(i+vec2(0.,1.)),hash(i+vec2(1.,1.)),f.x),f.y);}',
+  'float fbm(vec2 p){float v=0.,a=.5;for(int i=0;i<5;i++){v+=a*noise(p);p*=2.03;a*=.5;}return v;}',
+  'float b2(vec2 a){a=floor(a);return fract(a.x*.5+a.y*a.y*.75);}',
+  'float b4(vec2 a){return b2(a*.5)*.25+b2(a);}',
+  'float b8(vec2 a){return b4(a*.5)*.25+b2(a);}',
+  'void main(){vec2 uv=gl_FragCoord.xy/u_res;',
+  ' vec2 p=vec2(uv.x*(u_res.x/u_res.y),uv.y)*2.6;',
+  ' float n=fbm(p+vec2(u_t*.035,-u_t*.022));',
+  ' n=fbm(p+vec2(n*1.5,n*1.2)+vec2(0.,u_t*.012));',
+  ' float v=smoothstep(.24,.80,n);',
+  ' float d=step(b8(gl_FragCoord.xy),v);',
+  ' gl_FragColor=vec4(u_col*d,d);}'].join('\n');
+  function sh(t,src){const o=gl.createShader(t);gl.shaderSource(o,src);gl.compileShader(o);return o;}
+  const pr=gl.createProgram();
+  gl.attachShader(pr,sh(gl.VERTEX_SHADER,VS));gl.attachShader(pr,sh(gl.FRAGMENT_SHADER,FS));
+  gl.linkProgram(pr);
+  if(!gl.getProgramParameter(pr,gl.LINK_STATUS)){cv.style.display='none';return;}
+  gl.useProgram(pr);
+  const buf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buf);
+  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);
+  const loc=gl.getAttribLocation(pr,'p');gl.enableVertexAttribArray(loc);
+  gl.vertexAttribPointer(loc,2,gl.FLOAT,false,0,0);
+  const uRes=gl.getUniformLocation(pr,'u_res'),uT=gl.getUniformLocation(pr,'u_t'),
+        uCol=gl.getUniformLocation(pr,'u_col');
+  gl.enable(gl.BLEND);gl.blendFunc(gl.ONE,gl.ONE_MINUS_SRC_ALPHA);
+  function ink(){return document.documentElement.dataset.theme==='light'?[0.07,0.07,0.10]:[0.91,0.90,0.88];}
+  function size(){
+    const w=Math.max(2,Math.floor(innerWidth*0.5)),h=Math.max(2,Math.floor(innerHeight*0.5));
+    if(cv.width!==w||cv.height!==h){cv.width=w;cv.height=h;}
+    gl.viewport(0,0,cv.width,cv.height);gl.uniform2f(uRes,cv.width,cv.height);
+  }
+  function frame(ms){
+    size();gl.uniform3fv(uCol,ink());gl.uniform1f(uT,STILL?18:ms*0.001);
+    gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT);gl.drawArrays(gl.TRIANGLES,0,3);
+    if(!STILL)requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+  addEventListener('resize',()=>{if(STILL)requestAnimationFrame(frame);});
+  themebtn.addEventListener('click',()=>{if(STILL)requestAnimationFrame(frame);});
+})();
+strip(document.getElementById('strip1'),101,'a-558 / sw.log');
+strip(document.getElementById('strip2'),317,'qn-39.32');
+strip(document.getElementById('strip3'),512,'sheet 03 / 6 up');
+strip(document.getElementById('strip4'),733,'ledger / verified');
+strip(document.getElementById('strip5'),908,'stencil / 1:1');
+
+/* ---------- connect ---------- */
+const WALLETS=[['MetaMask','injected'],['Rabby','injected'],['WalletConnect','qr'],['Coinbase Wallet','sdk']];
+let connected=false;
+const addrBtn=document.getElementById('addr');
+function connectDialog(){
+  document.getElementById('dlgPath').textContent='usufruct.exe — connect';
+  document.getElementById('dlgTitle').textContent=connected?'Wallet connected':'Connect a wallet';
+  document.getElementById('dlgBody').textContent=connected
+    ?'You are connected to Sepolia. Disconnect to browse the sheet without an address.'
+    :'Sepolia only. Connecting lets you buy shares, pin a position and redeem verified income.';
+  const box=document.getElementById('dlgRows');
+  box.innerHTML='';
+  if(connected){
+    box.innerHTML='<div class="dl"><span>address</span><span>0x7a3f…9e21</span></div>'+
+                  '<div class="dl"><span>network</span><span>sepolia</span></div>';
+    document.getElementById('dlgOk').textContent='disconnect';
+    document.getElementById('dlgCancel').style.display='';
+    onOk=()=>{connected=false;addrBtn.textContent='connect wallet';};
+  }else{
+    WALLETS.forEach(w=>{
+      const b=document.createElement('button');
+      b.className='walletrow';
+      b.innerHTML='<span>'+w[0]+'</span><span>'+w[1]+'</span>';
+      b.addEventListener('click',()=>{
+        connected=true;addrBtn.textContent='0x7a3f…9e21';close();
+        dialog('receipt','Connected','0x7a3f…9e21 on Sepolia. Six positions are open on this sheet.',
+          [['network','sepolia'],['your claims','3']],'ok',()=>go('market'));
+      });
+      box.appendChild(b);
+    });
+    document.getElementById('dlgOk').textContent='cancel';
+    document.getElementById('dlgCancel').style.display='none';
+    onOk=null;
+  }
+  veil.classList.add('on');
+}
+addrBtn.addEventListener('click',connectDialog);
+document.getElementById('connectCta').addEventListener('click',connectDialog);
+
+/* ---------- block clock ---------- */
+const T0=Date.now(),FULL=600000;
+WINDOWS.forEach(w=>{w.p0=0.12+((w.id%41)/100);});
+function elapsed(w){return Math.min(1,w.p0+(Date.now()-T0)/FULL);}
+function blockNow(w){return w.start+Math.floor(elapsed(w)*(w.end-w.start));}
+function clockTick(){
+  WINDOWS.forEach(w=>{
+    const bar=document.querySelector('.prog[data-w="'+w.id+'"] i');
+    if(bar)bar.style.width=(elapsed(w)*100).toFixed(2)+'%';
+  });
+  if(document.getElementById('detail').classList.contains('on')&&cur){
+    const e=elapsed(cur);
+    document.getElementById('wpFill').style.width=(e*100).toFixed(2)+'%';
+    document.getElementById('wpHead').style.left=(e*100).toFixed(2)+'%';
+    document.getElementById('wpA').textContent='block '+n0(cur.start);
+    document.getElementById('wpB').textContent='block '+n0(cur.end);
+    document.getElementById('wpC').textContent=n0(blockNow(cur))+' · '+Math.round(e*100)+'% elapsed';
+    document.getElementById('dTop').textContent=e>=1?'window closed · awaiting capture'
+      :'window open · '+Math.round((1-e)*100)+'% of the period still to run';
+  }
+}
+setInterval(clockTick,400);
+
+/* ---------- transaction process ---------- */
+const dlgBtns=document.querySelector('.dlgbtns');
+function runProcess(cfg){
+  document.getElementById('dlgPath').textContent='usufruct.exe — pending';
+  document.getElementById('dlgTitle').textContent=cfg.title;
+  document.getElementById('dlgBody').textContent=cfg.body;
+  dlgBtns.style.display='none';
+  const box=document.getElementById('dlgRows');
+  let art='';
+  if(cfg.kind==='scan'){
+    art='<div class="scanbox"><span class="bcw">'+barcode(cfg.seed||7,240,74)+'</span>'+
+        '<i class="scanline" id="scanL"></i></div>';
+  }else{
+    art=citrus(cfg.seed,cfg.from,{live:true,bubbles:true});
+  }
+  const liveObj=(cfg.kind!=='scan')?LIVE[LIVE.length-1]:null;
+  box.innerHTML='<div class="proc"><div class="procart">'+art+'</div>'+
+    '<ul class="procsteps" id="procSteps">'+cfg.steps.map(x=>'<li>'+x+'</li>').join('')+'</ul>'+
+    '<div class="procbar" id="procBar">'+'<i></i>'.repeat(30)+'</div></div>';
+  veil.classList.add('on');
+  const lis=[...document.getElementById('procSteps').children];
+  const cells=[...document.getElementById('procBar').children];
+  const scanL=document.getElementById('scanL');
+  const t1=performance.now(),dur=2700;
+  const R=liveObj?liveObj.coreR:50,C=liveObj?liveObj.C:100;
+  function step(now){
+    const t=Math.min(1,(now-t1)/dur);
+    const e=t<0.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
+    cells.forEach((c,i)=>c.classList.toggle('on',i/cells.length<t));
+    const si=Math.min(lis.length-1,Math.floor(t*lis.length));
+    lis.forEach((l,i)=>{l.classList.toggle('on',i===si);l.classList.toggle('ok',i<si);});
+    if(scanL)scanL.style.left=(e*97).toFixed(1)+'%';
+    if(liveObj){
+      const f=cfg.from+(cfg.to-cfg.from)*e;
+      liveObj.lvl=C+R-2*R*Math.max(0,Math.min(1,f));
+      liveObj.amp=(f>0.02&&f<0.98)?3.1:0;
+      if(t<0.06)liveObj.kick=9;
+    }
+    if(t<1){requestAnimationFrame(step);}
+    else{lis.forEach(l=>{l.classList.remove('on');l.classList.add('ok');});
+      setTimeout(()=>{close();if(cfg.done)cfg.done();},420);}
+  }
+  requestAnimationFrame(step);
+}
+
+/* ---------- dialog ---------- */
+const veil=document.getElementById('veil');let onOk=null;
+function dialog(kind,title,body,rowsArr,okLabel,cb){
+  document.getElementById('dlgPath').textContent='usufruct.exe — '+kind;
+  document.getElementById('dlgTitle').textContent=title;
+  document.getElementById('dlgBody').textContent=body;
+  document.getElementById('dlgRows').innerHTML=(rowsArr||[]).map(r=>
+    '<div class="dl"><span>'+r[0]+'</span><span>'+r[1]+'</span></div>').join('');
+  dlgBtns.style.display='flex';
+  document.getElementById('dlgOk').textContent=okLabel;
+  document.getElementById('dlgCancel').style.display=okLabel==='ok'?'none':'';
+  onOk=cb;veil.classList.add('on');document.getElementById('dlgOk').focus();
+}
+function close(){veil.classList.remove('on');}
+document.getElementById('dlgCancel').addEventListener('click',close);
+document.getElementById('dlgOk').addEventListener('click',()=>{const f=onOk;close();if(f)f();});
+veil.addEventListener('click',e=>{if(e.target===veil)close();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&veil.classList.contains('on'))close();});
+
+paint();
+
+/* ---------- 404 art ---------- */
+document.getElementById('nfArt').innerHTML=citrus(4004,0,{live:true});
+strip(document.getElementById('strip404'),4004,'404 / not on the sheet');
+
+/* ---------- privacy notice ---------- */
+(function(){
+  const el=document.getElementById('notice');
+  let seen=false;
+  try{seen=localStorage.getItem('usufruct.notice')==='1';}catch(e){}
+  if(!seen)el.hidden=false;
+  document.getElementById('noticeOk').addEventListener('click',()=>{
+    el.hidden=true;
+    try{localStorage.setItem('usufruct.notice','1');}catch(e){}
+  });
+})();
+
+/* ---------- boot ---------- */
+(function(){
+  const boot=document.getElementById('boot');
+  const words=['SEED','WINDOW','ESCROW','CAPTURE','PROOF','REDEEM','USDC','SEPOLIA',
+               'A-558','QN-39.32','TICK 197400','HOOKLESS','SOLD ONCE','NO ROLLOVER',
+               'ONE WINDOW','SW.LOG','1:1','FIXED PERIOD'];
+  document.getElementById('bootArt').innerHTML=citrus(39216,0.62,{live:true,bubbles:true});
+  const bar=document.getElementById('bootBar');
+  bar.innerHTML='<i></i>'.repeat(34);
+  const cells=[...bar.children];
+  const wEl=document.getElementById('bootWord'),pEl=document.getElementById('bootPct');
+  const dur=STILL?500:2100,t1=performance.now();
+  let wi=0,lastSwap=0;
+  function frame(now){
+    const t=Math.min(1,(now-t1)/dur);
+    cells.forEach((c,i)=>c.classList.toggle('on',i/cells.length<t));
+    pEl.textContent=Math.round(t*100)+'%';
+    if(!STILL&&now-lastSwap>135){lastSwap=now;wi=(wi+1)%words.length;wEl.textContent=words[wi];}
+    if(t<1)requestAnimationFrame(frame);
+    else{
+      wEl.textContent='USUFRUCT';
+      setTimeout(()=>{
+        boot.classList.add('off');
+        setTimeout(()=>{boot.remove();routeFromHash();},480);
+      },STILL?0:260);
+    }
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

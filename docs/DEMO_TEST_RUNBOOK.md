@@ -17,26 +17,33 @@ Two people can coordinate these roles, but three wallet contexts make the full t
 
 Before a public sale, require fresh deployment-matching `/api/operations` readiness for **protocol, keeper, retention and replication**, and complete the operator’s restart/remote-restoration rehearsal. Fund gas for every wallet, including potentially expensive proof allocation. Use the app’s links for authentic Sepolia test USDC and ETH; do not use mainnet funds or arbitrary tokens named “USDC”.
 
-Record a test ticket: app commit, network, S/B/C addresses, NFT ID, upfront payment, sold percentage, Q, exact N, acceptance deadline in UTC, offer link, resulting series link and operator. For a small rehearsal, **0.25 test USDC / 25% sold** is an example to agree on, not a standing instruction to fund a particular NFT. Choose N with comfortable time for both wallets and activity. The form’s default is **1 USDC / 80% / +600 blocks / one-hour acceptance deadline**; replace defaults deliberately.
+Record a test ticket: app commit, network, S/B/C addresses, NFT ID, upfront payment, sold percentage, Q, exact N, acceptance deadline in UTC, offer link, resulting series link and operator. For a small rehearsal, **0.25 test USDC / 25% sold** is an example to agree on, not a standing instruction to fund a particular NFT. Choose N with comfortable time for both wallets and activity. The listing form defaults to **1 USDC / 100% / +600 blocks / one-hour acceptance deadline**; the direct buyer proposal defaults to 80%. Replace defaults deliberately.
 
-### 2. Fund and activate — two different wallets
+### 2. Publish, fund and activate — two different wallets
+
+Publishing requires an available persistent listing service. Only standard EOA signatures are supported currently. New funding and acceptance additionally require operational settlement readiness. If the service is unavailable, an editable draft is not a published listing.
 
 | Who | Click / check | Expected result |
 | --- | --- | --- |
-| S | **Pin a tree → NFT ID or Uniswap link → Find position → Copy position link** | The exact eligible NFT and owner appear. The link looks like `#pin/39220`. |
-| B | Open S’s link → **Fund an offer**. Set **Upfront USDC**, **Sold share (%)**, **Exact end block**, **Accept before (UTC)** | Recheck the NFT, owner, range/liquidity and immutable Q. End block must remain more than 32 blocks ahead; deadline more than one minute ahead. |
-| B | **Review funding → Fund offer**; approve USDC if requested, then submit funding | USDC enters offer escrow. There are still no claims and no activated sale. |
-| B | **My cabinet → Your funded offers → Copy offer link** | Send the generated exact-offer link to S, e.g. `#pin/39220?offer=3`. Use the actual ID, not this example. |
-| S | Open the link; check **Funded offer to review** → **1. Approve this NFT → Approve NFT transfer** | Only NFT approval is confirmed. |
-| S | **2. Review funded sale → Accept exact funded terms** | Seller receives the agreed USDC; the original NFT enters escrow; B and S receive their bought/retained claims. Record the new series ID/link. |
+| S | **Pin a seed → Choose position**; find/select the exact eligible NFT | Verify owner, pool, liquidity and range. |
+| S | **Set listing**; set share, asking USDC, exact earning end block and acceptance deadline | The amount is payment for this exact share. There is no verified fee forecast or promised return. |
+| S | **Review listing → Sign and publish listing** | Sign typed data, without gas or NFT approval. A durable listing link opens; NFT ownership and balances stay unchanged. |
+| B | Open the listing link, connect a different wallet → **Review exact funding → Fund offer** | Inspect the same signed terms; approve USDC if requested, then fund the refundable onchain offer. There are no claims yet. |
+| B | **Holdings → Your funded offers → Copy offer link** | Share the actual exact-offer link with S, e.g. `#pin/39220?offer=3`. |
+| S | Open that link, or choose **3 · Funded offers**; check the selected funded offer → **1. Approve this NFT → Approve NFT transfer** | Only NFT approval is confirmed. |
+| S | **2. Review funded sale → Accept exact funded terms** | Seller receives USDC; the original NFT enters escrow; bought/retained claims are minted once. Record the series ID. |
 
-**If sale review is disabled after approval:** first check that B really funded an offer and that S opened its exact link. Also check the connected owner/network, operational readiness, deadline/cutoff and whether the position changed. Approval alone is never an agreement or payment. A funded offer does not automatically create a secondary-market ask.
+The direct position-link buyer proposal also remains available. A buyer can propose exact terms for the owner to accept without a published advertisement.
+
+**If sale review is disabled after approval:** check that B actually funded an offer and S selected it. Check owner/network, project readiness, deadline/cutoff and unchanged liquidity/range. Approval alone is never a sale. Publishing or funding does not automatically create a secondary-market ask.
+
+Test **Withdraw listing** separately: it is a gasless signed withdrawal of the advertisement, not a refund or NFT transaction. Existing funded offers remain cancellable by their buyers. Several buyers can fund competing offers; publishing does not reserve the NFT. After a lost publication response/reload, use the saved draft to retry the exact same signed terms. Forgetting a browser draft does not withdraw a server listing.
 
 ### 3. Trade the issued claims
 
-1. B opens **My cabinet → Publish sell quote** and chooses **Sell claims (ask)**. Set a small **Claim quantity**, **Total USDC ask** and **Expires in minutes**. Replace the maker form’s 1,000-claim / 84-USDC defaults.
+1. B opens **Holdings → Publish sell quote** and chooses **Sell claims (ask)**. Set a small **Claim quantity**, **Total USDC ask** and **Expires in minutes**. Replace the maker form’s 1,000-claim / 84-USDC defaults.
 2. B selects **Review maker quote → Approve and publish quote**. Complete the required approval and publication actions. Inventory remains in B’s wallet; Aqua allocations do not create extra capital.
-3. C opens the issued claim from Orchard, sets **Claims to buy**, then **Review purchase → Confirm claim purchase**. Complete USDC approval if requested.
+3. C opens the issued claim from Market, sets **Claims to buy**, then **Review purchase → Confirm claim purchase**. Complete USDC approval if requested.
 4. Verify actual USDC and FeeClaim balance changes for B and C. Show C’s cabinet and saved receipt. Leave both wallets with claims for independent payout testing.
 
 Also exercise a **Buy claims (bid)** and **Review claim sale → Confirm claim sale** in the extended test. Test maker cancellation via **Your maker quotes → Review quote cancellation → Cancel this maker quote**. Never mistake a listed but depleted/expired quote for available liquidity.
@@ -46,9 +53,9 @@ Also exercise a **Buy claims (bid)** and **Review claim sale → Confirm claim s
 1. Generate **controlled, funded pool activity** before N and some after N. The operator supplies this; the frontend neither creates swaps nor fast-forwards Sepolia. Label test donations/activity honestly.
 2. Preserve the endpoint witness and canonical checkpoint. Wait until a block strictly **after N**.
 3. Open the issued claim → **Capture actual fees → Confirm transaction**. Record the collected reserve. This may include post-period USDC; it is not all owed to claim holders.
-4. As S/residual owner, open **My cabinet → Recover NFT #… → Confirm transaction**. Verify the same token ID returned, while allocation is still pending. This is a key demonstration.
+4. As S/residual owner, open **Holdings → Recover NFT #… → Confirm transaction**. Verify the same token ID returned, while allocation is still pending. This is a key demonstration.
 5. Open the issued claim → **Allocate fee reserve → Confirm transaction**. The app uses authenticated proof recovery or the exact verified onchain growth cache. It does not accept a manually typed payout amount. If proof is unavailable, leave the reserve protected and show the recovery state.
-6. B and C separately open **My cabinet → Read claim & recovery** for this series, then **Redeem … claims → Confirm transaction**. Disconnect S while doing this. The current UI redeems each wallet’s whole remaining claim balance. Compare actual payouts with original-Q entitlement; tiny amounts can round down to zero micro-USDC.
+6. B and C separately open **Holdings → Read claim & recovery** for this series, then **Redeem … claims → Confirm transaction**. Disconnect S while doing this. The current UI redeems each wallet’s whole remaining claim balance. Compare actual payouts with original-Q entitlement; tiny amounts can round down to zero micro-USDC.
 7. As the residual beneficiary, use **Withdraw residual fees** for separately available residual funds. Do not count retained fee claims twice as residual income.
 
 Retain receipts and before/after balances for funding, acceptance, trade, capture, NFT return, allocation and both redemptions. Check that NFT return preceded allocation, and disclose any operator assistance.

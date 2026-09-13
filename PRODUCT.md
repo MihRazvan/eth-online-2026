@@ -1,9 +1,11 @@
 # usufruct product context
 
-The user renamed FeeStrip to **usufruct** on11September2026 and supplied the orchard/specimen design direction. `DESIGN.md` records that identity. Historical specs and deployed contract identifiers still use FeeStrip.
+The user renamed FeeStrip to **usufruct** on 11 September 2026. The HTML design reference supplied on 13 September supersedes the original orchard/specimen direction; `DESIGN.md` records the current identity. Historical specs and deployed contract identifiers still use FeeStrip.
 
 The product lets an LP accept USDC upfront for fractional claims to an existing Uniswap v4 position's native USDC fees during one fixed earning window. The original canonical hookless NFT enters escrow with its exact liquidity/range frozen. The same NFT is returned after late fee capture; historical proof allocation and independent redemption are separate steps. Holders own their fraction of the whole period's unpaid income, including income accrued before a transfer.
 
 Audience: LPs assessing an upfront fee sale, buyers comparing uncertain fee claims, and makers supplying secondary liquidity. Main tasks: discover an instrument, review/fund/accept exact terms, trade existing claims, recover the original NFT and redeem verified income. Supported chain is Ethereum Sepolia for public testing; deterministic fixtures and local-chain verification remain explicitly labelled.
 
 Economic authority and detailed acceptance gates remain `feestrip-handoff/PRODUCT_CONTRACT.md`. Current implementation and limitations are in `docs/STATUS.md`. No public end-to-end settlement, live Graph composition, human wallet acceptance, audit or commercial validation is implied by the visual redesign. The current release targets ETHOnline 2026 Classic with a working product and truthful integration evidence. See `docs/TEAMMATE_BRIEF.md` for the explanation and demo walkthrough.
+
+Seller discovery begins with a signed, nonbinding listing: the NFT stays in the seller wallet, no approval is needed and no sale has started. A buyer funds the exact advertised terms into a refundable onchain offer. The seller then approves and accepts that offer. Multiple buyers can fund competing offers; withdrawing an advertisement does not cancel existing funded offers. Listings currently support standard EOA signatures and are scoped to the deployed chain and contracts. Service availability and settlement readiness are separate: publishing can be gasless, while new funding/acceptance stays paused if preservation is not operational.
