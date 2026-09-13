@@ -16,16 +16,18 @@ The name describes the separation between an asset and the right to enjoy its in
 
 ## What works today
 
-At the live check on **12 September, 14:22 UTC / 17:22 Bucharest**, the current deployment had **zero activated series** and `/api/operations` returned **503 — OPERATIONS_NOT_AVAILABLE**.
+At this **13 September implementation checkpoint**, the supplied stencil redesign and seller-first signed listing flow are implemented and verified locally. Railway source `9d089b1` deployed successfully with the reviewed keeper and Graph services enabled. At 12:28 UTC, public `/api/operations` passed protocol, keeper, retention and off-host replication checks, and deployment pins independently matched. The keeper held 0.01 Sepolia ETH with nonce 0; `nextSeriesId=1` confirmed no activated series. These are live service probes, not a completed public financial lifecycle or restored series proof.
 
 | Ready | Still required before an unattended public demo |
 | --- | --- |
-| Branded frontend on Vercel; wallet position discovery; separate buyer/seller offer flow | Operate the checkpoint signer, proof retention, remote backup and public recovery API |
+| Supplied stencil frontend, light/dark themes, wallet discovery and persistent signed seller listings; 78 hermetic browser checks | Verify operation through restart, an actual series endpoint checkpoint and authenticated remote restoration |
 | Reviewed replacement contracts deployed on Sepolia; Graph Studio v0.2.0 indexes their address | Complete a real public sale → trade → capture → NFT return → allocation → redemption |
-| Full local transaction/browser lifecycle; prior implementation CI (see STATUS for current verification) | Prepare real demo inventory, fresh executable quotes and funded participant wallets |
-| Checkpoint and authenticated backup/recovery implementations tested locally | Operate the Substreams history/analysis service and show its actual live join |
+| Both actual local-chain settlement variants, including gasless seller publication, database restart and second-wallet funding/acceptance | Prepare real demo inventory, fresh executable quotes and funded participant wallets; complete unaided human acceptance |
+| Railway service, 500 MB private persistent volume and private proof bucket provisioned; dedicated keeper funded with 0.01 Sepolia ETH | Confirm continuous Substreams operation and show its actual live instrument join; coordinate primary/fallback operators |
 
-**The public site is not yet a complete live demo.** A disabled sale while operations are unavailable is intentional. Do not bypass that gate, switch the public page to fixtures, or describe local receipts as Sepolia transactions. Hosting remains unprovisioned pending the team’s decision; an existing reliable server can replace the proposed Railway setup.
+**The public site is not yet a complete live demo.** A disabled sale while preservation is unavailable is intentional. Do not bypass that gate, switch the public page to fixtures, or describe local receipts as Sepolia transactions. The user delegated provider choice and hosting setup is complete; no further hosting approval is pending. The initial public readiness checks pass; actual series endpoint/restoration evidence and the human financial rehearsal remain open. See [automated stencil/listing evidence](design/STENCIL_VERIFICATION.md) for the exact local verification scope.
+
+**Publishing can work while sales are paused.** With the real listing service available, the NFT owner can sign and publish or withdraw a nonbinding listing without ETH for gas. This currently supports standard EOA wallets. Funding, NFT approval and acceptance still require their actual transaction prerequisites and preservation readiness. A published listing does not mean the NFT is escrowed or that its income is guaranteed.
 
 Use [the release checklist](JUDGE_READINESS.md) for current acceptance and [the operations runbook](deployment-operations.md) for the backend handoff. The latest deployed addresses are in [the public manifest](../deployments/sepolia.json). Old offer #2 was refunded; it is **not** a new demo offer to accept.
 
@@ -33,12 +35,14 @@ Use [the release checklist](JUDGE_READINESS.md) for current acceptance and [the 
 
 | Stage | What actually happens |
 | --- | --- |
-| Publish | An LP signs and publishes exact terms for an eligible Uniswap v4 position. The signature advertises a request for a funded offer; it does not approve or escrow the NFT. |
+| Publish | An LP signs and publishes exact terms for an eligible Uniswap v4 position. This gasless signature advertises a nonbinding request for a funded offer; it does not approve or escrow the NFT, issue claims or pay the LP. |
 | Fund | A **different wallet** escrows USDC against an exact NFT, position commitment, sold fraction, cutoff block and acceptance deadline. There are no fee claims yet. |
 | Accept | The LP approves that NFT and accepts the funded terms. Payment goes to the LP; the NFT enters escrow; fee claims are issued. Unsold claims stay with the LP. |
 | Earn / trade | Liquidity and range remain fixed. Current holders own their share of the entire period’s unpaid USDC income, including accrual before they purchased the claims. |
 | Capture / return | Earning ends at the exact end of block **N**. Fees are collected at a later block **M > N**. The LP can then recover the same NFT even before cash allocation is complete. |
 | Allocate / redeem | The contract authenticates endpoint evidence and splits the collected reserve. Holders redeem their claims independently; the seller does not need to return or sign. |
+
+Withdrawing a listing removes the advertisement through another gasless signature. It does not cancel an already funded offer or refund its buyer. The buyer can cancel their own unaccepted offer onchain to recover its exact USDC; expiry alone never sends an automatic refund. Listings do not reserve a position exclusively, so competing buyers can fund separate offers.
 
 **The rights must stay clear:**
 
@@ -54,11 +58,13 @@ The backend preserves the closing block hash and proof bytes. It does **not** de
 
 | Page | Show the teammate / judge |
 | --- | --- |
-| [Market](https://usufruct-mu.vercel.app/#market) | Issued fee claims, their earning period, available quotes and the difference between a price and uncertain income. Open a claim to inspect terms, buy and follow settlement. Sell-to-bid and maker actions are in Holdings. |
+| [Market](https://usufruct-mu.vercel.app/#market) | Browse seller listings separately from issued fee claims. A listing asks a buyer to fund terms; an issued claim has an accepted series and may have executable resale quotes. Open either to inspect its exact period and next action. Sell-to-bid and maker actions are in Holdings. |
 | [Pin a seed](https://usufruct-mu.vercel.app/#pin) | Select an existing NFT, publish signed terms, share the listing, then review a buyer-funded offer and approve/accept as owner. |
 | [Holdings](https://usufruct-mu.vercel.app/#positions) | Claims held, funded offers awaiting acceptance, maker quotes, the right to recover pinned NFTs, transaction receipts and available recovery/redemption actions. |
 
 **Frontend priority:** every step should answer “What do I own now?”, “What can I do next?” and “Why is this action unavailable?” Keep the supplied stencil/print identity, but use exact financial language beside the metaphor. Keep chain, period, wallet, amount and transaction status visible.
+
+For the seller-first rehearsal: **Pin a seed → select NFT → set listing share, asking USDC, exact end block and UTC acceptance deadline → Review listing → Sign and publish listing**. Share the resulting `#listing/…` link or let the separate buyer discover it in Market. The buyer reviews the same signed terms and funds an offer; the seller follows the resulting offer link, approves the NFT and accepts. Keep the listing ID, funded-offer ID and eventual series ID distinct in the recording. Retrying a pending publication uses its saved exact draft; forgetting that browser draft does not withdraw a published listing.
 
 ## The judge demo: 3–4 minutes, using prepared real states
 
@@ -81,7 +87,7 @@ These examples do **not** exist on the current public deployment yet. Use their 
 | 2:50–3:30 | Open B and its recovery information; show the NFT-return receipt | “The LP already recovered the NFT. The fee reserve stays protected while allocation is pending.” Point to proof status and, when available, **Download proof JSON**. |
 | 3:30–4:00 | Summarize the integrations and open source/evidence links if useful | “Uniswap supplies the position and fees; Aqua/SwapVM trades the claims; authenticated historical state settles the fixed endpoint.” Show Graph buyer context only after its live join works. |
 
-For a **live seller creation demo**, prepare an additional unaccepted funded offer and allow extra time for the seller’s approval/acceptance transactions. Otherwise use A’s real recorded creation flow, clearly identified as a recording. Wallet confirmations vary; do not disguise waiting, prepared approvals or a switch between series.
+For a **live seller creation demo**, show gasless publication from the owner, discovery/funding from a separate buyer, then seller approval/acceptance. Allow extra time for those transactions. A separately prepared unaccepted funded offer can shorten the presentation only if that preparation is disclosed. Otherwise use A’s real recorded creation flow, clearly identified as a recording. Wallet confirmations vary; do not disguise waiting, prepared approvals or a switch between series.
 
 If the public prerequisites are not ready, give a **clearly labelled local-chain demonstration**, with actual local transactions and controlled activity. Do not present the fixture preview as a completed public flow. The submitted recording should have human narration.
 
