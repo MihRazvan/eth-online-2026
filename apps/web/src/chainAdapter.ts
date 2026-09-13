@@ -57,6 +57,7 @@ import type {
   RecoveryObservation,
 } from "./types";
 import { CLAIM_UNIT } from "./amounts";
+import { estimatePositionFees } from "./feeEstimate";
 import { validateRecovery, verifyArtifactDigest } from "./recovery";
 import { positionId, positionIneligibility, recentPositionIds, POSITION_LIMIT } from "./positionDiscovery";
 
@@ -426,6 +427,10 @@ export class ChainAdapter implements FeeStripAdapter {
       this.importedPositions.add(id);
       return id;
     } catch (error) { throw new Error(message(error)); }
+  }
+
+  async estimatePositionFees(tokenId: string) {
+    return estimatePositionFees(this.client, this.deployment, BigInt(positionId(tokenId)));
   }
 
   private async walletPositionIds(wallet: WalletState, head: bigint) {

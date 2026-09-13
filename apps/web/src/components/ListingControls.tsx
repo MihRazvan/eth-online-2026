@@ -6,13 +6,15 @@ import type { Action, Position, Snapshot } from "../types";
 import type { SellerListing, SellerListingTerms } from "../listingTypes";
 import { money, sharePercent, deadlineDate, integer } from "../amounts";
 import { offerTerms, ORIGINAL_Q, positionRoute } from "../offerTerms";
+import { ListingEstimate } from "./ListingEstimate";
+import type { PositionFeeEstimate } from "../feeEstimate";
 
 type Review = { title: string; action: Action; lines: [string, string][]; warning: string; button: string };
 type ReviewProps = { onReview: (review: Review) => void; onError: (message: string) => void };
 export const listingRoute = (id: string) => `#listing/${id}`;
 const short = (value: string) => value.slice(0, 6) + "…" + value.slice(-4);
 
-export function ListingForm({ position, snapshot, disabled = false, onReview, onError }: ReviewProps & { position: Position; snapshot: Snapshot; disabled?: boolean }) {
+export function ListingForm({ position, snapshot, disabled = false, onReview, onError, estimateFees }: ReviewProps & { position: Position; snapshot: Snapshot; disabled?: boolean; estimateFees?: (tokenId: string) => Promise<PositionFeeEstimate> }) {
   const [payment, setPayment] = useState("1"), [percentage, setPercentage] = useState("100");
   const [endBlock, setEndBlock] = useState((BigInt(snapshot.blockNumber) + 600n).toString());
   const [deadline, setDeadline] = useState(new Date((Number(snapshot.timestamp) + 3600) * 1000).toISOString().slice(0, 16));
@@ -34,7 +36,7 @@ export function ListingForm({ position, snapshot, disabled = false, onReview, on
     <p className="fine">Publish exact terms for a buyer to fund. Your NFT stays in your wallet until you accept their funded offer.</p>
     <div className="field"><label htmlFor={`listing-share-${position.tokenId}`}>Share of the window to sell (%)</label><input id={`listing-share-${position.tokenId}`} inputMode="decimal" value={percentage} onChange={e => setPercentage(e.target.value)} required /></div>
     <div className="field"><label htmlFor={`listing-ask-${position.tokenId}`}>Asking USDC for this share</label><input id={`listing-ask-${position.tokenId}`} inputMode="decimal" value={payment} onChange={e => setPayment(e.target.value)} required /></div>
-    <div className="est"><span className="tele">Fee estimate</span><p className="estnote">A verified fee forecast is not available for this position. Set your own asking price; income can be zero.</p></div>
+    <ListingEstimate tokenId={position.tokenId} commitment={position.commitment} endBlock={endBlock} currentBlock={snapshot.blockNumber} percentage={percentage} onUse={setPayment} estimateFees={estimateFees} />
     <div className="field"><label htmlFor={`listing-end-${position.tokenId}`}>Exact earning end block</label><input id={`listing-end-${position.tokenId}`} inputMode="numeric" value={endBlock} onChange={e => setEndBlock(e.target.value)} required /></div>
     <div className="field"><label htmlFor={`listing-deadline-${position.tokenId}`}>Seller must accept before (UTC)</label><input id={`listing-deadline-${position.tokenId}`} type="datetime-local" value={deadline} onChange={e => setDeadline(e.target.value)} required /></div>
     <p className="fine">Current block {integer(snapshot.blockNumber)}. The default 600-block window is about two hours on Sepolia; block time varies. The window starts only when you accept. Terms remain fixed while you edit.</p>

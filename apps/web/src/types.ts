@@ -1,4 +1,5 @@
 import type { ListingDirectory, SellerListing, SellerListingTerms } from "./listingTypes";
+import type { PositionFeeEstimate } from "./feeEstimate";
 export type DataMode = "fixture" | "local" | "testnet";
 export type SeriesPhase =
   | "active"
@@ -257,6 +258,7 @@ export interface FeeStripAdapter {
   load(): Promise<Snapshot>;
   connect(): Promise<WalletState>;
   findPosition?(input: string): Promise<string>;
+  estimatePositionFees?(tokenId: string): Promise<PositionFeeEstimate>;
   execute(action: Action): Promise<ActionResult>;
   reconcileReplacement?(original: TransactionProgress, replacementHash: string): Promise<TransactionProgress[]>;
   readTransaction?(hash: `0x${string}`): Promise<"pending" | "confirmed" | "failed">;
