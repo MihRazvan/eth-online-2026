@@ -1,9 +1,9 @@
 {
   "scope": "Actual isolated local8588 transactions; no public signing or live liquidity claim",
   "chainId": 31337,
-  "ask": "0x29ee3662576dda7723f00a6526dc321438efab4d9ec647a6109a639bc60761a8",
-  "bid": "0x06a6b3e98fe33e7bf04f8c027cf075b53e42c23066e0c9ddd6c84c43b7de32e2",
-  "stale": "0x30f423122047ae3d2c14d867b135f855fdd9ee823cc0bef3fb3ad0f8e47419ea",
+  "ask": "0xd2c3a85ddfe259a212f574cee5e49e96f71d77dcec8367ad42b3d8e1948840dd",
+  "bid": "0xec64d998f296bda8b533cb21d88791a302e4c94647d88eaa7eda8d1cca07e0d8",
+  "stale": "0x75213608072e35b765b9d5979e1ede2a4a7ba271b220132c72775baeab0b7949",
   "partialAskRemaining": "1000000000000000000000",
   "sellerBidProceeds": "2000000",
   "capturedReserve": "299999999",
@@ -20,23 +20,23 @@
     },
     {
       "action": "Approve and publish quote",
-      "hash": "0x012591dadb50a36d654064d79dada9b0cc60d5702257e71d45186bd0bfecf5cf"
+      "hash": "0x863b99c785e60de12f24bc26db1a0df21fa1935443c2516c86f0aeae20a4e6e7"
     },
     {
       "action": "Confirm claim purchase",
-      "hash": "0x0bc5762e273e5339e91fb67dff84a0a49890c5d8ae42aa59a2d2e0ddb5787849"
+      "hash": "0x0d26b40b27c639f8727432fe7988132cdbbdf6e8189960f08beb4f50fa1ec58e"
     },
     {
       "action": "Cancel this maker quote",
-      "hash": "0x0823add8be69d0a96b1429dec8351897fb19500ea2fa70304dfa99ac31df2030"
+      "hash": "0x307760a7bb48778c166cc8efd1906a1ba00e4eb83101156d6a794d3aeaa36135"
     },
     {
       "action": "Approve and publish quote",
-      "hash": "0x310f261a0e7fdd1957cee6087038e89e9d2d1f7ef4f6e9e6a177e1aec81f515f"
+      "hash": "0xf788b57a72fc6e22f7624cf17ee3da439e1d8b47cca02635748db21db2b47485"
     },
     {
       "action": "Confirm claim sale",
-      "hash": "0x41309c5601f5d588ebaf29cafc60718f7c92c564d65a914e1ee1513b91165c95"
+      "hash": "0x7aebba0408403265bcc22e7f7e7446100fd8db4892238336a718088a0a4c4450"
     },
     {
       "action": "approve",
@@ -44,11 +44,11 @@
     },
     {
       "action": "Cancel this maker quote",
-      "hash": "0x404d44327fd0d987c4b8621930b750115df7d6f467637177992917cbea5bae99"
+      "hash": "0x7724d251032255ec5d8f3cdd097e40932343bead942cfbbac84890850ff6d2b3"
     },
     {
       "action": "Approve and publish quote",
-      "hash": "0x040ace8d51d5ba9a7b79b132791e7bb985bb78169af61d30a740abd5be6cfd34"
+      "hash": "0x6b1599fd9e243bf51a04c521450e65cc0dd14701c5533bd9e0f3a4b6aca2e510"
     },
     {
       "action": "transfer",
@@ -64,7 +64,7 @@
     },
     {
       "action": "Cancel this maker quote",
-      "hash": "0xcebd18b843aab663af1ad9e9e7a21a6bdab75c0b0bfd1976945c500266103ec9"
+      "hash": "0x10dfd9db9d2e649c3865da22bd6c11286d42df60af06c8ea522598302eadb52c"
     }
   ]
 }

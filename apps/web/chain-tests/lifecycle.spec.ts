@@ -131,7 +131,7 @@ test.beforeAll(async () => {
   await new Promise<void>((resolve,reject)=>{recoveryAPI.once('error',reject);recoveryAPI.listen(recoveryPort,'127.0.0.1',resolve);});
 });
 test.afterAll(async()=>{
-  if(recoveryAPI?.listening)await new Promise<void>(resolve=>recoveryAPI.close(resolve));
+  if(recoveryAPI?.listening)await new Promise<void>(resolve=>{recoveryAPI.close(resolve);recoveryAPI.closeAllConnections();});
   recoveryStore?.close();
   if(recoveryDirectory)rmSync(recoveryDirectory,{recursive:true,force:true});
 });
@@ -141,6 +141,7 @@ test("real browser funding, exact NFT sale, Aqua maker publication, trade, late 
 }, testInfo) => {
   const { seller, buyer, holder } = deployment.actors!;
   await login(page, "buyer", "pin");
+  await page.getByRole("button", { name: /3 · Funded offers/ }).click();
   await expect(page.locator(".position-entry")).toContainText(
     "Offer target · other wallet",
   );
@@ -330,7 +331,7 @@ test("real browser funding, exact NFT sale, Aqua maker publication, trade, late 
     paid += payout;
     expect(await balance(activated.claim, address)).toBe(0n);
   }
-  await page.getByRole("link", { name: "My cabinet", exact: true }).click();
+  await page.getByRole("link", { name: "Holdings", exact: true }).click();
   const residualBefore = await balance(deployment.usdc, seller);
   await page
     .getByRole("button", { name: "Withdraw residual fees", exact: true })
@@ -454,9 +455,11 @@ test("an unlisted canonical NFT connects two wallets through exact small terms, 
   const unknownOffer = await client.readContract({ address: deployment.feeStrip, abi: feeStripAbi, functionName: "nextOfferId" });
   // The buyer has never owned NFT2 and there is no offer or manifest entry for it.
   await page.goto("/?wallet=buyer#pin/2");
+  await page.getByRole("button", { name: /3 · Funded offers/ }).click();
   await expect(page.locator(".position-entry")).toContainText("NFT #2");
   await expect(page.getByRole("button", { name: "1. Approve this NFT", exact: true })).toBeDisabled();
   await login(page, "buyer", "pin/2");
+  await page.getByRole("button", { name: /3 · Funded offers/ }).click();
   const before = await balance(deployment.usdc, buyer);
   await page.getByRole("button", { name: "Fund an offer", exact: true }).click();
   await page.getByLabel("Upfront USDC", { exact: true }).fill("0.25");
@@ -472,6 +475,7 @@ test("an unlisted canonical NFT connects two wallets through exact small terms, 
   await expect(page.getByRole("link", { name: `Share offer #${unknownOffer} with the seller` })).toHaveAttribute("href", `#pin/2?offer=${unknownOffer}`);
   await page.reload();
   await login(page, "buyer", "pin/2");
+  await page.getByRole("button", { name: /3 · Funded offers/ }).click();
   await page.getByText("Saved transaction receipts", { exact: true }).click();
   await expect(page.getByRole("link", { name: `Share offer #${unknownOffer} with the seller` })).toBeVisible();
   // Another small offer can be cancelled and returns exactly its escrowed payment.
@@ -479,7 +483,7 @@ test("an unlisted canonical NFT connects two wallets through exact small terms, 
   await page.getByLabel("Upfront USDC", { exact: true }).fill("0.1");
   await page.getByRole("button", { name: "Review funding", exact: true }).click();
   await confirm(page, "Fund offer", "fundCancellableOffer");
-  await page.getByRole("link", { name: "My cabinet", exact: true }).click();
+  await page.getByRole("link", { name: "Holdings", exact: true }).click();
   const cancellable = page.locator(".funded-offer-row").filter({ hasText: `Offer #${unknownOffer + 1n} · NFT #2` });
   await cancellable.getByRole("button", { name: "Review cancellation" }).click();
   await expect(page.getByRole("dialog")).toContainText("$0.100000 USDC");
@@ -501,7 +505,7 @@ test("an unlisted canonical NFT connects two wallets through exact small terms, 
   const current = await client.readContract({ address: deployment.feeStrip, abi: feeStripAbi, functionName: "series", args: [newSeriesId] });
   expect(await balance(current.claim, buyer)).toBe(2500n * 10n ** 18n);
   expect(await balance(current.claim, seller)).toBe(7500n * 10n ** 18n);
-  await page.getByRole("link", { name: "My cabinet", exact: true }).click();
+  await page.getByRole("link", { name: "Holdings", exact: true }).click();
   await expect(page.getByRole("button", { name: "Publish sell quote", exact: true })).toBeVisible();
   await page.setViewportSize({ width: 390, height: 844 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);

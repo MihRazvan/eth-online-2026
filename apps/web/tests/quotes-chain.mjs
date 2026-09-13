@@ -133,7 +133,7 @@ async function dock(hash) {
   await confirm("Cancel this maker quote");
 }
 try {
-  await login("seller", "pin");
+  await login("seller", "pin/1?offer=1");
   await page
     .getByRole("button", { name: "1. Approve this NFT", exact: true })
     .click();
@@ -156,7 +156,7 @@ try {
     "Initial virtual claim inventory",
   );
   await login("holder");
-  await page.getByRole("link", { name: "Orchard", exact: true }).click();
+  await page.getByRole("link", { name: "Market", exact: true }).click();
   await page
     .getByRole("link", { name: "Open TEST / USDC NFT 1", exact: true })
     .click();
