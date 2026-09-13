@@ -1173,7 +1173,7 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                   <li><span>Window</span><span>Block {integer(selected.startBlock)}–{integer(selected.endBlock)}</span></li>
                   <li><span>Executable now</span><span>{noQuote || quoteStale ? "Unavailable" : `${formatClaims(selected.availableClaims)} claims · ${sharePercent(selected.availableClaims, selected.originalSupply)}% of Q`}</span></li>
                   <li><span>Price per claim</span><span>{noQuote || quoteStale ? "Unavailable" : `${money(selected.askMicros, 6)} USDC`}</span></li>
-                  <li><span>Settles</span><span>After capture and verified allocation</span></li>
+                  <li><span>Redemption</span><span>{selected.phase === "allocated" ? "Ready now" : selected.phase === "captured" ? "After verified allocation" : selected.phase === "closed" ? "Series closed" : "After capture and verified allocation"}</span></li>
                   <li><span>NFT return right</span><span title={selected.residualOwner}>{selected.residualOwner ? `${selected.residualOwner.slice(0, 6)}…${selected.residualOwner.slice(-4)}` : fixture ? "Fixture residual owner" : "Unavailable"}</span></li>
                 </ul>
                 {noQuote ? (
