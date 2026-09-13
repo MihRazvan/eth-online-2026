@@ -64,7 +64,18 @@ test('legacy enabled binding migrates atomically while preserving every job, sig
  new CheckpointKeeper({...f.config,enabled:false},reopened,{client:f.client});
  assert.equal(reopened.get('config'),keeperConfig(f.config).fingerprint);
  assert.deepEqual(reopened.jobs(),jobs);assert.deepEqual(reopened.db.prepare('SELECT * FROM transactions').all(),transactions);
- assert.equal(reopened.reserveCost(),reserved);assert.deepEqual(reopened.get('publicStatus'),status);assert.deepEqual(reopened.get('operator-marker'),{retained:true});
+ assert.equal(reopened.reserveCost(),reserved);assert.deepEqual(reopened.get('publicStatus'),{...status,status:'disabled',enabled:false,readyToSign:false,configFingerprint:keeperConfig(f.config).fingerprint});assert.deepEqual(reopened.get('operator-marker'),{retained:true});
+});
+test('disabled restart synchronously clears persisted readiness before its first observation',async t=>{
+ const f=setup(t);await f.worker.tick();
+ const before=readKeeperStatus(f.path);assert.equal(before.enabled,true);assert.equal(before.readyToSign,true);
+ const transactions=f.store.db.prepare('SELECT * FROM transactions').all(),jobs=f.store.jobs(),reserved=f.store.reserveCost();f.store.close();
+ const reopened=new KeeperStore(f.path);t.after(()=>reopened.close());let observations=0;
+ new CheckpointKeeper({...f.config,enabled:false},reopened,{client:f.client,observe:async()=>{observations++;throw new Error('not reached');}});
+ const status=readKeeperStatus(f.path);
+ assert.equal(observations,0);assert.equal(status.status,'disabled');assert.equal(status.enabled,false);assert.equal(status.readyToSign,false);
+ assert.equal(status.observedAtMs,before.observedAtMs,'restart must not imply a new chain observation');
+ assert.deepEqual(reopened.jobs(),jobs);assert.deepEqual(reopened.db.prepare('SELECT * FROM transactions').all(),transactions);assert.equal(reopened.reserveCost(),reserved);
 });
 test('legacy migration and current binding reject every economic, network, signer and scheduling change',t=>{
  const f=setup(t);

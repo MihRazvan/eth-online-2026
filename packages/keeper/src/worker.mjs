@@ -12,6 +12,8 @@ export class CheckpointKeeper {
   if(account&&!same(account.address,this.config.expectedSigner))fail('KEEPER_SIGNER_MISMATCH');
   if(this.config.enabled&&!account)fail('KEEPER_PRIVATE_KEY_REQUIRED');
   store.bind(this.config.fingerprint,legacyKeeperFingerprints(this.config));this.busy=false;
+  // Readers can inspect the journal before the first asynchronous observation completes.
+  if(!this.config.enabled)store.set('publicStatus',{...this.publicStatus(),status:'disabled',enabled:false,readyToSign:false,configFingerprint:this.config.fingerprint});
  }
  publicStatus(){return this.store.get('publicStatus')??{status:'not-observed',chainId:this.config.chainId,signer:this.config.expectedSigner};}
  async tick(){
