@@ -1,0 +1,13 @@
+# Series 1 endpoint: independent native collection oracle
+
+The real endpoint state for Sepolia series **1**, NFT **39216**, produces **999999 USDC micros (0.999999 USDC)** through native PositionManager collection. This exactly matches the fee-growth result authenticated by the retained witness. The [evidence](live-series-one-native-oracle.json) separates public observations from the transaction executed only in an isolated local fork.
+
+The fork starts at actual endpoint **11696317**, hash `0xb721397ec74fa0554a92609defb3b97653f818056267573aa1311a0f0bc1a2ee`. Its block hash and state root match an independent public RPC read. FeeStrip and verifier runtime hashes match the deployment pins. At that state, series 1 is uncaptured, has original Q **10000e18**, fixed liquidity **3411586204**, and activation baseline **0**. The later public capture is absent from the endpoint fork.
+
+One empty local block was mined. The exact deployed verifier then authenticated the downloaded witness against canonical endpoint `BLOCKHASH`. Its SHA-256 is `e682bdf0d5f0e02d2a2c30075448ea498edbfb6be30550a1c25c1cbce5fb762a`; authenticated inside growth is **99743153645646077733809069955943640**. Applying `floor(liquidity × (endpointGrowth − activationBaseline) / 2^128)` gives **999999 micros**.
+
+A funded existing actor was impersonated only inside Anvil to call the existing `FeeStrip.capture(1)`. The fork transaction at **N+2** used **244095 gas**. Both the native escrow USDC balance increase and `capturedUSDC` were **999999 micros**, exactly matching the authenticated growth calculation. No pool activity, liquidity change, key loading, balance override or storage override was introduced. No public transaction was sent. The isolated Anvil and read-only upstream proxy were stopped afterward; no other processes were touched.
+
+A separate public read observed the later capture of **1499999 micros**. Its difference from the endpoint oracle is **500000 micros**, belonging to the post-endpoint residual. The older fork rehearsal's **773324-micro** estimate used a different pool state and is superseded for this live endpoint. Participant claim payouts still use original Q and must be reconciled from actual transfers and redemption receipts; this oracle does not assume earlier planned wallet inventories.
+
+This establishes an independent native-collection comparison using actual public endpoint state and a real retained witness. The capture receipt here is explicitly **fork-only**. Public restoration, allocation, holder payments, and human wallet acceptance have separate evidence requirements.

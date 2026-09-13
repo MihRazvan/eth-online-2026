@@ -1,0 +1,87 @@
+{
+  "schemaVersion": 1,
+  "checkedAt": "2026-09-13T14:15:16.664Z",
+  "scope": "Isolated fork-only native collection oracle at actual public series1 endpoint N. Public source and retained witness are real Sepolia data; capture transaction is only local Anvil evidence, not a public transaction or participant acceptance.",
+  "publicTransactionsSent": 0,
+  "seriesId": "1",
+  "tokenId": "39216",
+  "chainId": 11155111,
+  "feeStrip": "0xd84eE56b24841c887c73e8b9079A01c28b1B3E8E",
+  "positionManager": "0x429ba70129df741B2Ca2a85BC3A2a3328e5c09b4",
+  "poolManager": "0xE03A1074c86CFeDd5C142C4F04F1a1536e203543",
+  "poolId": "0x0c5089eb2863310ecab41eb94f2705ce37ce455a0f64a9ee627c7470b43161e8",
+  "verifier": "0xcff7cccf3f09797b6b02d30647daee210fa0aafc",
+  "publicEndpoint": {
+    "number": "11696317",
+    "hash": "0xb721397ec74fa0554a92609defb3b97653f818056267573aa1311a0f0bc1a2ee",
+    "stateRoot": "0x021a6055af2c045a633e7fb1009b667118c2487bbf8f8b159c10a7fc47104fb8",
+    "timestamp": "1789307712",
+    "provider": "https://ethereum-sepolia-rpc.publicnode.com"
+  },
+  "retainedWitness": {
+    "url": "https://usufruct-mu.vercel.app/api/recovery/artifact?seriesId=1&digest=e682bdf0d5f0e02d2a2c30075448ea498edbfb6be30550a1c25c1cbce5fb762a",
+    "sha256": "e682bdf0d5f0e02d2a2c30075448ea498edbfb6be30550a1c25c1cbce5fb762a",
+    "bytes": 58393,
+    "blockHash": "0xb721397ec74fa0554a92609defb3b97653f818056267573aa1311a0f0bc1a2ee",
+    "blockNumber": "11696317",
+    "encodedWitnessKeccak256": "0xd45914d4eb18e5bcd99ca8e3ce0d060984f347603a4aa69b44d59a0c00f58d48",
+    "authenticatedThrough": "Exact deployed HistoricalFeeVerifier.verify on fork, anchored to canonical N using BLOCKHASH; no synthetic cache or storage override.",
+    "authenticatedInsideGrowthX128": "99743153645646077733809069955943640"
+  },
+  "fork": {
+    "implementation": "anvil/v1.5.1",
+    "upstream": "Loopback read-only RPC proxy; credentials omitted; only own ports8598/8798",
+    "baseNumber": "11696317",
+    "baseHash": "0xb721397ec74fa0554a92609defb3b97653f818056267573aa1311a0f0bc1a2ee",
+    "baseStateRoot": "0x021a6055af2c045a633e7fb1009b667118c2487bbf8f8b159c10a7fc47104fb8",
+    "emptyBlock": {
+      "number": "11696318",
+      "hash": "0x1edcaf3430c064796c7317839eb64a7d3ef4eaaded0f16c17bc76251981019ef",
+      "parentHash": "0xb721397ec74fa0554a92609defb3b97653f818056267573aa1311a0f0bc1a2ee",
+      "transactions": 0
+    },
+    "actor": "0x92AAe0857979a139344f5b6F008e71F27A507522",
+    "actorKeysLoaded": false,
+    "balancesOverridden": false,
+    "storageOverridden": false,
+    "poolActivityInjected": false,
+    "receipt": {
+      "scope": "FORK ONLY",
+      "transactionHash": "0x40e71809e989b30b8356100ef7c72c555a898d35c9bf1a780677e28b0d9d2d8f",
+      "blockNumber": "11696319",
+      "blockHash": "0xf11d6ecec89950f52f2b6846dca9a3a5b5b7674a776ff30f3394d24812c2f545",
+      "status": "success",
+      "gasUsed": "244095"
+    },
+    "cleanup": "Own isolated Anvil8598 and read-only proxy8798 stopped after verification; no other process touched."
+  },
+  "nativeOracle": {
+    "activationBlock": "11696226",
+    "endpointBlock": "11696317",
+    "tickLower": 58980,
+    "tickUpper": 60180,
+    "liquidity": "3411586204",
+    "originalQ": "10000000000000000000000",
+    "activationBaselineX128": "0",
+    "escrowUSDCBefore": "0",
+    "escrowUSDCAfter": "999999",
+    "nativeCollectionUSDC": "999999",
+    "capturedUSDC": "999999",
+    "otherCurrencyCaptured": "0",
+    "authenticatedGrowthModelUSDC": "999999",
+    "exactNativeModelEquality": true
+  },
+  "publicLaterCapture": {
+    "observedBlock": "11696413",
+    "observedHash": "0x5379d526c0af40e8ba2c9fcc56d130da9db4a3266b8465e1d2727018f0610668",
+    "capturedUSDC": "1499999",
+    "postEndpointResidualByDifference": "500000"
+  },
+  "limitations": [
+    "No pool swaps, donations, liquidity changes or balance/storage overrides were introduced in the fork. Only one empty block and one capture transaction were mined.",
+    "The fork starts at real endpoint state; later public capture is absent there. This is an independent native-collection measurement, not a second public capture.",
+    "Earlier rehearsal773324micros used a different pool state and is superseded for this actual endpoint by999999micros.",
+    "The observed500000micros post-endpoint difference is residual; holder distribution always uses originalQ and actual participant receipts.",
+    "No wallet balances or remaining claim ownership are inferred from prior plans; public participant accounting and restoration evidence are separate."
+  ]
+}
