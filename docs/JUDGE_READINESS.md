@@ -4,6 +4,18 @@ The release target is a judge who understands the proposition without an explana
 
 This is the execution checklist for the next release. The [bounty research](research/bounty-readiness.md) explains the architectural decisions; [STATUS](STATUS.md) records implementation evidence. Updated 13 September 2026 against source `9d089b1`. Checked implementation items have automated verification; they do not establish public participant acceptance. J09/J10 and J12/J19 remain open until their operational and public financial evidence exists.
 
+## Current gap owners — 13 September, 13:10 UTC
+
+| Gap | Codex lead owns | Team owns | Current evidence |
+| --- | --- | --- | --- |
+| Stable hosting | Shutdown repair, normal restart, journals/proof storage, resource monitoring | Primary/fallback human operator availability | Restart and fresh public readiness pass; actual series checkpoint/restoration still pending |
+| Finished product | Reference intro, clean normal screens, desktop/mobile UX and recovery | Final visual feedback | Intro and removal of internal diagnostics implemented;87hermetic browser checks |
+| Full live lifecycle | Bounded Sepolia self-test, actual transactions, activity, proof restoration and payout reconciliation | Signatures only for participant-controlled wallets | Existing configured wallet and isolated buyer/holder prepared; live sale not yet executed |
+| Repeatable judge experience | Real mature inventory, executable quotes, exact instructions and second-session checks | One fresh unaided browser/wallet rehearsal | Pending public lifecycle; quotes must be renewed after relevant state changes |
+| Submission | Visual README, project brief, architecture, quickstart, sponsor evidence and recording outline | Human narration, real contribution review, feedback form and final submission | Repository navigation prepared; no video or entry submission claimed |
+
+No additional hosting purchase is needed to resolve the observed crash. The authorized service is running within its current resource ceiling. [Hosted restart evidence](evidence/operations/hosted-restart.json) and [public readiness](evidence/operations/hosted-readiness.json) are operational observations, not a completed public lifecycle. The detailed IDs below retain their acceptance gates.
+
 ## Release decision
 
 **The public site is not yet ready for an unattended end-to-end judge session.** The supplied stencil interface, seller-first signed listings, deployed contracts and automated financial flows are implemented. Hosting resources are provisioned. Source `9d089b1` deployed successfully with the reviewed keeper and Graph services enabled. At 12:28 UTC, the public `/api/operations` probe passed protocol, keeper, retention and off-host replication checks; deployment pins independently matched. There is no completed public series or participant financial lifecycle to demonstrate.

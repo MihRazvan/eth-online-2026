@@ -1,0 +1,34 @@
+{
+  "checkedAt": "2026-09-13T13:08:46.477454+00:00",
+  "deployment": "85e2934f-37f0-4efb-8b04-bbb358b4580a",
+  "sourceCommit": "8aa2e1e",
+  "graphEnabled": true,
+  "keeperEnabled": true,
+  "sameContainerOwnsBothLocks": true,
+  "history": {
+    "count": 17198,
+    "first": 11678801,
+    "last": 11695998
+  },
+  "databaseIntegrity": {
+    "analysis": "ok",
+    "keeper": "ok",
+    "listings": "ok"
+  },
+  "keeper": {
+    "enabled": true,
+    "readyToSign": true,
+    "lastError": null,
+    "configFingerprint": "3e1c42950c970d6f59e7321740d7664137aa9b721facb7d67af86b7a13f30e9d",
+    "pendingTransactions": 0,
+    "missedEndpoints": 0,
+    "balanceWei": "10000000000000000",
+    "observedHead": "11696092",
+    "observedAt": "2026-09-13T13:08:45.363Z"
+  },
+  "transactionsRetained": 0,
+  "memoryBytes": 209309696,
+  "memoryLimitBytes": 536870912,
+  "freeVolumeBytes": 424964096,
+  "scope": "Normal hosted redeployment preserves databases and reacquires its own locks without manual recovery. No public sale or checkpoint yet."
+}

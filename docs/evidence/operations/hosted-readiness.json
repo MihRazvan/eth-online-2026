@@ -1,0 +1,38 @@
+{
+  "checkedAt": "2026-09-13T13:10:00.442Z",
+  "scope": "Read-only runtime pins and operational snapshot; not checkpoint, backup restoration, public sale or participant acceptance.",
+  "ready": true,
+  "chain": {
+    "chainId": 11155111,
+    "head": 11696098,
+    "headHash": "0x2eca1765036cd35a09fb60d1822c671feea01d5c4d8ceed1b69b39107aec2ee3",
+    "headTimestamp": 1789304988,
+    "runtimePinsMatched": [
+      "feeStrip",
+      "verifier",
+      "checkpoints"
+    ],
+    "keeper": {
+      "address": "0xFfaa5fE1C38Aa538fd9B1A28D8CF8516fa3728Ad",
+      "balanceWei": "10000000000000000",
+      "nonce": 0,
+      "pendingNonce": 0,
+      "hasPendingNonce": false,
+      "initialAllocationWei": "10000000000000000",
+      "initialAllocationMet": true
+    },
+    "nextSeriesId": "1",
+    "seriesEverActivated": "0"
+  },
+  "operations": {
+    "ready": true,
+    "reasons": [],
+    "checks": {
+      "protocol": true,
+      "keeper": true,
+      "retention": true,
+      "replication": true
+    },
+    "httpStatus": 200
+  }
+}
