@@ -2821,6 +2821,16 @@ dialog .review-lines {
   }
 }
 /* The seller moves through real stages: discovery, advertisement, acceptance. */
+.pin-prerequisite {
+  margin: 20px 0;
+  padding: 14px 18px;
+  border-left: 2px solid var(--sel);
+  background: var(--panel);
+  font-size: 12px;
+}
+.pin-prerequisite strong { color: var(--ink); }
+.pin-prerequisite p { margin-top: 6px; color: var(--muted); max-width: 90ch; }
+.pin-prerequisite a { color: var(--ink); text-underline-offset: 3px; }
 .pin-steps {
   display: flex;
   border: 1px solid var(--rule2);

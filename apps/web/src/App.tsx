@@ -1531,6 +1531,27 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
               </span>
             </section>
             {pin && (
+              <aside className="pin-prerequisite" aria-label="Before you pin">
+                <strong>First, a Uniswap v4 LP position.</strong>
+                <p>
+                  To sell fees, your wallet needs a position NFT with liquidity
+                  in a pool containing genuine USDC, such as ETH/USDC, and no hooks.
+                  {s.mode === "testnet" && (
+                    <> Use Ethereum Sepolia for this demo; mainnet positions won’t appear.</>
+                  )}
+                  {" "}Create one in Uniswap or receive an unused LP NFT, then
+                  connect the wallet that owns it.
+                </p>
+                <p>
+                  <a href="https://app.uniswap.org/positions" target="_blank" rel="noreferrer">
+                    Open Uniswap ↗
+                  </a>
+                  {" · "}Just buying fee claims? <a href="#market">Explore the market</a>
+                  {" "}— no LP NFT needed. You’ll need USDC to pay and ETH for gas.
+                </p>
+              </aside>
+            )}
+            {pin && (
               <nav className="pin-steps" aria-label="Pin workflow">
                 <button
                   className={pinStep === 1 ? "on" : ""}
