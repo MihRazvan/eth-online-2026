@@ -1,10 +1,10 @@
 import {defineRailway,project,service,volume,bucket,ref,preserve} from 'railway/iac';
 
-// Plan-only until the new project's bounded hosting spend is approved.
+// User delegated the small managed hosting choice after the cost comparison.
 // Explicitly reject the account's unrelated existing project.
 export default defineRailway(ctx=>{
  if(ctx.projectName!=='usufruct'||ctx.environment!=='production')throw new Error('Only the isolated usufruct production environment is supported');
- const data=volume('endpoint-data',{region:'europe-west4-drams3a',sizeMB:1024});
+ const data=volume('endpoint-data',{region:'europe-west4-drams3a',sizeMB:500});
  const proofs=bucket('endpoint-proofs',{region:'ams'});
  const operations=service('endpoint-operations',{
   // Source is deliberately omitted: deploy a reviewed checkout with railway up.

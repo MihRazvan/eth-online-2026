@@ -1,9 +1,9 @@
 // Operational health is a precondition for new UI commitments, never a payout oracle.
-export function operationsStatus({config,keeper,retention,replication,proof,clock=Date.now}) {
+export function operationsStatus({config,keeperEnabled,keeper,retention,replication,proof,clock=Date.now}) {
  const now=clock(),fresh=at=>Number.isSafeInteger(at)&&at<=now+5000&&now-at<=60000;
  const match=value=>String(value?.chainId)===String(config.chainId)&&value?.feeStrip?.toLowerCase()===config.feeStrip.toLowerCase();
  const check=(ready,code)=>({ready:!!ready,code:ready?'READY':code});
- const keeperReady=match(keeper)&&fresh(keeper?.observedAtMs)&&keeper?.enabled===true&&keeper?.readyToSign===true&&
+ const keeperReady=keeperEnabled===true&&match(keeper)&&fresh(keeper?.observedAtMs)&&keeper?.enabled===true&&keeper?.readyToSign===true&&
   !keeper.lastError&&keeper.missedEndpoints===0&&keeper.discoveryComplete===true;
  const checks={
   protocol:check(config.fundingCommitmentVersion===1,'CONTRACT_UPGRADE_REQUIRED'),

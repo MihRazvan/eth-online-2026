@@ -54,7 +54,7 @@ try{
  const listingsHandler=createListingsHandler(createListingService({client:listingClient,scope:config.listings,store:listingStore}));
  const recovery=recoveryServer({store,scope:worker.scope});
  server=operationsServer({token:config.gatewayToken,listingsHandler,analysisHandler:analysis?analysisHandler(analysis):null,recoveryHandler:recovery.listeners('request')[0],status:()=>operationsStatus({config:config.retention,
-  keeper:config.keeper?readKeeperStatus(config.keeper.database):null,retention:retentionStatus(store,worker.scope),replication:replica?.publicStatus(),proof})});
+  keeperEnabled:config.keeper?.enabled,keeper:config.keeper?.enabled?readKeeperStatus(config.keeper.database):null,retention:retentionStatus(store,worker.scope),replication:replica?.publicStatus(),proof})});
  server.listen(config.port,'0.0.0.0');await once(server,'listening');
  console.log(JSON.stringify({status:'operations-listening',port:config.port,chainId:config.retention.chainId,feeStrip:config.retention.feeStrip}));
  do{

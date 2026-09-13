@@ -8,7 +8,7 @@ import {proxyFor} from '../../../scripts/deploy/api-proxy.mjs';
 import {hostedConfig} from '../src/config.mjs';
 import {recoveryAcquirer} from '../src/acquire.mjs';
 const token='test-gateway-credential-32-characters-long',address='0x'+'ab'.repeat(20),now=1789218000000;
-const good=()=>({config:{chainId:11155111,feeStrip:address,fundingCommitmentVersion:1},clock:()=>now,
+const good=()=>({config:{chainId:11155111,feeStrip:address,fundingCommitmentVersion:1},keeperEnabled:true,clock:()=>now,
  keeper:{chainId:11155111,feeStrip:address,observedAtMs:now,enabled:true,readyToSign:true,missedEndpoints:0,discoveryComplete:true,lastError:null},
  retention:{ready:true,observedAt:now},replication:{ready:true,observedAt:now},proof:{ready:true,observedAt:now}});
 test('new commitments require bound fresh observations from every preservation component',()=>{
@@ -26,6 +26,12 @@ test('new commitments require bound fresh observations from every preservation c
  }
  for(const change of [{chainId:1},{feeStrip:'0x'+'cd'.repeat(20)},{missedEndpoints:1},{discoveryComplete:false},{lastError:'RPC_UNAVAILABLE'}]){
   const input=good();Object.assign(input.keeper,change);assert.equal(operationsStatus(input).readyForNewSales,false);
+ }
+});
+test('disabled supervisor rejects a fresh ready snapshot retained by the previous keeper process',()=>{
+ for(const keeperEnabled of [false,undefined,'true']){
+  const result=operationsStatus({...good(),keeperEnabled});
+  assert.equal(result.readyForNewSales,false);assert.equal(result.checks.keeper.code,'KEEPER_NOT_READY');
  }
 });
 async function listening(server,t){server.listen(0,'127.0.0.1');await once(server,'listening');t.after(()=>new Promise(r=>server.close(r)));return `http://127.0.0.1:${server.address().port}`;}
