@@ -42,3 +42,8 @@ The actual public lifecycle funded and accepted NFT39216, traded its claims thro
 A separate native collection on a fork of the identical public endpoint matched the historical allocation exactly. This is independent fork evidence, not another public transaction. [Native comparison](docs/evidence/operations/live-series-one-native-oracle.md).
 
 Fixed bands, variable fee income, proof cost and witness availability remain product constraints. Controlled donations generated these test fees; the amounts do not establish commercially viable gas economics. The implementation has reproducible regression and static-analysis checks, but no professional security audit. [Verification](docs/VERIFICATION.md), [Security](SECURITY.md).
+
+## Submission of [Uniswap Online Form](https://developers.uniswap.org/hackathon-feedback)
+
+<img width="1511" height="862" alt="Screenshot 2026-09-13 at 17 50 38" src="https://github.com/user-attachments/assets/c2a0686e-e39a-4508-ac4a-76c432658874" />
+
