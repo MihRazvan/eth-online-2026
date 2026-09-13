@@ -5,7 +5,7 @@ import {mkdtempSync,readFileSync,rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {createPublicClient,http,erc20Abi,getAddress,parseAbi,type Address} from 'viem';
+import {createPublicClient,http,erc20Abi,getAddress,parseAbi,toHex,type Address} from 'viem';
 import {ListingStore} from '../../../packages/listings/src/store.mjs';
 import {createListingService} from '../../../packages/listings/src/service.mjs';
 import {createListingsHandler} from '../../../packages/listings/src/http.mjs';
@@ -76,19 +76,45 @@ test('seller signed publication survives restart, buyer funds exact terms, cance
   const sellerPage=await sellerContext.newPage(),buyerPage=await buyerContext.newPage();
   const {seller,buyer}=deployment.actors!;
   try {
-    await login(sellerPage,'seller');
+    const sellerEth=await client.getBalance({address:seller});
+    // A gasless listing must work even when this dedicated local seller cannot
+    // yet pay for an onchain transaction. Restore its test ETH before acceptance.
+    await client.request({method:'anvil_setBalance' as never,params:[seller,'0x0'] as never});
+    await login(sellerPage,'seller','pin/1');
     const block=await client.getBlock();
     const commitment=await client.readContract({address:deployment.feeStrip,abi:feeStripAbi,functionName:'positionCommitment',args:[1n]});
-    const terms:SellerListingTerms={schemaVersion:1,chainId:31337,feeStrip:deployment.feeStrip,positionManager:deployment.positionManager,usdc:deployment.usdc,seller,tokenId:'1',positionCommitment:commitment,originalSupply:ORIGINAL_Q.toString(),buyerQuantity:(ORIGINAL_Q*3n/5n).toString(),proceedsMicros:'101000000',endBlock:(block.number+600n).toString(),deadlineTimestamp:(block.timestamp+3600n).toString(),nonce:`0x${'41'.repeat(32)}`};
+    const endBlock=(block.number+600n).toString();
+    const deadlineInput=new Date(Number(block.timestamp+3600n)*1000).toISOString().slice(0,16);
     const sellerBefore=await balance(deployment.usdc,seller),buyerBefore=await balance(deployment.usdc,buyer),escrowBefore=await balance(deployment.usdc,deployment.feeStrip);
     const nonceBefore=await client.getTransactionCount({address:seller});
-    const result=await publication(sellerPage,terms);
-    expect(result.listingId).toMatch(/^0x[0-9a-f]{64}$/);expect(result.transactionHash).toBeUndefined();
+    await sellerPage.getByLabel('Share of the window to sell (%)',{exact:true}).fill('60');
+    await sellerPage.getByLabel('Asking USDC for this share',{exact:true}).fill('101');
+    await sellerPage.getByLabel('Exact earning end block',{exact:true}).fill(endBlock);
+    await sellerPage.getByLabel('Seller must accept before (UTC)',{exact:true}).fill(deadlineInput);
+    await sellerPage.getByRole('button',{name:'Review listing',exact:true}).click();
+    await expect(sellerPage.getByRole('dialog')).toContainText('60.00%');
+    await expect(sellerPage.getByRole('dialog')).toContainText('$101.000000 USDC');
+    await expect(sellerPage.getByRole('dialog')).toContainText('not a sale or NFT approval');
+    await expect(sellerPage.getByRole('dialog').getByRole('button',{name:'Sign and publish listing',exact:true})).toBeEnabled();
+    await confirm(sellerPage,'Sign and publish listing');
+    await expect(sellerPage).toHaveURL(/#listing\/0x[0-9a-f]{64}$/);
+    const result={listingId:sellerPage.url().split('#listing/')[1] as `0x${string}`};
+    const retained=await sellerPage.evaluate(async id=>{
+      const response=await fetch('/api/listings?listingId='+id);if(!response.ok)throw new Error('Published listing was not retained.');return response.json();
+    },result.listingId);
+    const terms=retained.listing.terms as SellerListingTerms;
+    expect(retained.listing.status).toBe('available');expect(retained.listing.signature).toMatch(/^0x[0-9a-f]{130}$/i);
+    expect(terms.originalSupply).toBe(ORIGINAL_Q.toString());expect(terms.buyerQuantity).toBe((ORIGINAL_Q*3n/5n).toString());
+    expect(terms.proceedsMicros).toBe('101000000');expect(terms.endBlock).toBe(endBlock);
+    expect(terms.deadlineTimestamp).toBe(String(Date.parse(deadlineInput+'Z')/1000));
+    expect(terms.positionCommitment.toLowerCase()).toBe(commitment.toLowerCase());expect(terms.seller.toLowerCase()).toBe(seller.toLowerCase());
     expect(await client.getTransactionCount({address:seller})).toBe(nonceBefore);
+    expect(await client.getBalance({address:seller})).toBe(0n);
     expect((await owner()).toLowerCase()).toBe(seller.toLowerCase());
     expect(await nextSeries()).toBe(1n);
     expect(await balance(deployment.usdc,seller)).toBe(sellerBefore);
     expect(await balance(deployment.usdc,deployment.feeStrip)).toBe(escrowBefore);
+    await client.request({method:'anvil_setBalance' as never,params:[seller,toHex(sellerEth)] as never});
 
     await stopDirectory();await startDirectory();
     await login(buyerPage,'buyer');
