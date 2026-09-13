@@ -115,7 +115,8 @@ export async function main(){
  const checkStorage=storageGuard(config.db,config.minFreeBytes);checkStorage();
  const lock=acquireWriterLock(config.db);let store,heartbeat;
  const controller=new AbortController(),shutdown=()=>controller.abort();
- process.once('SIGINT',shutdown);process.once('SIGTERM',shutdown);
+ // Repeated termination signals must keep aborting gracefully until cleanup ends.
+ process.on('SIGINT',shutdown);process.on('SIGTERM',shutdown);
  try{
   store=new HistoryStore(config.db);const sink=new SubstreamsHistorySink(store,sinkConfig),head=sink.checkpoint();
   if(stop&&(stop-(head?.number+1||config.start)>10000||head?.number>=stop))fail('bounded-range-invalid');

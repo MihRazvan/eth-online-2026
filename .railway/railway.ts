@@ -14,7 +14,7 @@ export default defineRailway(ctx=>{
    overlapSeconds:0,drainingSeconds:45,requiredMountPath:'/data',
    limitOverride:{containers:{cpu:1,memoryBytes:536870912}}},
   volumeMounts:{'/data':data},
-  env:{NODE_ENV:'production',OPERATIONS_DATA_DIR:'/data',PORT:'8789',
+  env:{NODE_ENV:'production',OPERATIONS_DATA_DIR:'/data',PORT:'8789',RAILWAY_DEPLOYMENT_DRAINING_SECONDS:'45',
    SEPOLIA_RPC_URL:preserve(),OPERATIONS_GATEWAY_TOKEN:preserve(),
    ANALYSIS_ENABLED:preserve(),GRAPH_STREAM_ENABLED:preserve(),SUBSTREAMS_API_TOKEN:preserve(),
    KEEPER_ENABLED:preserve(),KEEPER_EXPECTED_SIGNER:preserve(),KEEPER_PRIVATE_KEY:preserve(),
