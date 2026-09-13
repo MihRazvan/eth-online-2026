@@ -325,3 +325,30 @@ test("narrow market and claim stay within viewport; financial labels remain avai
     fullPage: true,
   });
 });
+
+
+test("Holdings redeems allocated claims through the same reviewed payout without leaving the wallet", async ({ page }) => {
+  await page.goto("/#market/fs-1484");
+  await wallet(page);
+  await page.getByRole("button", { name: "Capture actual fees", exact: true }).click();
+  await confirm(page, "Confirm fixture action");
+  await page.getByRole("button", { name: "Preview fixture allocation", exact: true }).click();
+  await confirm(page, "Confirm fixture action");
+  await page.getByRole("link", { name: "Holdings", exact: true }).click();
+  const holding = page.locator(".holding-row").filter({ hasText: "NFT #1484" });
+  const redeem = holding.getByRole("button", { name: "Redeem 400 claims", exact: true });
+  await expect(redeem).toBeVisible();
+  await condition(page, "wrong-network");
+  await expect(redeem).toBeDisabled();
+  await page.getByLabel("Fixture condition").selectOption("normal");
+  await expect(redeem).toBeEnabled();
+  await redeem.click();
+  await expect(page.getByRole("dialog")).toContainText("$33.600000 USDC");
+  await expect(page.getByRole("dialog")).toContainText("immutable original Q denominator");
+  await expect(page.getByRole("dialog")).toContainText("other holders redeem independently");
+  await confirm(page, "Confirm fixture action");
+  await expect(page).toHaveURL(/#positions$/);
+  await expect(holding).toContainText("No unredeemed claims in this wallet");
+  await expect(redeem).toHaveCount(0);
+  await expect(page.locator(".holding-row").filter({ hasText: "NFT #1482" })).toContainText("250");
+});

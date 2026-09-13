@@ -433,10 +433,18 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
     if (!target) setFindingPosition(false);
     if (!target || !adapter.findPosition) return;
     let active = true;
+    paused.current = true;
     setPinStep(target.offerId ? 3 : 2);
     setPinToken(target.tokenId);
     setOfferSelection(target.offerId ?? null);
     setFindingPosition(true);
+    const timer = window.setTimeout(() => {
+      if (!active) return;
+      active = false;
+      ++refreshVersion.current;
+      setFindingPosition(false);
+      setError("Position lookup took longer than 20 seconds. Check the NFT ID and try again.");
+    }, 20_000);
     adapter
       .findPosition(target.tokenId)
       .then(() => (active ? refresh() : undefined))
@@ -444,10 +452,13 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
         if (active) setError((error as Error).message);
       })
       .finally(() => {
+        clearTimeout(timer);
         if (active) setFindingPosition(false);
       });
     return () => {
       active = false;
+      clearTimeout(timer);
+      ++refreshVersion.current;
     };
   }, [adapter, route]);
   useEffect(() => {
@@ -1748,6 +1759,15 @@ export function App({ adapter }: { adapter: FeeStripAdapter }) {
                             </small>
                           </span>
                           <div className="holding-actions">
+                            {m.phase === "allocated" && BigInt(s.wallet.claims[m.id]) > 0n && (
+                              <button
+                                className="primary"
+                                disabled={busy || !!review || wrongNetwork}
+                                onClick={() => lifecycleAction("redeem", m)}
+                              >
+                                Redeem {formatClaims(s.wallet.claims[m.id])} claims
+                              </button>
+                            )}
                             <a className="button" href={"#market/" + m.id}>
                               Read claim &amp; recovery <Icon />
                             </a>
