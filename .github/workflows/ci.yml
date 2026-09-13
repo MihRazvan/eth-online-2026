@@ -35,6 +35,7 @@ jobs:
           /tmp/feestrip-proof-venv/bin/python -m pip install -r scripts/proof/requirements.txt
       - run: pnpm test
       - run: pnpm test:public-setup
+      - run: node scripts/public/live-browser.mjs --self-test
       - run: pnpm test:settlement
       - run: pnpm test:operations
       - run: node --test packages/keeper/test/keeper.test.mjs
